@@ -31,7 +31,7 @@
   <div id="score"></div>
 
   <div class="gx-board" style="text-align:center">
-    <div id="card" style="font-size:46px;line-height:1.1;margin:6px 0"></div>
+    <div id="card" style="font-size:46px;line-height:1.1;margin:6px 0;direction:ltr"></div>
     <div id="boundaries" class="gx-row" style="gap:30px;margin-top:8px"></div>
   </div>
 
@@ -76,7 +76,7 @@ function renderStep() {
   document.getElementById('prompt').innerHTML = '🤔 ' + st.q;
   renderBoundaries();
   const ch = document.getElementById('choices'); ch.innerHTML = '';
-  st.opts.forEach((opt, i) => ch.appendChild(el('button', { class: 'gx-btn', html: opt, onclick: () => pick(i) })));
+  st.opts.forEach((opt, i) => ch.appendChild(el('button', { class: 'gx-btn', html: opt, style: { direction: 'ltr', unicodeBidi: 'isolate' }, onclick: () => pick(i) })));
 }
 function pick(i) {
   const st = STEPS[idx];

@@ -72,12 +72,12 @@ STEPS.forEach((st, i) => {
   if (i !== 0) input.disabled = true;
   const check = el('button', { class: 'gx-btn', text: 'בדוק', disabled: i !== 0 ? '' : null, onclick: () => doCheck(i) });
   if (i !== 0) check.disabled = true;
-  const hint = el('button', { class: 'gx-btn gx-btn-ghost', text: '💡 רמז', onclick: () => toast('רמז: ' + st.hint, 'info') });
+  const hint = el('button', { class: 'gx-btn gx-btn-ghost', text: '💡 רמז', onclick: () => toast('רמז: <span style="direction:ltr;unicode-bidi:isolate;display:inline-block">' + st.hint + '</span>', 'info') });
   input.addEventListener('keydown', e => { if (e.key === 'Enter' && !input.disabled) doCheck(i); });
   const row = el('div', {
     style: { display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap', padding: '10px 0', borderBottom: '1px solid var(--line)', opacity: i === 0 ? '1' : '.5' }
   }, [
-    el('span', { html: '<b>' + (i + 1) + '.</b> ' + st.label, style: { flex: '1', minWidth: '220px' } }),
+    el('span', { html: '<b>' + (i + 1) + '.</b> ' + st.label, style: { flex: '1', minWidth: '220px', direction: 'ltr', unicodeBidi: 'isolate' } }),
     input, check, hint
   ]);
   rows.push({ row, input, check, hint });

@@ -51,7 +51,7 @@
 /* ---------- תור / שבבים ---------- */
 .gx-queue{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;min-height:42px;align-items:center}
 .gx-chip{background:var(--primary-soft);border:1px solid #c7d2f5;color:var(--primary);font-weight:700;
-  border-radius:10px;padding:6px 12px;font-family:Consolas,monospace;font-size:15px}
+  border-radius:10px;padding:6px 12px;font-family:Consolas,monospace;font-size:15px;direction:ltr}
 .gx-chip.head{background:var(--accent-soft);border-color:#f0dca0;color:var(--accent)}
 .gx-chip small{font-weight:500;color:var(--muted)}
 
@@ -89,6 +89,7 @@
 /* ---------- מטריצת תשלומים ---------- */
 .gx-matrix{border-collapse:separate;border-spacing:0;margin:14px auto}
 .gx-matrix td,.gx-matrix th{border:1px solid var(--line);padding:14px 18px;text-align:center;font-size:17px}
+.gx-matrix td{direction:ltr}
 .gx-matrix th{background:var(--primary);color:#fff}
 .gx-matrix td.cell{cursor:pointer;font-family:Consolas,monospace;font-weight:700;transition:background .15s}
 .gx-matrix td.cell:hover{background:var(--primary-soft)}

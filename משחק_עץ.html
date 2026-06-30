@@ -127,7 +127,7 @@ function phaseClassify() {
 function nextClassify() {
   if (ti >= MUSHROOM.test.length) return finish();
   const m = MUSHROOM.test[ti];
-  document.getElementById('prompt').innerHTML = '🍄 פטרייה <b>' + m.id + '</b>: Smooth=' + m.Smooth + ', Smelly=' + m.Smelly + ' — אכיל או רעיל?';
+  document.getElementById('prompt').innerHTML = '🍄 פטרייה <b>' + m.id + '</b>: <span style="direction:ltr;unicode-bidi:isolate">Smooth=' + m.Smooth + ', Smelly=' + m.Smelly + '</span> — אכיל או רעיל?';
   const ch = document.getElementById('choices'); ch.innerHTML = '';
   ch.append(
     el('button', { class: 'gx-btn gx-btn-ok', text: '🍽️ אכיל', onclick: () => classify(1) }),
