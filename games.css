@@ -1,0 +1,118 @@
+/* ============================================================
+   games.css — עיצוב משחקי הלמידה (מעל style.css)
+   ============================================================ */
+
+/* ---------- לוח ניקוד ---------- */
+.gx-score{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin:6px 0 18px}
+.gx-stat{background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);
+  padding:8px 18px;min-width:90px;text-align:center}
+.gx-num{display:block;font-size:24px;font-weight:800;color:var(--primary);line-height:1.1}
+.gx-lbl{display:block;font-size:12.5px;color:var(--muted);margin-top:2px}
+.gx-s-streak .gx-num{color:var(--warn)}
+.gx-s-best .gx-num{color:var(--accent)}
+@keyframes gxPulse{0%{transform:scale(1)}40%{transform:scale(1.35)}100%{transform:scale(1)}}
+.gx-pulse{animation:gxPulse .4s ease}
+
+/* ---------- לוח משחק / פאנלים ---------- */
+.gx-board{background:#fff;border:1px solid var(--line);border-radius:var(--radius);
+  box-shadow:var(--shadow);padding:18px;margin:16px 0}
+.gx-board svg{max-width:100%;height:auto;display:block;margin:0 auto}
+.gx-panel{background:var(--primary-soft);border:1px solid #d6deff;border-radius:12px;padding:12px 16px;margin:12px 0}
+.gx-row{display:flex;gap:12px;flex-wrap:wrap;align-items:center;justify-content:center}
+.gx-prompt{text-align:center;font-size:18px;font-weight:600;margin:10px 0;color:var(--ink)}
+.gx-prompt b{color:var(--primary)}
+
+/* ---------- כפתורים ---------- */
+.gx-btn{font-family:inherit;font-size:15.5px;font-weight:600;cursor:pointer;border:1px solid var(--line);
+  background:#fff;color:var(--ink);border-radius:999px;padding:9px 20px;box-shadow:var(--shadow);
+  transition:transform .1s,background .15s}
+.gx-btn:hover{transform:translateY(-1px)}
+.gx-btn:active{transform:translateY(0)}
+.gx-btn-primary{background:var(--primary);color:#fff;border-color:var(--primary)}
+.gx-btn-primary:hover{background:var(--primary-2)}
+.gx-btn-ok{background:var(--ok);color:#fff;border-color:var(--ok)}
+.gx-btn-ghost{background:transparent}
+.gx-btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+
+/* ---------- בקרת בחירה (segmented) ---------- */
+.gx-seg{display:inline-flex;background:#eef1f8;border:1px solid var(--line);
+  border-radius:999px;padding:4px;gap:2px;flex-wrap:wrap;justify-content:center}
+.gx-seg-btn{font-family:inherit;font-size:14.5px;font-weight:600;cursor:pointer;border:none;background:transparent;
+  color:var(--muted);border-radius:999px;padding:7px 16px;transition:all .15s}
+.gx-seg-btn.active{background:var(--primary);color:#fff;box-shadow:var(--shadow)}
+
+/* ---------- צמתים אינטראקטיביים ב-SVG ---------- */
+.gx-node{cursor:pointer;transition:filter .15s}
+.gx-node:hover{filter:brightness(1.05) drop-shadow(0 0 4px rgba(58,91,217,.5))}
+.gx-node.locked{cursor:default}
+.gx-node.locked:hover{filter:none}
+.gx-pick circle,.gx-pick rect{stroke-width:4}
+
+/* ---------- תור / שבבים ---------- */
+.gx-queue{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;min-height:42px;align-items:center}
+.gx-chip{background:var(--primary-soft);border:1px solid #c7d2f5;color:var(--primary);font-weight:700;
+  border-radius:10px;padding:6px 12px;font-family:Consolas,monospace;font-size:15px}
+.gx-chip.head{background:var(--accent-soft);border-color:#f0dca0;color:var(--accent)}
+.gx-chip small{font-weight:500;color:var(--muted)}
+
+/* ---------- toast ---------- */
+.gx-toast{position:fixed;top:18px;left:50%;transform:translate(-50%,-26px);
+  z-index:1000;background:#fff;border-radius:12px;box-shadow:0 8px 26px rgba(31,37,51,.22);
+  padding:12px 22px;font-size:16px;font-weight:600;opacity:0;pointer-events:none;
+  border-right:6px solid var(--primary);max-width:90vw;transition:opacity .2s,transform .2s}
+.gx-toast.show{opacity:1;transform:translate(-50%,0)}
+.gx-toast.gx-good{border-right-color:var(--ok);color:var(--ok)}
+.gx-toast.gx-bad{border-right-color:var(--warn);color:var(--warn)}
+.gx-toast.gx-info{border-right-color:var(--primary);color:var(--primary)}
+
+/* ---------- מודאל ניצחון ---------- */
+.gx-modal-bg{position:fixed;inset:0;z-index:1001;background:rgba(31,37,51,.55);
+  display:flex;align-items:center;justify-content:center;padding:20px;animation:gxFade .2s ease}
+@keyframes gxFade{from{opacity:0}to{opacity:1}}
+.gx-modal{background:#fff;border-radius:18px;box-shadow:0 18px 50px rgba(0,0,0,.3);
+  padding:26px 28px;max-width:460px;text-align:center;animation:gxPop .25s ease}
+@keyframes gxPop{from{transform:scale(.9);opacity:0}to{transform:scale(1);opacity:1}}
+.gx-modal-emoji{font-size:46px;line-height:1}
+.gx-modal-body{color:var(--ink);font-size:15.5px;line-height:1.7;margin:8px 0 18px}
+.gx-modal-body code{background:#eef2ff;color:#27408b;padding:1px 6px;border-radius:6px}
+.gx-stars{font-size:30px;color:var(--accent);letter-spacing:4px;margin:2px 0 4px}
+
+/* ---------- קונפטי ---------- */
+.gx-confetti{position:fixed;top:-12px;width:10px;height:14px;z-index:1002;border-radius:2px;
+  pointer-events:none;animation:gxFall 2.6s linear forwards}
+@keyframes gxFall{to{transform:translateY(105vh) rotate(540deg);opacity:.2}}
+
+/* ---------- ניעור שגיאה ---------- */
+@keyframes gxShake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-7px)}40%,80%{transform:translateX(7px)}}
+.gx-shake{animation:gxShake .4s}
+
+/* ---------- מטריצת תשלומים ---------- */
+.gx-matrix{border-collapse:separate;border-spacing:0;margin:14px auto}
+.gx-matrix td,.gx-matrix th{border:1px solid var(--line);padding:14px 18px;text-align:center;font-size:17px}
+.gx-matrix th{background:var(--primary);color:#fff}
+.gx-matrix td.cell{cursor:pointer;font-family:Consolas,monospace;font-weight:700;transition:background .15s}
+.gx-matrix td.cell:hover{background:var(--primary-soft)}
+.gx-matrix td.nash{background:var(--ok-soft);outline:3px solid var(--ok);outline-offset:-3px}
+.gx-matrix td.wrong{background:var(--warn-soft)}
+
+/* ---------- sliders ---------- */
+.gx-ctrl{display:flex;flex-direction:column;gap:4px;min-width:180px}
+.gx-ctrl label{font-size:13.5px;color:var(--muted);font-weight:600;display:flex;justify-content:space-between}
+.gx-ctrl input[type=range]{width:100%;accent-color:var(--primary)}
+.gx-num-in{font-family:Consolas,monospace;font-size:16px;text-align:center;width:90px;
+  border:2px solid var(--line);border-radius:8px;padding:6px;direction:ltr}
+.gx-num-in.ok{border-color:var(--ok);background:var(--ok-soft)}
+.gx-num-in.bad{border-color:var(--warn);background:var(--warn-soft)}
+
+/* ---------- גרף כושר (קנבס) ---------- */
+.gx-chart{background:#fff;border:1px solid var(--line);border-radius:10px;width:100%;max-width:560px;display:block;margin:10px auto}
+
+/* ---------- כרטיסי Hub ---------- */
+.gx-tile-stars{color:var(--accent);font-size:15px;letter-spacing:1px;margin-top:6px}
+.gx-tag{display:inline-block;background:var(--accent-soft);color:var(--accent);border-radius:999px;
+  padding:1px 9px;font-size:12px;font-weight:700;margin-bottom:4px}
+
+@media(max-width:560px){
+  .gx-num{font-size:20px}
+  .gx-matrix td,.gx-matrix th{padding:10px 12px;font-size:15px}
+}

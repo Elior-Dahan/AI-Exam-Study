@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>בנה מינימקס 🌳 | משחקי למידה</title>
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="games.css">
+</head>
+<body>
+
+<div class="topbar"><div class="inner">
+  <a class="home" href="index.html">🏠 דף הבית</a>
+  <span class="sep">|</span>
+  <a href="משחקים.html">🎮 כל המשחקים</a>
+  <span class="sep">·</span>
+  <a href="03_חיפוש_יריבי.html">📖 הנושא</a>
+</div></div>
+
+<div class="wrap">
+  <div class="page-head">
+    <p class="eyebrow">משחק · נושא 03</p>
+    <h1>🌳 בנה עץ מינימקס</h1>
+    <span class="ref">מלא ערכים מלמטה למעלה, ואז גזום ב-Alpha-Beta</span>
+  </div>
+
+  <div class="card">
+    <p><b>שלב 1:</b> לכל צומת מודגש — בחר את הערך הנכון (<b>MIN</b> = מינימום הילדים, <b>MAX</b> = מקסימום). <b>שלב 2:</b> סמן את העלים שייגזמו ב-Alpha-Beta (שמאל→ימין).</p>
+  </div>
+
+  <div id="score"></div>
+  <div class="gx-prompt" id="prompt">מתחילים! 🌳</div>
+
+  <div class="gx-board">
+    <svg id="tree" viewBox="0 0 620 320" xmlns="http://www.w3.org/2000/svg" aria-label="עץ מינימקס"></svg>
+  </div>
+
+  <div class="gx-panel" id="panel"><div class="gx-row" id="choices"></div></div>
+
+  <div class="gx-row" style="margin-top:14px">
+    <button class="gx-btn" id="restart">↻ התחל מחדש</button>
+    <a class="gx-btn gx-btn-ghost" href="03_חיפוש_יריבי.html">📖 חזרה להסבר</a>
+  </div>
+</div>
+
+<script type="module">
+import { MINIMAX_TREE } from './games-data.js';
+import { Scoreboard, toast, winModal, svg, el, shake } from './games-core.js';
+
+const groups = MINIMAX_TREE.groups;
+const minVals = groups.map(g => Math.min(...g));
+const rootVal = Math.max(...minVals);
+// alpha-beta: אילו עלים נגזמים (שמאל→ימין)
+function abPruned() {
+  const pruned = new Set(); let rootAlpha = -Infinity;
+  groups.forEach((leaves, gi) => {
+    let minVal = Infinity, cut = false;
+    leaves.forEach((leaf, li) => {
+      if (cut) { pruned.add(gi + '-' + li); return; }
+      minVal = Math.min(minVal, leaf);
+      if (minVal <= rootAlpha) cut = true;
+    });
+    rootAlpha = Math.max(rootAlpha, minVal);
+  });
+  return pruned;
+}
+const PRUNED = abPruned();
+
+const score = new Scoreboard('minimax');
+document.getElementById('score').appendChild(score.el);
+
+// מיקומים (כמו עמוד 03)
+const ROOT = { x: 310, y: 45 };
+const MIN = [{ x: 120, y: 160 }, { x: 310, y: 160 }, { x: 500, y: 160 }];
+const LEAFX = [[65, 120, 175], [255, 310, 365], [445, 500, 555]];
+const LEAFY = 267;
+
+const els = {}; // node id -> {shape, txt}
+function drawTree() {
+  const s = document.getElementById('tree'); s.innerHTML = '';
+  // קשתות
+  MIN.forEach(m => s.appendChild(svg('line', { x1: ROOT.x, y1: ROOT.y + 17, x2: m.x, y2: m.y - 20, stroke: '#9aa6c0', 'stroke-width': 2 })));
+  groups.forEach((g, gi) => LEAFX[gi].forEach(lx => s.appendChild(svg('line', { x1: MIN[gi].x, y1: MIN[gi].y + 20, x2: lx, y2: LEAFY - 15, stroke: '#9aa6c0', 'stroke-width': 2 }))));
+  // שורש
+  let c = svg('circle', { cx: ROOT.x, cy: ROOT.y, r: 22, fill: '#eef2ff', stroke: '#27408b', 'stroke-width': 2 });
+  let t = svg('text', { x: ROOT.x, y: ROOT.y + 6, 'text-anchor': 'middle', 'font-size': 18, 'font-weight': 700, fill: '#27408b', text: '?' });
+  s.append(c, t); els['root'] = { shape: c, txt: t };
+  s.appendChild(svg('text', { x: ROOT.x + 42, y: ROOT.y + 4, 'font-size': 13, 'font-weight': 700, fill: '#27408b', text: 'MAX' }));
+  // MIN
+  MIN.forEach((m, gi) => {
+    let cc = svg('circle', { cx: m.x, cy: m.y, r: 20, fill: '#fdecec', stroke: '#b23b3b', 'stroke-width': 2 });
+    let tt = svg('text', { x: m.x, y: m.y + 6, 'text-anchor': 'middle', 'font-size': 17, 'font-weight': 700, fill: '#b23b3b', text: '?' });
+    s.append(cc, tt); els['min-' + gi] = { shape: cc, txt: tt };
+  });
+  s.appendChild(svg('text', { x: 540, y: 165, 'font-size': 13, 'font-weight': 700, fill: '#b23b3b', text: 'MIN' }));
+  // עלים
+  groups.forEach((g, gi) => g.forEach((val, li) => {
+    const lx = LEAFX[gi][li];
+    let r = svg('rect', { x: lx - 15, y: LEAFY - 15, width: 30, height: 30, rx: 5, fill: '#eef2ff', stroke: '#27408b', 'stroke-width': 1.5, class: 'gx-node locked' });
+    let tx = svg('text', { x: lx, y: LEAFY + 6, 'text-anchor': 'middle', 'font-size': 16, 'font-weight': 700, fill: '#1f2533', text: val });
+    const gEl = svg('g');
+    gEl.append(r, tx);
+    gEl.addEventListener('click', () => onLeafClick(gi, li));
+    s.appendChild(gEl);
+    els['leaf-' + gi + '-' + li] = { shape: r, txt: tx, g: gEl, val };
+  }));
+}
+
+// ---------- שלב 1: מילוי ----------
+const fillSeq = [
+  { id: 'min-0', correct: minVals[0], cands: groups[0], isMax: false },
+  { id: 'min-1', correct: minVals[1], cands: groups[1], isMax: false },
+  { id: 'min-2', correct: minVals[2], cands: groups[2], isMax: false },
+  { id: 'root', correct: rootVal, cands: minVals, isMax: true }
+];
+let fi = 0, phase = 1, misses = 0;
+
+function highlight(id, on) {
+  const e = els[id]; if (!e) return;
+  e.shape.setAttribute('stroke-width', on ? 4 : 2);
+  if (on) e.shape.setAttribute('stroke', '#3a5bd9');
+}
+function fillNode(id, val) {
+  const e = els[id];
+  e.txt.textContent = val;
+  e.shape.setAttribute('fill', '#e8f7ef'); e.shape.setAttribute('stroke', '#1b7f5a'); e.shape.setAttribute('stroke-width', 2.5);
+  e.txt.setAttribute('fill', '#0f5a3e');
+}
+
+function askFill() {
+  const node = fillSeq[fi];
+  highlight(node.id, true);
+  const kind = node.isMax ? 'MAX (מקסימום)' : 'MIN (מינימום)';
+  document.getElementById('prompt').innerHTML = '🤔 מהו ערך הצומת המודגש? &nbsp;<b>' + kind + '</b> של הילדים';
+  const ch = document.getElementById('choices'); ch.innerHTML = '';
+  const uniq = [...new Set(node.cands)].sort((a, b) => a - b);
+  uniq.forEach(v => ch.appendChild(el('button', {
+    class: 'gx-btn', text: v, onclick: () => pickFill(v)
+  })));
+}
+function pickFill(v) {
+  const node = fillSeq[fi];
+  if (v === node.correct) {
+    highlight(node.id, false); fillNode(node.id, v); score.add(10);
+    toast('✓ נכון!', 'good');
+    fi++;
+    if (fi >= fillSeq.length) startPhase2();
+    else askFill();
+  } else {
+    misses++; score.miss(); shake(els[node.id].shape);
+    toast('✗ נסה שוב — ' + (node.isMax ? 'הכי גבוה' : 'הכי נמוך'), 'bad');
+  }
+}
+
+// ---------- שלב 2: גיזום ----------
+const marked = new Set();
+function startPhase2() {
+  phase = 2;
+  document.getElementById('prompt').innerHTML = '✂️ <b>שלב 2:</b> לחץ על העלים שייגזמו ב-Alpha-Beta (שמאל→ימין), ואז "בדוק"';
+  const ch = document.getElementById('choices'); ch.innerHTML = '';
+  // הפוך עלים לבחירים
+  for (const k in els) if (k.startsWith('leaf-')) {
+    els[k].shape.classList.remove('locked'); els[k].shape.classList.add('gx-node');
+  }
+  ch.appendChild(el('button', { class: 'gx-btn gx-btn-primary', text: '✓ בדוק גיזום', onclick: checkPrune }));
+}
+function onLeafClick(gi, li) {
+  if (phase !== 2) return;
+  const id = gi + '-' + li, e = els['leaf-' + id];
+  if (marked.has(id)) {
+    marked.delete(id);
+    e.shape.setAttribute('fill', '#eef2ff'); e.shape.setAttribute('stroke', '#27408b'); e.shape.setAttribute('stroke-dasharray', '');
+    e.txt.setAttribute('fill', '#1f2533');
+  } else {
+    marked.add(id);
+    e.shape.setAttribute('fill', '#fdecec'); e.shape.setAttribute('stroke', '#b23b3b'); e.shape.setAttribute('stroke-dasharray', '4 3');
+    e.txt.setAttribute('fill', '#b23b3b');
+  }
+}
+function checkPrune() {
+  const same = marked.size === PRUNED.size && [...marked].every(x => PRUNED.has(x));
+  if (same) {
+    score.add(20);
+    const stars = misses === 0 ? 3 : misses <= 2 ? 2 : 1;
+    winModal({
+      title: 'עץ הושלם! 🌳', stars, gameId: 'minimax',
+      html: '<p>ערך המשחק: <code>' + rootVal + '</code> · המהלך הנבחר = הענף שמוביל אליו.</p>' +
+            '<p><b>נגזמו:</b> ' + PRUNED.size + ' עלים (אחרי שראינו ערך ≤ α בצומת MIN).</p>' +
+            '<p>ניקוד: <b>' + score.score + '</b></p>'
+    });
+  } else {
+    misses++; score.miss();
+    toast('✗ לא מדויק — חשוב: גוזמים ב-MIN כש-v ≤ α', 'bad');
+  }
+}
+
+function restart() {
+  fi = 0; phase = 1; misses = 0; marked.clear(); score.reset();
+  drawTree(); document.getElementById('prompt').innerHTML = 'מתחילים! 🌳'; askFill();
+}
+document.getElementById('restart').addEventListener('click', restart);
+
+drawTree(); askFill();
+</script>
+</body>
+</html>

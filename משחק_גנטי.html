@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>סימולטור אבולוציה 🧬 | משחקי למידה</title>
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="games.css">
+</head>
+<body>
+
+<div class="topbar"><div class="inner">
+  <a class="home" href="index.html">🏠 דף הבית</a>
+  <span class="sep">|</span>
+  <a href="משחקים.html">🎮 כל המשחקים</a>
+  <span class="sep">·</span>
+  <a href="08_אלגוריתמים_גנטיים.html">📖 הנושא</a>
+</div></div>
+
+<div class="wrap">
+  <div class="page-head">
+    <p class="eyebrow">משחק · נושא 08</p>
+    <h1>🧬 סימולטור אבולוציה</h1>
+    <span class="ref">צפה באוכלוסייה מתפתחת ל-max f(x)=x² · שחק עם המוטציה וההכלאה</span>
+  </div>
+
+  <div class="card">
+    <p>כל פרט הוא כרומוזום של 5 ביטים (<code>x∈[0,31]</code>), והכושר הוא <code>f(x)=x²</code>. <b>המטרה:</b> להגיע ל-<code>x=31</code> (<code>11111</code>), כושר <b>961</b>. שנה את הפרמטרים, לחץ "דור הבא" או "הרץ", וצפה בכושר מטפס. 🚀</p>
+  </div>
+
+  <div class="gx-row" style="gap:22px;align-items:flex-end">
+    <div class="gx-ctrl"><label>גודל אוכלוסייה: <b id="lpop">6</b></label><input type="range" id="pop" min="4" max="16" step="2" value="6"></div>
+    <div class="gx-ctrl"><label>שיעור מוטציה: <b id="lmut">5%</b></label><input type="range" id="mut" min="0" max="25" step="1" value="5"></div>
+    <div class="gx-ctrl"><label>שיעור הכלאה: <b id="lcx">80%</b></label><input type="range" id="cx" min="0" max="100" step="10" value="80"></div>
+  </div>
+
+  <div class="gx-row" style="margin:14px 0">
+    <button class="gx-btn gx-btn-primary" id="step">▶ דור הבא</button>
+    <button class="gx-btn gx-btn-ok" id="run">⏩ הרץ</button>
+    <button class="gx-btn" id="reset">↻ אתחל</button>
+  </div>
+
+  <div class="gx-prompt" id="status">דור 0 · הכי טוב: —</div>
+
+  <div class="gx-board">
+    <div style="text-align:center;font-weight:700;color:var(--primary);margin-bottom:6px">האוכלוסייה</div>
+    <div id="population"></div>
+  </div>
+
+  <div class="gx-board">
+    <div style="text-align:center;font-weight:700;color:var(--primary);margin-bottom:6px">כושר לאורך הדורות (🟢 הכי טוב · 🔵 ממוצע)</div>
+    <canvas id="chart" class="gx-chart" width="560" height="180"></canvas>
+  </div>
+
+  <div class="gx-row" style="margin-top:6px">
+    <a class="gx-btn gx-btn-ghost" href="08_אלגוריתמים_גנטיים.html">📖 חזרה להסבר</a>
+  </div>
+</div>
+
+<script type="module">
+import { GA_CONFIG } from './games-data.js';
+import { toast, confetti, setStars, el } from './games-core.js';
+
+const BITS = GA_CONFIG.bits, MAXF = GA_CONFIG.optimum * GA_CONFIG.optimum; // 961
+const decode = c => parseInt(c, 2);
+const fitness = c => decode(c) * decode(c);
+const randChrom = () => Array.from({ length: BITS }, () => Math.random() < 0.5 ? '0' : '1').join('');
+
+let pop = [], gen = 0, history = [], running = null, reached = false;
+let popSize = 6, mutRate = 0.05, cxRate = 0.8;
+
+function init() {
+  popSize = +document.getElementById('pop').value;
+  pop = Array.from({ length: popSize }, randChrom);
+  gen = 0; history = []; reached = false;
+  record(); render();
+}
+function record() {
+  const fits = pop.map(fitness);
+  history.push({ best: Math.max(...fits), avg: fits.reduce((a, b) => a + b, 0) / fits.length });
+}
+function roulette(fits, total) {
+  if (total <= 0) return Math.floor(Math.random() * fits.length);
+  let r = Math.random() * total;
+  for (let i = 0; i < fits.length; i++) { r -= fits[i]; if (r <= 0) return i; }
+  return fits.length - 1;
+}
+function crossover(a, b) {
+  if (Math.random() > cxRate) return [a, b];
+  const p = 1 + Math.floor(Math.random() * (BITS - 1));
+  return [a.slice(0, p) + b.slice(p), b.slice(0, p) + a.slice(p)];
+}
+function mutate(c) {
+  return c.split('').map(bit => Math.random() < mutRate ? (bit === '0' ? '1' : '0') : bit).join('');
+}
+function nextGen() {
+  const fits = pop.map(fitness), total = fits.reduce((a, b) => a + b, 0);
+  const bestIdx = fits.indexOf(Math.max(...fits));
+  const next = [pop[bestIdx]]; // אליטיזם
+  while (next.length < pop.length) {
+    const a = pop[roulette(fits, total)], b = pop[roulette(fits, total)];
+    let [c1, c2] = crossover(a, b);
+    next.push(mutate(c1));
+    if (next.length < pop.length) next.push(mutate(c2));
+  }
+  pop = next; gen++;
+  record(); render();
+  if (!reached && history[history.length - 1].best >= MAXF) {
+    reached = true; confetti(); toast('🏆 הגעת לאופטימום! x=31, כושר 961', 'good'); setStars('genetic', 3);
+  }
+}
+
+function render() {
+  const fits = pop.map(fitness);
+  const best = Math.max(...fits), bestC = pop[fits.indexOf(best)];
+  document.getElementById('status').innerHTML =
+    'דור <b>' + gen + '</b> · הכי טוב: <code>' + bestC + '</code> → x=' + decode(bestC) + ', f=<b>' + best + '</b>';
+  // אוכלוסייה
+  const box = document.getElementById('population'); box.innerHTML = '';
+  pop.map((c, i) => ({ c, f: fits[i] })).sort((a, b) => b.f - a.f).forEach(({ c, f }) => {
+    const pct = Math.round(f / MAXF * 100);
+    const row = el('div', { style: { display: 'flex', alignItems: 'center', gap: '10px', margin: '5px 0' } }, [
+      el('code', { text: c, style: { direction: 'ltr', minWidth: '64px' } }),
+      el('span', { text: 'x=' + decode(c), style: { minWidth: '52px', color: 'var(--muted)', fontSize: '14px' } }),
+      el('div', { style: { flex: '1', background: '#eef2ff', borderRadius: '6px', overflow: 'hidden', height: '18px' } }, [
+        el('div', { style: { width: pct + '%', height: '100%', background: f >= MAXF ? 'var(--ok)' : 'var(--primary-2)', transition: 'width .3s' } })
+      ]),
+      el('b', { text: f, style: { minWidth: '46px', textAlign: 'left', color: 'var(--primary)' } })
+    ]);
+    box.appendChild(row);
+  });
+  drawChart();
+}
+
+function drawChart() {
+  const cv = document.getElementById('chart'), ctx = cv.getContext('2d');
+  const W = cv.width, Hh = cv.height, pad = 26;
+  ctx.clearRect(0, 0, W, Hh);
+  // צירים
+  ctx.strokeStyle = '#dfe3ee'; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(pad, 6); ctx.lineTo(pad, Hh - pad); ctx.lineTo(W - 6, Hh - pad); ctx.stroke();
+  ctx.fillStyle = '#5b6478'; ctx.font = '11px Segoe UI'; ctx.textAlign = 'right';
+  ctx.fillText('961', pad - 4, 12); ctx.fillText('0', pad - 4, Hh - pad);
+  const n = history.length;
+  const xAt = i => pad + (n <= 1 ? 0 : (W - pad - 8) * i / (n - 1));
+  const yAt = v => (Hh - pad) - (Hh - pad - 6) * (v / MAXF);
+  const line = (key, color) => {
+    ctx.strokeStyle = color; ctx.lineWidth = 2.5; ctx.beginPath();
+    history.forEach((h, i) => { const x = xAt(i), y = yAt(h[key]); i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y); });
+    ctx.stroke();
+  };
+  line('avg', '#3a5bd9'); line('best', '#1b7f5a');
+}
+
+// בקרות
+const sync = () => {
+  document.getElementById('lpop').textContent = document.getElementById('pop').value;
+  document.getElementById('lmut').textContent = document.getElementById('mut').value + '%';
+  document.getElementById('lcx').textContent = document.getElementById('cx').value + '%';
+  mutRate = +document.getElementById('mut').value / 100;
+  cxRate = +document.getElementById('cx').value / 100;
+};
+document.getElementById('mut').addEventListener('input', sync);
+document.getElementById('cx').addEventListener('input', sync);
+document.getElementById('pop').addEventListener('input', () => { sync(); stop(); init(); });
+document.getElementById('step').addEventListener('click', () => { stop(); nextGen(); });
+document.getElementById('reset').addEventListener('click', () => { stop(); init(); });
+function stop() { if (running) { clearInterval(running); running = null; document.getElementById('run').textContent = '⏩ הרץ'; } }
+document.getElementById('run').addEventListener('click', () => {
+  if (running) { stop(); return; }
+  document.getElementById('run').textContent = '⏸ עצור';
+  running = setInterval(() => { nextGen(); if (gen > 60) stop(); }, 420);
+});
+
+sync(); init();
+</script>
+</body>
+</html>

@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🎮 משחקי למידה | בינה מלאכותית</title>
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="games.css">
+</head>
+<body>
+
+<div class="topbar"><div class="inner">
+  <a class="home" href="index.html">🏠 דף הבית</a>
+  <span class="sep">|</span>
+  <a href="דף_נוסחאות.html">📐 נוסחאות</a>
+  <span class="sep">·</span>
+  <a href="פתרונות_מבחנים.html">✅ פתרונות</a>
+</div></div>
+
+<div class="wrap">
+  <div class="page-head">
+    <p class="eyebrow">למד תוך כדי משחק</p>
+    <h1>🎮 משחקי למידה</h1>
+    <span class="ref">כל אלגוריתם הוא רצף של שלבים — שחק אותו, קבל פידבק מיידי, וזכור אותו למבחן</span>
+  </div>
+
+  <div class="card">
+    <p>במקום רק לקרוא איך אלגוריתם עובד — <strong>הרץ אותו בעצמך</strong>. כל משחק נותן ניקוד, רצף וכוכבים שנשמרים אצלך בדפדפן. בהצלחה! 🚀</p>
+    <div style="text-align:center;margin-top:8px;font-size:18px">סך הכוכבים שצברת: <b id="total-stars" style="color:var(--accent)">★ 0</b></div>
+  </div>
+
+  <div class="grid" id="games"></div>
+
+  <div class="card" style="text-align:center;margin-top:20px;color:var(--muted);font-size:14px">
+    טיפ: כל משחק מקושר לעמוד הנושא המלא — אם נתקעת, חזור ללמוד ואז נסה שוב. 💪
+  </div>
+</div>
+
+<script type="module">
+import { getStars, el } from './games-core.js';
+
+const GAMES = [
+  { id: 'search',  href: 'משחק_חיפוש.html',   icon: '🔍', t: 'מירוץ חיפוש',       d: 'נחש איזה צומת ייפתח הבא — BFS / DFS / UCS / Greedy / A*.', tag: 'אתגר',    topic: 'שיעורים 01–02', active: true },
+  { id: 'minimax', href: 'משחק_מינימקס.html', icon: '🌳', t: 'בנה עץ מינימקס',     d: 'מלא ערכים מלמטה למעלה, ואז גזום ב-Alpha-Beta.',            tag: 'אתגר',    topic: 'שיעור 03',     active: true },
+  { id: 'genetic', href: 'משחק_גנטי.html',    icon: '🧬', t: 'סימולטור אבולוציה',  d: 'צפה באוכלוסייה מתכנסת ל-max f(x)=x²; שחק עם המוטציה.',     tag: 'ארגז חול', topic: 'שיעור 08',     active: true },
+  { id: 'nash',    href: 'משחק_משחקים.html',  icon: '🎲', t: 'צייד הנאש',          d: 'שחק דילמת אסיר חוזרת נגד ה-AI, ומצא שיווי משקל נאש.',      tag: 'נגד AI',  topic: 'שיעור 04',     active: false },
+  { id: 'vspace',  href: 'משחק_מושג.html',    icon: '🃏', t: 'גבולות S ו-G',       d: 'עדכן את מרחב הגרסאות לכל דוגמה עד התכנסות.',               tag: 'אתגר',    topic: 'שיעור 05',     active: false },
+  { id: 'neuron',  href: 'משחק_נוירון.html',  icon: '🧠', t: 'אמן את הנוירון',     d: 'חשב forward ו-backprop צעד-אחר-צעד עם ולידציה.',           tag: 'אתגר',    topic: 'שיעור 06',     active: false },
+  { id: 'dtree',   href: 'משחק_עץ.html',      icon: '🍄', t: 'איזו תכונה מפצלת?',  d: 'בחר את התכונה עם ה-IG הגבוה וסווג פטריות.',               tag: 'אתגר',    topic: 'שיעור 07',     active: false }
+];
+
+const starStr = n => '★'.repeat(n) + '☆'.repeat(3 - n);
+let total = 0;
+const grid = document.getElementById('games');
+
+GAMES.forEach(g => {
+  const stars = g.active ? getStars(g.id) : 0;
+  total += stars;
+  const inner = [
+    el('div', { class: 'gx-tag', text: g.tag }),
+    el('div', { class: 't', html: g.icon + ' ' + g.t }),
+    el('div', { class: 'd', text: g.d }),
+    el('div', { class: 'num', text: g.topic, style: { marginTop: '6px' } }),
+    g.active
+      ? el('div', { class: 'gx-tile-stars', text: starStr(stars) })
+      : el('div', { class: 'gx-tile-stars', text: '🔜 בקרוב', style: { color: 'var(--muted)' } })
+  ];
+  if (g.active) {
+    grid.appendChild(el('a', { class: 'tile', href: g.href }, inner));
+  } else {
+    grid.appendChild(el('div', { class: 'tile', style: { opacity: '.6', cursor: 'default' } }, inner));
+  }
+});
+
+document.getElementById('total-stars').textContent = '★ ' + total;
+</script>
+</body>
+</html>

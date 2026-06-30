@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>מירוץ חיפוש 🔍 | משחקי למידה</title>
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="games.css">
+</head>
+<body>
+
+<div class="topbar"><div class="inner">
+  <a class="home" href="index.html">🏠 דף הבית</a>
+  <span class="sep">|</span>
+  <a href="משחקים.html">🎮 כל המשחקים</a>
+  <span class="sep">·</span>
+  <a href="01_חיפוש_לא_מיודע.html">📖 הנושא</a>
+</div></div>
+
+<div class="wrap">
+  <div class="page-head">
+    <p class="eyebrow">משחק · נושאים 01–02</p>
+    <h1>🔍 מירוץ חיפוש</h1>
+    <span class="ref">נחש איזה צומת ייפתח הבא — BFS · DFS · UCS · Greedy · A*</span>
+  </div>
+
+  <div class="card">
+    <p>בחר אלגוריתם, והרץ אותו בעצמך: בכל צעד <strong>לחץ על הצומת</strong> שלדעתך ייפתח הבא (מבין הצמתים שבתור, המודגשים בכתום). נכון = ניקוד ורצף 🔥. הגעת ליעד G = ניצחון!</p>
+  </div>
+
+  <div id="score"></div>
+
+  <div class="gx-row" style="margin-bottom:8px">
+    <div id="algo"></div>
+  </div>
+
+  <div class="gx-prompt" id="prompt">בחר אלגוריתם כדי להתחיל</div>
+
+  <div class="gx-board">
+    <svg id="graph" viewBox="0 0 560 380" xmlns="http://www.w3.org/2000/svg" aria-label="גרף החיפוש"></svg>
+  </div>
+
+  <div class="gx-panel">
+    <div style="text-align:center;font-weight:700;color:var(--primary);margin-bottom:6px" id="queue-title">התור (Frontier)</div>
+    <div class="gx-queue" id="queue"></div>
+  </div>
+
+  <div class="gx-row" style="margin-top:14px">
+    <button class="gx-btn" id="restart">↻ התחל מחדש</button>
+    <a class="gx-btn gx-btn-ghost" href="01_חיפוש_לא_מיודע.html">📖 חזרה להסבר</a>
+  </div>
+</div>
+
+<script type="module">
+import { SEARCH_GRAPH, adjacency } from './games-data.js';
+import { Scoreboard, toast, winModal, segmented, svg, el, shake } from './games-core.js';
+
+const G = SEARCH_GRAPH, H = G.h;
+const score = new Scoreboard('search');
+document.getElementById('score').appendChild(score.el);
+
+// ---------- מנוע חיפוש: מייצר את כל הצעדים ----------
+function searchSteps(algo) {
+  const adj = adjacency(G);
+  const valueOf = { UCS: e => e.g, Greedy: e => H[e.node], 'A*': e => e.g + H[e.node] };
+  let frontier = [{ node: G.start, g: 0 }];
+  const inF = new Map([[G.start, frontier[0]]]);
+  const closed = new Set();
+  const parentOf = { [G.start]: null };
+  const order = [], steps = [];
+  let goalEntry = null;
+  let guard = 0;
+  while (frontier.length && guard++ < 100) {
+    let idx = 0;
+    if (algo === 'BFS') idx = 0;
+    else if (algo === 'DFS') idx = frontier.length - 1;
+    else {
+      for (let i = 1; i < frontier.length; i++) {
+        const a = frontier[i], b = frontier[idx];
+        const va = valueOf[algo](a), vb = valueOf[algo](b);
+        if (va < vb || (va === vb && a.node < b.node)) idx = i;
+      }
+    }
+    const pick = frontier[idx];
+    steps.push({
+      frontier: frontier.map(e => ({ node: e.node, g: e.g, h: H[e.node], f: e.g + H[e.node] })),
+      pick: pick.node
+    });
+    frontier.splice(idx, 1); inF.delete(pick.node); closed.add(pick.node); order.push(pick.node);
+    if (pick.node === G.goal) { goalEntry = pick; break; }
+    const neigh = adj[pick.node].filter(([n]) => !closed.has(n));
+    const pushOrder = (algo === 'DFS')
+      ? neigh.slice().sort((a, b) => b[0].localeCompare(a[0]))
+      : neigh.slice().sort((a, b) => a[0].localeCompare(b[0]));
+    for (const [n, w] of pushOrder) {
+      const g2 = pick.g + w, ex = inF.get(n);
+      if (!ex) { const e = { node: n, g: g2 }; frontier.push(e); inF.set(n, e); parentOf[n] = pick.node; }
+      else if ((algo === 'UCS' || algo === 'A*') && g2 < ex.g) { ex.g = g2; parentOf[n] = pick.node; }
+    }
+  }
+  const path = [];
+  if (goalEntry) { let c = G.goal; while (c != null) { path.unshift(c); c = parentOf[c]; } }
+  return { steps, order, path, cost: goalEntry ? goalEntry.g : null };
+}
+
+// ---------- ציור הגרף ----------
+const nodeEls = {};
+function drawGraph() {
+  const s = document.getElementById('graph');
+  s.innerHTML = '';
+  // קשתות + עלויות
+  for (const [u, v, w] of G.edges) {
+    const a = G.nodes[u], b = G.nodes[v];
+    s.appendChild(svg('line', { x1: a.x, y1: a.y, x2: b.x, y2: b.y, stroke: '#9aa6c0', 'stroke-width': 2.5 }));
+    const mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
+    s.appendChild(svg('rect', { x: mx - 10, y: my - 10, width: 20, height: 20, rx: 4, fill: '#fff7e0' }));
+    s.appendChild(svg('text', { x: mx, y: my + 5, 'text-anchor': 'middle', 'font-family': 'Consolas,monospace', 'font-size': 14, 'font-weight': 700, fill: '#b8860b', text: w }));
+  }
+  // צמתים
+  for (const name in G.nodes) {
+    const nd = G.nodes[name];
+    const g = svg('g', { class: 'gx-node' });
+    const circle = svg('circle', { cx: nd.x, cy: nd.y, r: 24, fill: '#eef2ff', stroke: '#27408b', 'stroke-width': 2 });
+    const txt = svg('text', { x: nd.x, y: nd.y + 6, 'text-anchor': 'middle', 'font-family': 'Segoe UI,Arial', 'font-size': 18, 'font-weight': 700, fill: '#27408b', text: name });
+    const hbadge = svg('text', { x: nd.x + 26, y: nd.y - 18, 'text-anchor': 'middle', 'font-family': 'Consolas,monospace', 'font-size': 12, 'font-weight': 700, fill: '#b8860b', text: 'h' + H[name] });
+    g.append(circle, txt, hbadge);
+    g.addEventListener('click', () => onPick(name));
+    s.appendChild(g);
+    nodeEls[name] = { g, circle, txt, hbadge };
+  }
+}
+function setState(name, st) {
+  const { circle, txt } = nodeEls[name];
+  const map = {
+    idle: ['#eef2ff', '#27408b', 2, '#27408b'],
+    frontier: ['#fff7e0', '#b8860b', 3.5, '#7a5b00'],
+    expanded: ['#e8f7ef', '#1b7f5a', 2.5, '#0f5a3e'],
+    correct: ['#1b7f5a', '#0f5a3e', 3, '#fff'],
+    wrong: ['#fdecec', '#b23b3b', 3, '#b23b3b']
+  };
+  const [f, st2, sw, tc] = map[st];
+  circle.setAttribute('fill', f); circle.setAttribute('stroke', st2); circle.setAttribute('stroke-width', sw);
+  txt.setAttribute('fill', tc);
+}
+
+// ---------- מצב המשחק ----------
+let plan = null, stepIdx = 0, algo = null, misses = 0, locked = false;
+
+function startAlgo(a) {
+  algo = a; plan = searchSteps(a); stepIdx = 0; misses = 0; locked = false;
+  score.reset();
+  for (const n in nodeEls) setState(n, 'idle');
+  showStep();
+}
+
+const Q_TITLE = {
+  BFS: 'התור (FIFO — יוצא מהקצה השמאלי)',
+  DFS: 'המחסנית (LIFO — יוצא מהקצה הימני)',
+  UCS: 'התור — ממוין לפי g (בחר את המינימום)',
+  Greedy: 'התור — לפי h (בחר את המינימום)',
+  'A*': 'התור — לפי f=g+h (בחר את המינימום)'
+};
+const PROMPT = {
+  BFS: 'לפי <b>FIFO</b> — איזה צומת ייצא מהתור?',
+  DFS: 'לפי <b>LIFO</b> — איזה צומת ייצא מהמחסנית?',
+  UCS: 'מי בעל ה-<b>g</b> (עלות) הנמוך ביותר?',
+  Greedy: 'מי בעל ה-<b>h</b> (היוריסטיקה) הנמוך ביותר?',
+  'A*': 'מי בעל <b>f = g + h</b> הנמוך ביותר?'
+};
+
+function showStep() {
+  const step = plan.steps[stepIdx];
+  // הדגש frontier בגרף
+  const inFront = new Set(step.frontier.map(e => e.node));
+  for (const n in nodeEls) {
+    if (plan.order.slice(0, stepIdx).includes(n)) continue; // כבר פותח
+    setState(n, inFront.has(n) ? 'frontier' : 'idle');
+  }
+  // פאנל התור
+  document.getElementById('queue-title').textContent = Q_TITLE[algo];
+  document.getElementById('prompt').innerHTML = '🤔 ' + PROMPT[algo];
+  const q = document.getElementById('queue'); q.innerHTML = '';
+  let list = step.frontier.slice();
+  if (algo === 'UCS' || algo === 'A*' || algo === 'Greedy') list.sort((a, b) => a.node.localeCompare(b.node));
+  // BFS/DFS: השאר בסדר התור
+  list.forEach((e, i) => {
+    let val = '';
+    if (algo === 'UCS') val = 'g=' + e.g;
+    else if (algo === 'Greedy') val = 'h=' + e.h;
+    else if (algo === 'A*') val = e.g + '+' + e.h + '=' + e.f;
+    const chip = el('span', { class: 'gx-chip' + ((algo === 'BFS' && i === 0) ? ' head' : (algo === 'DFS' && i === list.length - 1) ? ' head' : '') }, [
+      e.node, val ? el('small', { text: ' ' + val }) : null
+    ]);
+    q.appendChild(chip);
+  });
+  locked = false;
+}
+
+function onPick(name) {
+  if (locked || !plan) { if (!plan) toast('בחר אלגוריתם תחילה', 'info'); return; }
+  const step = plan.steps[stepIdx];
+  const inFront = new Set(step.frontier.map(e => e.node));
+  if (!inFront.has(name)) { toast('הצומת <b>' + name + '</b> אינו בתור כרגע', 'info'); shake(nodeEls[name].g); return; }
+  locked = true;
+  if (name === step.pick) {
+    score.add(10);
+    setState(name, 'correct');
+    setTimeout(() => { setState(name, 'expanded'); advance(); }, 350);
+    toast('✓ נכון! ' + (score.streak >= 3 ? 'רצף ' + score.streak + ' 🔥' : ''), 'good');
+  } else {
+    misses++; score.miss();
+    setState(name, 'wrong'); shake(nodeEls[name].g);
+    // חשוף את הנכון
+    setTimeout(() => {
+      setState(name, inFront.has(name) ? 'frontier' : 'idle');
+      setState(step.pick, 'correct');
+      setTimeout(() => { setState(step.pick, 'expanded'); advance(); }, 500);
+    }, 500);
+    toast('✗ הצומת הנכון הוא <b>' + step.pick + '</b>', 'bad');
+  }
+}
+
+function advance() {
+  stepIdx++;
+  if (stepIdx >= plan.steps.length) { finish(); return; }
+  showStep();
+}
+
+function finish() {
+  const stars = misses === 0 ? 3 : misses <= 2 ? 2 : 1;
+  const body =
+    '<p><b>סדר פיתוח:</b> <code>' + plan.order.join(' → ') + '</code></p>' +
+    '<p><b>מסלול ליעד:</b> <code>' + plan.path.join('→') + '</code>' +
+    (plan.cost != null ? ' &nbsp;<b>עלות:</b> ' + plan.cost : '') + '</p>' +
+    '<p>ניקוד: <b>' + score.score + '</b> · טעויות: ' + misses + '</p>';
+  winModal({ title: 'מצאת את ' + G.goal + '! 🏁', html: body, stars, gameId: 'search' });
+}
+
+// ---------- בקרת אלגוריתם ----------
+const seg = segmented(
+  [{ label: 'BFS', value: 'BFS' }, { label: 'DFS', value: 'DFS' }, { label: 'UCS', value: 'UCS' },
+   { label: 'Greedy', value: 'Greedy' }, { label: 'A*', value: 'A*' }],
+  v => startAlgo(v)
+);
+document.getElementById('algo').appendChild(seg);
+document.getElementById('restart').addEventListener('click', () => { if (algo) startAlgo(algo); });
+
+drawGraph();
+</script>
+</body>
+</html>
