@@ -207,10 +207,40 @@ frontier ← priority queue ordered by f = g + h
     </ul>
   </div>
 
+  <h2>🗺️ תרשים זרימה — שלבי פתרון של חיפוש מיודע</h2>
+  <div class="fig diagram">
+<pre class="mermaid">
+flowchart TD
+  Q(["שאלת חיפוש מיודע"]):::start --> T{"מה מבקשים?"}:::decision
+  T -->|"עקוב אחר A*"| AS["מיין לפי f = g + h"]:::step
+  T -->|"Greedy"| GR["מיין לפי h בלבד"]:::step
+  T -->|"האם h קבילה?"| AD{"קיים צומת עם h גדול מ-h*?"}:::decision
+  AS --> POP["הוצא את הצומת עם f מינימלי"]:::step
+  POP --> GOAL{"יעד?"}:::decision
+  GOAL -->|"כן"| ANS(["מסלול + עלות אופטימלית"]):::answer
+  GOAL -->|"לא"| UPD["עדכן g של שכן אם נמצא מסלול זול יותר"]:::step
+  UPD --> POP
+  AD -->|"כן"| NOK(["לא קבילה — A* עלול לטעות"]):::warn
+  AD -->|"לא"| OK(["קבילה — A* אופטימלי"]):::answer
+  GR -.-> note["זהירות: Greedy לא מובטח אופטימלי"]:::warn
+  GR --> ANS
+  classDef start fill:#27408b,stroke:#1b2a5e,color:#fff;
+  classDef step fill:#eef2ff,stroke:#27408b,color:#1f2533;
+  classDef decision fill:#fff7e0,stroke:#b8860b,color:#5b4a00;
+  classDef answer fill:#e8f7ef,stroke:#1b7f5a,color:#0f5a3e;
+  classDef warn fill:#fdecec,stroke:#b23b3b,color:#b23b3b;
+</pre>
+  </div>
+  <div class="box tip"><p class="box-title"><span class="ico">🧭</span> ההיגיון שמאחורי ההסתעפויות</p><p style="margin:0">השאלה מתפצלת לפי מה שמבקשים: <strong>עקיבה</strong> (A* / Greedy) או <strong>בדיקת קבילות</strong>. הלולאה המרכזית של A*: הוצא f מינימלי → יעד? → אם לא, עדכן g של שכנים זולים יותר. בקבילות — מספיק <strong>צומת אחד</strong> שמפר את <span class="math">h≤h*</span> כדי לפסול. Greedy מהיר אך מסומן באזהרה כי אינו מובטח אופטימלי.</p></div>
+
   <div class="card" style="text-align:center;margin-top:26px">
     <a class="home" href="03_חיפוש_יריבי.html" style="display:inline-block">הנושא הבא ◀ חיפוש יריבי</a>
   </div>
 
 </div>
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+  mermaid.initialize({ startOnLoad: true, theme: 'neutral', securityLevel: 'loose', flowchart: { htmlLabels: true, curve: 'basis' }, themeVariables: { fontFamily: 'Segoe UI, Arial, sans-serif', fontSize: '15px' } });
+</script>
 </body>
 </html>

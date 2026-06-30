@@ -164,6 +164,11 @@ ul.clean>li::before{content:"◀";color:var(--primary-2);position:absolute;right
 .tile .t{font-size:19px;font-weight:700;margin:4px 0 6px;color:var(--primary)}
 .tile .d{font-size:14px;color:var(--muted);line-height:1.5}
 
+/* ---------- Mermaid ---------- */
+.diagram{overflow-x:auto;padding:18px 10px}
+.mermaid{direction:ltr;display:flex;justify-content:center;min-height:40px}
+.mermaid svg{max-width:100%;height:auto}
+
 /* ---------- הדפסה ---------- */
 @media print{
   body{background:#fff;font-size:12.5pt}

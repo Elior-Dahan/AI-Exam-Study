@@ -152,10 +152,36 @@
     </ul>
   </div>
 
+  <h2>🗺️ תרשים זרימה — מחזור האלגוריתם הגנטי</h2>
+  <div class="fig diagram">
+<pre class="mermaid">
+flowchart TD
+  Q(["אוכלוסייה התחלתית"]):::start --> FIT["הערך כושר לכל כרומוזום"]:::step
+  FIT --> TERM{"הגענו לתנאי עצירה?"}:::decision
+  TERM -->|"כן"| A(["הפתרון הטוב ביותר"]):::answer
+  TERM -->|"לא"| SEL["בחירה ברולטה: P = f חלקי סכום הכושר"]:::step
+  SEL --> CX["הכלאה — 1 או 2 נקודות"]:::step
+  CX --> MUT["מוטציה — היפוך ביט בהסתברות נמוכה"]:::step
+  MUT --> FIT
+  CX -.-> W1["תמורות (TSP) → אופרטור OX / PMX"]:::warn
+  A -.-> W2["זכור: אין הבטחה לאופטימום גלובלי"]:::warn
+  classDef start fill:#27408b,stroke:#1b2a5e,color:#fff;
+  classDef step fill:#eef2ff,stroke:#27408b,color:#1f2533;
+  classDef decision fill:#fff7e0,stroke:#b8860b,color:#5b4a00;
+  classDef answer fill:#e8f7ef,stroke:#1b7f5a,color:#0f5a3e;
+  classDef warn fill:#fdecec,stroke:#b23b3b,color:#b23b3b;
+</pre>
+  </div>
+  <div class="box tip"><p class="box-title"><span class="ico">🧭</span> ההיגיון שמאחורי ההסתעפויות</p><p style="margin:0">הצומת המרכזי הוא תנאי העצירה: אם הגענו (פתרון מספיק טוב / מספר דורות) — מחזירים את הטוב ביותר; אחרת ממשיכים במחזור בחירה → הכלאה → מוטציה → <strong>חזרה</strong> להערכת כושר. שתי האזהרות: בעיות תמורה דורשות אופרטור מיוחד, והאלגוריתם לעולם לא מבטיח אופטימום גלובלי.</p></div>
+
   <div class="card" style="text-align:center;margin-top:26px">
     <a class="home" href="דף_נוסחאות.html" style="display:inline-block">להמשך ◀ דף הנוסחאות המרוכז</a>
   </div>
 
 </div>
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+  mermaid.initialize({ startOnLoad: true, theme: 'neutral', securityLevel: 'loose', flowchart: { htmlLabels: true, curve: 'basis' }, themeVariables: { fontFamily: 'Segoe UI, Arial, sans-serif', fontSize: '15px' } });
+</script>
 </body>
 </html>

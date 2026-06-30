@@ -32,6 +32,36 @@
   </div>
 
   <!-- ===================== 2015 ===================== -->
+  <h2>🗺️ מפת ניווט — זיהוי סוג שאלה וניתוב לשיטה</h2>
+  <div class="fig diagram">
+<pre class="mermaid">
+flowchart TD
+  Q(["שאלה במבחן"]):::start --> T{"מה נתון בשאלה?"}:::decision
+  T -->|"גרף + התחלה/יעד"| SE["חיפוש: זהה אלגוריתם ובנה טבלת תור"]:::step
+  T -->|"עץ עם MAX/MIN"| GA["Minimax → אם ביקשו, Alpha-Beta"]:::step
+  T -->|"מטריצת תשלומים"| GT["נאש: סימון / מחיקת נשלטות / מעורב"]:::step
+  T -->|"דוגמאות + / −"| VS{"S,G או אנטרופיה?"}:::decision
+  VS -->|"לומד מושג (S,G)"| VSa["Candidate-Elimination"]:::step
+  VS -->|"תכונות + אנטרופיה"| DT["ID3: H ו-IG"]:::step
+  T -->|"רשת עם משקולות"| NN["Forward + Backprop, η"]:::step
+  T -->|"כרומוזומים / אוכלוסייה"| GAlg["מחזור גנטי"]:::step
+  T -->|"הגדר / נכון-לא-נכון"| CN["מושגי — נמק תמיד"]:::step
+  SE --> ANS(["פתרון מלא + תשובה סופית"]):::answer
+  GA --> ANS
+  GT --> ANS
+  VSa --> ANS
+  DT --> ANS
+  NN --> ANS
+  GAlg --> ANS
+  CN --> ANS
+  classDef start fill:#27408b,stroke:#1b2a5e,color:#fff;
+  classDef step fill:#eef2ff,stroke:#27408b,color:#1f2533;
+  classDef decision fill:#fff7e0,stroke:#b8860b,color:#5b4a00;
+  classDef answer fill:#e8f7ef,stroke:#1b7f5a,color:#0f5a3e;
+</pre>
+  </div>
+  <div class="box tip"><p class="box-title"><span class="ico">🧭</span> ההיגיון שמאחורי ההסתעפויות</p><p style="margin:0">ברגע שפותחים את המבחן, הצעד הראשון הוא תמיד <strong>זיהוי סוג השאלה לפי מה שנתון</strong> (גרף? עץ? מטריצה? דוגמאות מתויגות?). כל ענף מנתב לשיטה הנכונה ולעמוד הנושא המתאים. זו "מפת ניווט" שתחסוך לכם זמן יקר.</p></div>
+
   <h2 id="e2015">מבחן 2015 (מועד א')</h2>
 
   <h3>שאלה 1 — חיפוש (BFS/IDS/A*, קבילות)</h3>
@@ -151,5 +181,9 @@
   </div>
 
 </div>
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+  mermaid.initialize({ startOnLoad: true, theme: 'neutral', securityLevel: 'loose', flowchart: { htmlLabels: true, curve: 'basis' }, themeVariables: { fontFamily: 'Segoe UI, Arial, sans-serif', fontSize: '15px' } });
+</script>
 </body>
 </html>

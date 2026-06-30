@@ -160,10 +160,38 @@
     </ul>
   </div>
 
+  <h2>🗺️ תרשים זרימה — בחירת שיטה בתורת המשחקים</h2>
+  <div class="fig diagram">
+<pre class="mermaid">
+flowchart TD
+  Q(["מטריצת תשלומים"]):::start --> T{"מה מבקשים?"}:::decision
+  T -->|"נאש טהור"| P1["סמן best-response לכל שחקן"]:::step
+  T -->|"מחיקת נשלטות"| P2["מחק אסטרטגיה נשלטת ממש וחזור"]:::step
+  T -->|"נאש מעורב 2x2"| P3["שיטת האדישות"]:::step
+  P1 --> C1{"תא עם שני סימונים?"}:::decision
+  C1 -->|"כן"| A1(["נאש טהור"]):::answer
+  C1 -->|"לא"| MIX["אין טהור — חפש מעורב"]:::step
+  MIX --> P3
+  P2 --> A2(["שיווי המשקל שנותר"]):::answer
+  P3 --> A3(["פתור q מהמשוואה הלינארית"]):::answer
+  P3 -.-> W["זכור: ההסתברות שלי מאדישה את היריב — לא אותי"]:::warn
+  classDef start fill:#27408b,stroke:#1b2a5e,color:#fff;
+  classDef step fill:#eef2ff,stroke:#27408b,color:#1f2533;
+  classDef decision fill:#fff7e0,stroke:#b8860b,color:#5b4a00;
+  classDef answer fill:#e8f7ef,stroke:#1b7f5a,color:#0f5a3e;
+  classDef warn fill:#fdecec,stroke:#b23b3b,color:#b23b3b;
+</pre>
+  </div>
+  <div class="box tip"><p class="box-title"><span class="ico">🧭</span> ההיגיון שמאחורי ההסתעפויות</p><p style="margin:0">השאלה מנותבת לפי הניסוח. "מצא נאש" → שיטת הסימון; אם <strong>אין</strong> תא עם שני סימונים, עוברים אוטומטית לחיפוש נאש מעורב. "מחיקת נשלטות" → IESDS. הטעות הקריטית (החץ המקווקו) בנאש מעורב: ההסתברות שלי נקבעת כדי להפוך את <strong>היריב</strong> לאדיש.</p></div>
+
   <div class="card" style="text-align:center;margin-top:26px">
     <a class="home" href="05_למידת_מושג.html" style="display:inline-block">הנושא הבא ◀ למידת מושג</a>
   </div>
 
 </div>
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+  mermaid.initialize({ startOnLoad: true, theme: 'neutral', securityLevel: 'loose', flowchart: { htmlLabels: true, curve: 'basis' }, themeVariables: { fontFamily: 'Segoe UI, Arial, sans-serif', fontSize: '15px' } });
+</script>
 </body>
 </html>

@@ -168,10 +168,37 @@
     </ul>
   </div>
 
+  <h2>🗺️ תרשים זרימה — אלגוריתם Candidate-Elimination</h2>
+  <div class="fig diagram">
+<pre class="mermaid">
+flowchart TD
+  Q(["אתחל: G = ?,?   ·   S = ריק"]):::start --> NEXT["קח את הדוגמה הבאה"]:::step
+  NEXT --> POS{"חיובית או שלילית?"}:::decision
+  POS -->|"חיובית +"| GEN["הרחב S מינימלית; זרוק מ-G מי שלא מכסה"]:::step
+  POS -->|"שלילית −"| SPEC["צמצם G מינימלית; זרוק מ-S מי שמכסה"]:::step
+  GEN --> CLEAN["נקה מ-G השערות מיותרות"]:::step
+  SPEC --> CLEAN
+  CLEAN --> CONV{"S שווה ל-G?"}:::decision
+  CONV -->|"כן"| A(["המושג שנלמד"]):::answer
+  CONV -->|"לא — יש עוד דוגמאות"| NEXT
+  GEN -.-> WW["טעות: חיובי מרחיב S, שלילי מצמצם G — לא הפוך"]:::warn
+  classDef start fill:#27408b,stroke:#1b2a5e,color:#fff;
+  classDef step fill:#eef2ff,stroke:#27408b,color:#1f2533;
+  classDef decision fill:#fff7e0,stroke:#b8860b,color:#5b4a00;
+  classDef answer fill:#e8f7ef,stroke:#1b7f5a,color:#0f5a3e;
+  classDef warn fill:#fdecec,stroke:#b23b3b,color:#b23b3b;
+</pre>
+  </div>
+  <div class="box tip"><p class="box-title"><span class="ico">🧭</span> ההיגיון שמאחורי ההסתעפויות</p><p style="margin:0">הלב של האלגוריתם הוא הצומת "חיובית או שלילית": <strong>חיובי מרחיב את S</strong>, <strong>שלילי מצמצם את G</strong> (היפוך = הטעות הנפוצה ביותר). אחרי כל עדכון מנקים השערות מיותרות ובודקים התכנסות S=G; אם עוד לא — חוזרים ללולאה עם הדוגמה הבאה.</p></div>
+
   <div class="card" style="text-align:center;margin-top:26px">
     <a class="home" href="06_רשתות_נוירונים.html" style="display:inline-block">הנושא הבא ◀ רשתות נוירונים</a>
   </div>
 
 </div>
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+  mermaid.initialize({ startOnLoad: true, theme: 'neutral', securityLevel: 'loose', flowchart: { htmlLabels: true, curve: 'basis' }, themeVariables: { fontFamily: 'Segoe UI, Arial, sans-serif', fontSize: '15px' } });
+</script>
 </body>
 </html>

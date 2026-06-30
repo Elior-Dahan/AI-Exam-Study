@@ -83,6 +83,24 @@
   <p><strong>התשובה:</strong> A* מחזיר את המסלול <code>S→B→E→F→G</code> בעלות <strong>18</strong> (האופטימלי).</p>
   <div class="box mistake"><p class="box-title"><span class="ico">⚠️</span> דקות חשובה</p><p style="margin:0">היוריסטיקה כאן <strong>אינה עקבית</strong> (למשל <span class="math">h(S)=17 &gt; c(S,A)+h(A)=16</span>). לכן <strong>חובה</strong> לנהל תור של <em>מסלולים</em> ולא "לסגור" צמתים מוקדם — אחרת היינו מחזירים בטעות את S-A-E-F-G בעלות 19. ניהול מסלולים (tree-search) עם יוריסטיקה קבילה מבטיח אופטימליות.</p></div>
 
+  <h2>🗺️ תרשים זרימה — פתרון ה-A* (שאלה 3)</h2>
+  <div class="fig diagram">
+<pre class="mermaid">
+flowchart TD
+  Q(["A* על הגרף — f = g + h"]):::start --> P1["פתח S → C (f=14) → A (f=16)"]:::step
+  P1 --> P2["דרך A מגיעים ל-G בעלות 19"]:::warn
+  P1 --> P3["פתח B (f=18): B→E בעלות g=11 — זול יותר מ-A→E"]:::step
+  P3 --> P4["B→E→F (f=16) ואז F→G"]:::step
+  P4 --> ANS(["S→B→E→F→G = 18 — אופטימלי ✓"]):::answer
+  P2 -.-> W["מלכודת: היוריסטיקה לא-עקבית — 19 אינו אופטימלי, לכן עוקבים אחרי מסלולים בתור"]:::warn
+  classDef start fill:#27408b,stroke:#1b2a5e,color:#fff;
+  classDef step fill:#eef2ff,stroke:#27408b,color:#1f2533;
+  classDef answer fill:#e8f7ef,stroke:#1b7f5a,color:#0f5a3e;
+  classDef warn fill:#fdecec,stroke:#b23b3b,color:#b23b3b;
+</pre>
+  </div>
+  <div class="box tip"><p class="box-title"><span class="ico">🧭</span> ההיגיון שמאחורי ההסתעפויות</p><p style="margin:0">התרשים ממחיש את הלקח המרכזי: המסלול דרך A נראה זול בהתחלה (f=16) אך מוביל לעלות <strong>19</strong>, בעוד שדרך B מגיעים ל-E בזול יותר (g=11) ולפתרון האופטימלי <strong>18</strong>. בגלל שההיוריסטיקה אינה עקבית — חובה לנהל מסלולים מלאים בתור ולא "לסגור" צמתים מוקדם.</p></div>
+
   <!-- ============ תרגיל 2 ============ -->
   <h2 id="t2">תרגיל 2 — חיפוש יוריסטי ומשחקים</h2>
 
@@ -129,5 +147,9 @@
   </div>
 
 </div>
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+  mermaid.initialize({ startOnLoad: true, theme: 'neutral', securityLevel: 'loose', flowchart: { htmlLabels: true, curve: 'basis' }, themeVariables: { fontFamily: 'Segoe UI, Arial, sans-serif', fontSize: '15px' } });
+</script>
 </body>
 </html>

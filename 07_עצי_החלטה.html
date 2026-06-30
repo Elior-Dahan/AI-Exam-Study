@@ -178,10 +178,52 @@
     </ul>
   </div>
 
+  <h2>🗺️ תרשים זרימה — אלגוריתם ID3 (תהליך הבנייה)</h2>
+  <div class="fig diagram">
+<pre class="mermaid">
+flowchart TD
+  Q(["קבוצת אימון S"]):::start --> H["חשב אנטרופיה H(S)"]:::step
+  H --> IG["לכל תכונה: חשב Information Gain"]:::step
+  IG --> PICK["בחר תכונה עם IG מקסימלי כצומת"]:::step
+  PICK --> SPLIT["פצל את S לפי ערכי התכונה"]:::step
+  SPLIT --> PURE{"תת-הקבוצה טהורה? H=0"}:::decision
+  PURE -->|"כן"| LEAF(["עלה: התיוג הסופי"]):::answer
+  PURE -->|"לא — חזור רקורסיבית"| Q
+  IG -.-> W["זכור: log בבסיס 2; שקלל H לפי גודל הקבוצה"]:::warn
+  classDef start fill:#27408b,stroke:#1b2a5e,color:#fff;
+  classDef step fill:#eef2ff,stroke:#27408b,color:#1f2533;
+  classDef decision fill:#fff7e0,stroke:#b8860b,color:#5b4a00;
+  classDef answer fill:#e8f7ef,stroke:#1b7f5a,color:#0f5a3e;
+  classDef warn fill:#fdecec,stroke:#b23b3b,color:#b23b3b;
+</pre>
+  </div>
+
+  <h2>🌳 עץ ההחלטה הסופי — דוגמת הפטריות (Mermaid)</h2>
+  <div class="fig diagram">
+<pre class="mermaid">
+flowchart TD
+  R{"Smooth?"}:::decision
+  R -->|"= 0"| S0{"Smelly?"}:::decision
+  R -->|"= 1"| S1{"Smelly?"}:::decision
+  S0 -->|"= 0  (A,B)"| L1(["אכיל ✓"]):::answer
+  S0 -->|"= 1  (E,H)"| L2(["רעיל ✗"]):::warn
+  S1 -->|"= 1  (C)"| L3(["אכיל ✓"]):::answer
+  S1 -->|"= 0  (D,F,G)"| L4(["רעיל ✗"]):::warn
+  classDef decision fill:#fff7e0,stroke:#b8860b,color:#5b4a00;
+  classDef answer fill:#e8f7ef,stroke:#1b7f5a,color:#0f5a3e;
+  classDef warn fill:#fdecec,stroke:#b23b3b,color:#b23b3b;
+</pre>
+  </div>
+  <div class="box tip"><p class="box-title"><span class="ico">🧭</span> ההיגיון שמאחורי ההסתעפויות</p><p style="margin:0"><strong>התרשים הראשון</strong> הוא הלולאה הרקורסיבית של ID3: בכל צומת בוחרים את התכונה עם ה-IG הגבוה, מפצלים, ועוצרים רק כשהקבוצה טהורה. <strong>התרשים השני</strong> הוא התוצאה הסופית — שימו לב שבשני הענפים מפצלים לפי Smelly אך עם תוצאה הפוכה, ולכן החיזוי: U,V → אכיל, W → רעיל.</p></div>
+
   <div class="card" style="text-align:center;margin-top:26px">
     <a class="home" href="08_אלגוריתמים_גנטיים.html" style="display:inline-block">הנושא הבא ◀ אלגוריתמים גנטיים</a>
   </div>
 
 </div>
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+  mermaid.initialize({ startOnLoad: true, theme: 'neutral', securityLevel: 'loose', flowchart: { htmlLabels: true, curve: 'basis' }, themeVariables: { fontFamily: 'Segoe UI, Arial, sans-serif', fontSize: '15px' } });
+</script>
 </body>
 </html>

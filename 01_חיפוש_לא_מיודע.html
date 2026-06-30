@@ -226,10 +226,43 @@ frontier ← {start};  explored ← {}
     </ul>
   </div>
 
+  <h2>🗺️ תרשים זרימה — שלבי פתרון של עקיבת חיפוש</h2>
+  <div class="fig diagram">
+<pre class="mermaid">
+flowchart TD
+  Q(["שאלה: עקוב אחר אלגוריתם חיפוש"]):::start --> ALG{"איזה אלגוריתם?"}:::decision
+  ALG -->|"BFS"| F1["תור FIFO"]:::step
+  ALG -->|"DFS"| F2["מחסנית LIFO"]:::step
+  ALG -->|"IDS"| F3["DFS עם גבול עומק שגדל"]:::step
+  ALG -->|"UCS"| F4["תור עדיפויות לפי g"]:::step
+  F1 --> P["הוצא צומת מהתור"]:::step
+  F2 --> P
+  F3 --> P
+  F4 --> P
+  P --> G{"האם זה היעד?"}:::decision
+  G -->|"כן"| A(["דווח סדר פיתוח + מסלול"]):::answer
+  G -->|"לא"| C{"הצומת כבר פותח?"}:::decision
+  C -->|"כן"| SKIP["דלג — אחרת לולאה אינסופית"]:::warn
+  C -->|"לא"| E["הוסף שכנים בסדר אלפביתי"]:::step
+  E --> P
+  SKIP --> P
+  classDef start fill:#27408b,stroke:#1b2a5e,color:#fff;
+  classDef step fill:#eef2ff,stroke:#27408b,color:#1f2533;
+  classDef decision fill:#fff7e0,stroke:#b8860b,color:#5b4a00;
+  classDef answer fill:#e8f7ef,stroke:#1b7f5a,color:#0f5a3e;
+  classDef warn fill:#fdecec,stroke:#b23b3b,color:#b23b3b;
+</pre>
+  </div>
+  <div class="box tip"><p class="box-title"><span class="ico">🧭</span> ההיגיון שמאחורי ההסתעפויות</p><p style="margin:0">ההסתעפות הראשונה — בחירת מבנה הנתונים — היא הכי קריטית: היא לבדה קובעת את כל סדר הפיתוח. הלולאה המרכזית חוזרת: הוצא → בדוק יעד (<strong>בהוצאה!</strong>) → אם לא, ודא שלא ביקרת (אחרת לולאה) → הוסף שכנים אלפביתית. שובר השוויון האלפביתי מבטיח סדר עקבי וחד-משמעי.</p></div>
+
   <div class="card" style="text-align:center;margin-top:26px">
     <a class="home" href="02_חיפוש_מיודע.html" style="display:inline-block">הנושא הבא ◀ חיפוש מיודע (A*)</a>
   </div>
 
 </div>
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+  mermaid.initialize({ startOnLoad: true, theme: 'neutral', securityLevel: 'loose', flowchart: { htmlLabels: true, curve: 'basis' }, themeVariables: { fontFamily: 'Segoe UI, Arial, sans-serif', fontSize: '15px' } });
+</script>
 </body>
 </html>

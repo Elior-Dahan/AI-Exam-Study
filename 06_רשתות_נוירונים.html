@@ -133,10 +133,35 @@
     </ul>
   </div>
 
+  <h2>🗺️ תרשים זרימה — Forward + Backpropagation</h2>
+  <div class="fig diagram">
+<pre class="mermaid">
+flowchart TD
+  Q(["רשת + קלט + מטרה t"]):::start --> F["Forward: net=Σwx, ואז o=σ(net), שכבה אחר שכבה"]:::step
+  F --> DO["דלתא פלט = (t−o)·o·(1−o)"]:::step
+  DO --> UV["עדכן משקולות פלט: v ← v + η·δ·h"]:::step
+  UV --> DH["דלתא נסתר = h·(1−h)·Σ(δ·v ישן)"]:::step
+  DH --> UW["עדכן משקולות קלט: w ← w + η·δ·x"]:::step
+  UW --> A(["משקולות מעודכנות — 4 ספרות"]):::answer
+  DH -.-> W1["טעות: להשתמש ב-v המעודכן במקום הישן"]:::warn
+  UW -.-> W2["בדיקה: קלט 0 → המשקל לא משתנה"]:::warn
+  classDef start fill:#27408b,stroke:#1b2a5e,color:#fff;
+  classDef step fill:#eef2ff,stroke:#27408b,color:#1f2533;
+  classDef decision fill:#fff7e0,stroke:#b8860b,color:#5b4a00;
+  classDef answer fill:#e8f7ef,stroke:#1b7f5a,color:#0f5a3e;
+  classDef warn fill:#fdecec,stroke:#b23b3b,color:#b23b3b;
+</pre>
+  </div>
+  <div class="box tip"><p class="box-title"><span class="ico">🧭</span> ההיגיון שמאחורי ההסתעפויות</p><p style="margin:0">זו זרימה ליניארית בשני חצאים: קודם <strong>Forward</strong> מלא (מחשבים את כל ה-o), ואז <strong>Backprop</strong> לאחור — דלתא בפלט → עדכון משקולות פלט → דלתא בנסתר (עם המשקולות ה<strong>ישנים!</strong>) → עדכון משקולות קלט. שתי תיבות האזהרה מסמנות את שתי הטעויות הקריטיות ביותר.</p></div>
+
   <div class="card" style="text-align:center;margin-top:26px">
     <a class="home" href="07_עצי_החלטה.html" style="display:inline-block">הנושא הבא ◀ עצי החלטה</a>
   </div>
 
 </div>
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+  mermaid.initialize({ startOnLoad: true, theme: 'neutral', securityLevel: 'loose', flowchart: { htmlLabels: true, curve: 'basis' }, themeVariables: { fontFamily: 'Segoe UI, Arial, sans-serif', fontSize: '15px' } });
+</script>
 </body>
 </html>

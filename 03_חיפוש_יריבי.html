@@ -223,10 +223,37 @@
     </ul>
   </div>
 
+  <h2>🗺️ תרשים זרימה — שלבי פתרון של עץ משחק</h2>
+  <div class="fig diagram">
+<pre class="mermaid">
+flowchart TD
+  Q(["עץ משחק נתון"]):::start --> V["חשב Minimax מלמטה למעלה: MAX=max, MIN=min"]:::step
+  V --> PR{"התבקש גיזום Alpha-Beta?"}:::decision
+  PR -->|"לא"| A1(["ערך השורש + המהלך הנבחר"]):::answer
+  PR -->|"כן"| AB["עבור שמאל לימין; תחזק אלפא (MAX) ובטא (MIN)"]:::step
+  AB --> CUT{"MIN: v≤α   או   MAX: v≥β ?"}:::decision
+  CUT -->|"כן"| PRUNE["גזום את שאר הילדים — לא מתפתחים"]:::step
+  CUT -->|"לא"| CONT["המשך לילד הבא"]:::step
+  PRUNE --> A2(["אותו ערך כמו Minimax + רשימת הגזומים"]):::answer
+  CONT --> A2
+  AB -.-> WARN["טעות נפוצה: להחליף את תנאי MIN ו-MAX"]:::warn
+  classDef start fill:#27408b,stroke:#1b2a5e,color:#fff;
+  classDef step fill:#eef2ff,stroke:#27408b,color:#1f2533;
+  classDef decision fill:#fff7e0,stroke:#b8860b,color:#5b4a00;
+  classDef answer fill:#e8f7ef,stroke:#1b7f5a,color:#0f5a3e;
+  classDef warn fill:#fdecec,stroke:#b23b3b,color:#b23b3b;
+</pre>
+  </div>
+  <div class="box tip"><p class="box-title"><span class="ico">🧭</span> ההיגיון שמאחורי ההסתעפויות</p><p style="margin:0">תמיד מתחילים מחישוב Minimax מלמטה למעלה — זה הבסיס. ההסתעפות היחידה היא האם התבקש גיזום: אם כן, מוסיפים מעקב α/β ובכל ילד בודקים את תנאי הגיזום (<strong>שונה</strong> ל-MIN ול-MAX!). שני המסלולים מגיעים לאותו ערך שורש — הגיזום חוסך פיתוח אך לא משנה את התוצאה.</p></div>
+
   <div class="card" style="text-align:center;margin-top:26px">
     <a class="home" href="04_תורת_משחקים.html" style="display:inline-block">הנושא הבא ◀ תורת המשחקים</a>
   </div>
 
 </div>
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+  mermaid.initialize({ startOnLoad: true, theme: 'neutral', securityLevel: 'loose', flowchart: { htmlLabels: true, curve: 'basis' }, themeVariables: { fontFamily: 'Segoe UI, Arial, sans-serif', fontSize: '15px' } });
+</script>
 </body>
 </html>

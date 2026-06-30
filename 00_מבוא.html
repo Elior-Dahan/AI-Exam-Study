@@ -161,10 +161,35 @@
     </ul>
   </div>
 
+  <h2>🗺️ תרשים זרימה — איך עונים על שאלה מושגית</h2>
+  <div class="fig diagram">
+<pre class="mermaid">
+flowchart TD
+  Q(["שאלה מושגית במבחן"]):::start --> T{"איזה סוג שאלה?"}:::decision
+  T -->|"הגדר או הסבר מושג"| D1["הגדרה + מנגנון + מסקנה — 3 שורות"]:::step
+  T -->|"נכון / לא-נכון"| D2["הכרע — ותמיד נמק"]:::step
+  T -->|"השוואה / דיון"| D3["הצג שני צדדים ומסקנה"]:::step
+  D2 -.-> M["טעות נפוצה: לכתוב נכון/לא-נכון בלי נימוק"]:::warn
+  D1 --> A(["תשובה מלאה וקצרה"]):::answer
+  D2 --> A
+  D3 --> A
+  classDef start fill:#27408b,stroke:#1b2a5e,color:#fff;
+  classDef step fill:#eef2ff,stroke:#27408b,color:#1f2533;
+  classDef decision fill:#fff7e0,stroke:#b8860b,color:#5b4a00;
+  classDef answer fill:#e8f7ef,stroke:#1b7f5a,color:#0f5a3e;
+  classDef warn fill:#fdecec,stroke:#b23b3b,color:#b23b3b;
+</pre>
+  </div>
+  <div class="box tip"><p class="box-title"><span class="ico">🧭</span> ההיגיון שמאחורי ההסתעפויות</p><p style="margin:0">הצומת הראשון הוא זיהוי סוג השאלה — הוא קובע את מבנה התשובה. שאלת "הגדר" → תבנית קבועה של 3 שורות. שאלת "נכון/לא-נכון" → ההכרעה עצמה שווה מעט; <strong>הנימוק</strong> הוא שמזכה בנקודות (לכן יש חץ מקווקו לטעות הנפוצה). כל המסלולים מתכנסים לתשובה מנוסחת וקצרה.</p></div>
+
   <div class="card" style="text-align:center;margin-top:26px">
     <a class="home" href="01_חיפוש_לא_מיודע.html" style="display:inline-block">הנושא הבא ◀ חיפוש לא-מיודע</a>
   </div>
 
 </div>
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+  mermaid.initialize({ startOnLoad: true, theme: 'neutral', securityLevel: 'loose', flowchart: { htmlLabels: true, curve: 'basis' }, themeVariables: { fontFamily: 'Segoe UI, Arial, sans-serif', fontSize: '15px' } });
+</script>
 </body>
 </html>
