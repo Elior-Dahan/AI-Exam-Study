@@ -182,9 +182,41 @@
 .gx-ig-bar.win .fill{background:var(--ok)}
 .gx-ig-bar .val{min-width:78px;font-size:13px;font-weight:700;direction:ltr}
 
+/* ============================================================
+   מנוע הרמות — מסך בחירה, כרטיסים, מונה-סבב
+   ============================================================ */
+.gx-levels-sub{text-align:center;font-weight:600;color:var(--muted);margin:4px 0 14px}
+.gx-levels{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;max-width:760px;margin:0 auto}
+.gx-level-card{background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);
+  padding:18px 18px 16px;text-align:center;cursor:pointer;transition:transform .12s,box-shadow .15s;border-top:4px solid var(--primary)}
+.gx-level-card:hover{transform:translateY(-3px);box-shadow:0 10px 26px rgba(31,37,51,.14)}
+.gx-level-card h3{color:var(--primary);font-size:18px}
+.gx-level-card.locked{cursor:not-allowed;opacity:.6;border-top-color:#c2c9da;background:#f7f8fb}
+.gx-level-card.locked:hover{transform:none;box-shadow:var(--shadow)}
+.gx-level-badge{display:inline-block;font-size:13px;font-weight:800;color:#fff;background:var(--primary);
+  border-radius:999px;padding:3px 14px;letter-spacing:.3px}
+.gx-level-card:nth-child(2) .gx-level-badge{background:var(--accent)}
+.gx-level-card:nth-child(3) .gx-level-badge{background:var(--warn)}
+.gx-level-card:nth-child(2){border-top-color:var(--accent)}
+.gx-level-card:nth-child(3){border-top-color:var(--warn)}
+.gx-level-stars{font-size:22px;color:var(--accent);letter-spacing:3px;margin-top:8px;min-height:26px}
+.gx-level-card.locked .gx-level-stars{font-size:13px;color:var(--muted);letter-spacing:0}
+.gx-round-head{text-align:center;font-weight:700;color:var(--primary);font-size:16px;margin:8px 0}
+
+/* רכיבי תורת-משחקים נוספים */
+.gx-mx-tag{display:inline-block;font-size:12px;font-weight:700;border-radius:999px;padding:2px 10px;margin:0 3px}
+.gx-mx-nash{background:var(--ok-soft);color:var(--ok)}
+.gx-mx-pareto{background:var(--accent-soft);color:var(--accent);outline:2px dashed var(--accent);outline-offset:-2px}
+.gx-matrix td.pareto{outline:3px dashed var(--accent);outline-offset:-3px}
+.gx-matrix td.removed{opacity:.32;text-decoration:line-through}
+.gx-matrix td.sel{background:var(--primary-soft);outline:3px solid var(--primary);outline-offset:-3px}
+.gx-bot{display:flex;align-items:center;gap:10px;justify-content:center;margin:6px 0;font-size:15px}
+.gx-bot .guess{font-family:Consolas,monospace;font-weight:800;color:var(--primary);min-width:46px;direction:ltr}
+
 @media(max-width:560px){
   .gx-num{font-size:20px}
   .gx-matrix td,.gx-matrix th{padding:10px 12px;font-size:15px}
   .gx-ladder-tag{min-width:90px}
   .gx-hyp{font-size:12.5px;padding:4px 8px}
+  .gx-levels{grid-template-columns:1fr}
 }

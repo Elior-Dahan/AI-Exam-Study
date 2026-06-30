@@ -140,3 +140,88 @@ export const GA_CONFIG = {
   optimum: 31,
   seedPopulation: ['01101', '11000', '01000', '10011']
 };
+
+// ============================================================
+// בנקי מופעים — לרמות וריבוי סבבים (משחקי הליבה)
+// ============================================================
+
+// ---------- חיפוש: מספר גרפים (לכל גרף coords לרינדור) ----------
+export const SEARCH_GRAPHS = [
+  // גרף 0 — הגרף הקנוני (זהה ל-SEARCH_GRAPH)
+  {
+    id: 'g0', name: 'הגרף הבסיסי',
+    nodes: { S:{x:280,y:45,start:true}, A:{x:150,y:140}, B:{x:410,y:140}, C:{x:90,y:245}, D:{x:280,y:245}, G:{x:235,y:330,goal:true} },
+    edges: [['S','A',1],['S','B',4],['A','C',2],['A','D',5],['B','D',1],['C','G',3],['D','G',1]],
+    h: { S:5,A:4,B:2,C:2,D:1,G:0 }, start:'S', goal:'G'
+  },
+  // גרף 1 — קטן (5 צמתים)
+  {
+    id: 'g1', name: 'גרף יהלום',
+    nodes: { S:{x:240,y:40,start:true}, A:{x:120,y:150}, B:{x:360,y:150}, C:{x:240,y:250}, G:{x:240,y:330,goal:true} },
+    edges: [['S','A',2],['S','B',1],['A','C',2],['B','C',2],['B','G',5],['C','G',3]],
+    h: { S:4,A:3,B:3,C:2,G:0 }, start:'S', goal:'G'
+  },
+  // גרף 2 — גדול יותר (7 צמתים)
+  {
+    id: 'g2', name: 'גרף מורחב',
+    nodes: { S:{x:260,y:40,start:true}, A:{x:130,y:130}, B:{x:390,y:130}, C:{x:70,y:245}, D:{x:260,y:215}, E:{x:430,y:245}, G:{x:250,y:335,goal:true} },
+    edges: [['S','A',2],['S','B',3],['A','C',4],['A','D',2],['B','D',1],['B','E',5],['C','G',3],['D','G',4],['E','G',2]],
+    h: { S:5,A:4,B:3,C:2,D:4,E:2,G:0 }, start:'S', goal:'G'
+  }
+];
+
+// ---------- מינימקס: מספר עצים (root + nested leaves) ----------
+// node: number = leaf ; array = inner node. שכבות מתחלפות MAX/MIN מהשורש.
+export const MINIMAX_TREES = [
+  { id:'t0', name:'עץ בסיסי (עומק 2)',  root:'MAX', t:[[3,7,8],[10,8,4],[2,7,5]] },   // עוגן: שורש=4, נגזם {7,5}
+  { id:'t1', name:'עץ רחב (עומק 2)',    root:'MAX', t:[[8,5,6],[2,9,4],[7,3,10]] },
+  { id:'t2', name:'עץ עמוק (עומק 3)',   root:'MAX', t:[[[3,12],[8,2]],[[14,5],[6,9]]] }
+];
+
+// ---------- תורת המשחקים: בנק מטריצות (התשובות מחושבות ע"י matrixSolve) ----------
+export const GT_MATRICES = {
+  pd:      { id:'pd', title:'דילמת האסיר', rows:['C','D'], cols:['C','D'],
+             rowName:{C:'שתף פעולה',D:'בגוד'}, colName:{C:'שתף פעולה',D:'בגוד'},
+             pay:{ C:{C:[3,3],D:[0,5]}, D:{C:[5,0],D:[1,1]} } },
+  coord:   { id:'coord', title:'משחק תיאום', rows:['A','B'], cols:['A','B'],
+             pay:{ A:{A:[2,2],B:[0,0]}, B:{A:[0,0],B:[1,1]} } },
+  iesds3:  { id:'iesds3', title:'מחיקת נשלטות 3×3', rows:['A','B','C'], cols:['X','Y','Z'],
+             pay:{ A:{X:[4,3],Y:[5,1],Z:[6,2]}, B:{X:[2,1],Y:[8,4],Z:[3,6]}, C:{X:[3,0],Y:[9,6],Z:[2,8]} } },
+  iesds2:  { id:'iesds2', title:'מחיקת נשלטות 2×2', rows:['U','D'], cols:['L','R'],
+             pay:{ U:{L:[3,2],R:[2,1]}, D:{L:[1,3],R:[0,0]} } },
+  chicken: { id:'chicken', title:'תרנגול (Chicken)', rows:['S','T'], cols:['S','T'],
+             rowName:{S:'סטה',T:'ישר'}, colName:{S:'סטה',T:'ישר'},
+             pay:{ S:{S:[0,0],T:[-1,1]}, T:{S:[1,-1],T:[-10,-10]} } },   // עוגן: q=0.9
+  chicken2:{ id:'chicken2', title:'תרנגול — וריאנט', rows:['S','T'], cols:['S','T'],
+             rowName:{S:'סטה',T:'ישר'}, colName:{S:'סטה',T:'ישר'},
+             pay:{ S:{S:[0,0],T:[-1,2]}, T:{S:[2,-1],T:[-4,-4]} } },     // q=0.6
+  maximin1:{ id:'maximin1', title:'משחק ביטחון', rows:['U','D'], cols:['L','R'],
+             pay:{ U:{L:[3,1],R:[0,4]}, D:{L:[2,2],R:[1,0]} } }
+};
+
+// ---------- משחק "2/3 מהממוצע" ----------
+export const GUESS23 = {
+  factor: 2 / 3,
+  // כל בוט "חושב" k צעדים: ניחוש = 50·factor^k (חשיבה איטרטיבית)
+  bots: [
+    { name:'דני הנאיבי',   depth:0 },
+    { name:'רותי המחושבת', depth:1 },
+    { name:'מוטי המתוחכם', depth:2 }
+  ]
+};
+
+// ---------- עצי החלטה: מספר סטים ----------
+export const DTREE_TOY = {
+  id:'study', name:'ללמוד למבחן?', target:'Study',
+  attrs:['Rested','Exam','Coffee'],
+  rows:[
+    { id:'r1', Rested:1, Exam:1, Coffee:1, Study:1 },
+    { id:'r2', Rested:1, Exam:1, Coffee:0, Study:1 },
+    { id:'r3', Rested:1, Exam:0, Coffee:1, Study:0 },
+    { id:'r4', Rested:0, Exam:1, Coffee:1, Study:1 },
+    { id:'r5', Rested:0, Exam:1, Coffee:0, Study:0 },
+    { id:'r6', Rested:0, Exam:0, Coffee:1, Study:0 },
+    { id:'r7', Rested:1, Exam:0, Coffee:0, Study:0 },
+    { id:'r8', Rested:0, Exam:0, Coffee:0, Study:0 }
+  ]
+};

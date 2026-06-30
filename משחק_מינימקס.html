@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>בנה מינימקס 🌳 | משחקי למידה</title>
+<title>אמן המינימקס 🌳 | משחקי למידה</title>
 <link rel="stylesheet" href="style.css">
 <link rel="stylesheet" href="games.css">
 </head>
@@ -20,187 +20,156 @@
 <div class="wrap">
   <div class="page-head">
     <p class="eyebrow">משחק · נושא 03</p>
-    <h1>🌳 בנה עץ מינימקס</h1>
-    <span class="ref">מלא ערכים מלמטה למעלה, ואז גזום ב-Alpha-Beta</span>
+    <h1>🌳 אמן המינימקס</h1>
+    <span class="ref">3 רמות · מילוי ערכים ← גיזום Alpha-Beta ← עומק 3</span>
   </div>
 
   <div class="card">
-    <p><b>שלב 1:</b> לכל צומת מודגש — בחר את הערך הנכון (<b>MIN</b> = מינימום הילדים, <b>MAX</b> = מקסימום). <b>שלב 2:</b> סמן את העלים שייגזמו ב-Alpha-Beta (שמאל→ימין).</p>
+    <p>מלא ערכי <b style="color:#1b7f5a">MAX</b>/<b style="color:#b23b3b">MIN</b> מלמטה למעלה, סמן עלים שנגזמים ב-Alpha-Beta (שמאל→ימין), ובחר את המהלך הטוב. הגיזום לא משנה את ערך השורש — רק את היעילות.</p>
   </div>
 
-  <div id="score"></div>
-  <div class="gx-prompt" id="prompt">מתחילים! 🌳</div>
+  <div id="game-root"></div>
 
-  <div class="gx-board">
-    <svg id="tree" viewBox="0 0 620 320" xmlns="http://www.w3.org/2000/svg" aria-label="עץ מינימקס"></svg>
-  </div>
-
-  <div class="gx-panel" id="panel"><div class="gx-row" id="choices"></div></div>
-
-  <div class="gx-row" style="margin-top:14px">
-    <button class="gx-btn" id="restart">↻ התחל מחדש</button>
+  <div class="gx-row" style="margin-top:18px">
     <a class="gx-btn gx-btn-ghost" href="03_חיפוש_יריבי.html">📖 חזרה להסבר</a>
   </div>
 </div>
 
 <script type="module">
-import { MINIMAX_TREE } from './games-data.js';
-import { Scoreboard, toast, winModal, svg, el, shake } from './games-core.js';
+import { MINIMAX_TREES } from './games-data.js';
+import { minimaxSolve, runLevels } from './games-engine.js';
+import { el, svg, toast, shake } from './games-core.js';
 
-const groups = MINIMAX_TREE.groups;
-const minVals = groups.map(g => Math.min(...g));
-const rootVal = Math.max(...minVals);
-// alpha-beta: אילו עלים נגזמים (שמאל→ימין)
-function abPruned() {
-  const pruned = new Set(); let rootAlpha = -Infinity;
-  groups.forEach((leaves, gi) => {
-    let minVal = Infinity, cut = false;
-    leaves.forEach((leaf, li) => {
-      if (cut) { pruned.add(gi + '-' + li); return; }
-      minVal = Math.min(minVal, leaf);
-      if (minVal <= rootAlpha) cut = true;
-    });
-    rootAlpha = Math.max(rootAlpha, minVal);
+const T = id => MINIMAX_TREES.find(t => t.id === id);
+
+// ---------- פריסת עץ ----------
+function layoutTree(tree) {
+  let leafCount = 0; (function c(n) { Array.isArray(n) ? n.forEach(c) : leafCount++; })(tree.t);
+  let maxDepth = 0; (function d(n, dep) { maxDepth = Math.max(maxDepth, dep); if (Array.isArray(n)) n.forEach(ch => d(ch, dep + 1)); })(tree.t, 0);
+  const W = Math.max(360, leafCount * 66), xStep = leafCount > 1 ? (W - 80) / (leafCount - 1) : 0, yStep = 84;
+  const nodes = [], edges = []; let leafX = 0, idc = 0;
+  function val(node, isMax) { if (!Array.isArray(node)) return node; const vs = node.map(ch => val(ch, !isMax)); return isMax ? Math.max(...vs) : Math.min(...vs); }
+  function rec(node, depth, isMax) {
+    const id = idc++;
+    if (!Array.isArray(node)) { const nd = { id, x: 40 + leafX * xStep, y: 40 + maxDepth * yStep, isLeaf: true, value: node, depth }; leafX++; nodes.push(nd); return nd; }
+    const children = node.map(ch => rec(ch, depth + 1, !isMax));
+    const nd = { id, x: children.reduce((s, c) => s + c.x, 0) / children.length, y: 40 + depth * yStep, isLeaf: false, type: isMax ? 'MAX' : 'MIN', depth, children, value: val(node, isMax) };
+    nodes.push(nd); children.forEach(c => edges.push([nd, c])); return nd;
+  }
+  rec(tree.t, 0, tree.root !== 'MIN');
+  return { nodes, edges, W };
+}
+function fullValues(nodes) { const m = new Map(); nodes.filter(n => !n.isLeaf).forEach(n => m.set(n.id, n.value)); return m; }
+
+function drawTree(host, nodes, edges, W, state) {
+  const maxY = Math.max(...nodes.map(n => n.y)) + 44;
+  const s = svg('svg', { viewBox: '0 0 ' + (W + 20) + ' ' + maxY, style: { maxWidth: (W + 20) + 'px', width: '100%', display: 'block', margin: '0 auto' } });
+  edges.forEach(([p, c]) => s.appendChild(svg('line', { x1: p.x, y1: p.y, x2: c.x, y2: c.y, stroke: '#9aa6c0', 'stroke-width': 2 })));
+  nodes.forEach(n => {
+    if (n.isLeaf) {
+      const pruned = state.markPruned && state.markPruned.has(n);
+      const r = svg('rect', { x: n.x - 18, y: n.y - 16, width: 36, height: 32, rx: 6, fill: pruned ? 'var(--warn-soft)' : '#eef2ff', stroke: pruned ? 'var(--warn)' : '#27408b', 'stroke-width': 2, style: { cursor: state.onLeaf ? 'pointer' : 'default' } });
+      if (state.onLeaf) r.addEventListener('click', () => state.onLeaf(n));
+      s.appendChild(r);
+      s.appendChild(svg('text', { x: n.x, y: n.y + 5, 'text-anchor': 'middle', 'font-size': 14, 'font-weight': 700, fill: pruned ? '#b23b3b' : '#27408b', style: { pointerEvents: 'none' } }, pruned ? '✂' : n.value));
+    } else {
+      const isMax = n.type === 'MAX', hl = state.highlight === n.id;
+      s.appendChild(svg('circle', { cx: n.x, cy: n.y, r: 21, fill: hl ? 'var(--accent-soft)' : (isMax ? '#e8f7ef' : '#fdecec'), stroke: hl ? 'var(--accent)' : (isMax ? '#1b7f5a' : '#b23b3b'), 'stroke-width': hl ? 4 : 2 }));
+      s.appendChild(svg('text', { x: n.x, y: n.y - 3, 'text-anchor': 'middle', 'font-size': 10.5, 'font-weight': 700, fill: isMax ? '#1b7f5a' : '#b23b3b' }, n.type));
+      const shown = state.filled && state.filled.has(n.id) ? state.filled.get(n.id) : '?';
+      s.appendChild(svg('text', { x: n.x, y: n.y + 12, 'text-anchor': 'middle', 'font-size': 14, 'font-weight': 800, fill: '#1f2533' }, shown));
+    }
   });
-  return pruned;
-}
-const PRUNED = abPruned();
-
-const score = new Scoreboard('minimax');
-document.getElementById('score').appendChild(score.el);
-
-// מיקומים (כמו עמוד 03)
-const ROOT = { x: 310, y: 45 };
-const MIN = [{ x: 120, y: 160 }, { x: 310, y: 160 }, { x: 500, y: 160 }];
-const LEAFX = [[65, 120, 175], [255, 310, 365], [445, 500, 555]];
-const LEAFY = 267;
-
-const els = {}; // node id -> {shape, txt}
-function drawTree() {
-  const s = document.getElementById('tree'); s.innerHTML = '';
-  // קשתות
-  MIN.forEach(m => s.appendChild(svg('line', { x1: ROOT.x, y1: ROOT.y + 17, x2: m.x, y2: m.y - 20, stroke: '#9aa6c0', 'stroke-width': 2 })));
-  groups.forEach((g, gi) => LEAFX[gi].forEach(lx => s.appendChild(svg('line', { x1: MIN[gi].x, y1: MIN[gi].y + 20, x2: lx, y2: LEAFY - 15, stroke: '#9aa6c0', 'stroke-width': 2 }))));
-  // שורש
-  let c = svg('circle', { cx: ROOT.x, cy: ROOT.y, r: 22, fill: '#eef2ff', stroke: '#27408b', 'stroke-width': 2 });
-  let t = svg('text', { x: ROOT.x, y: ROOT.y + 6, 'text-anchor': 'middle', 'font-size': 18, 'font-weight': 700, fill: '#27408b', text: '?' });
-  s.append(c, t); els['root'] = { shape: c, txt: t };
-  s.appendChild(svg('text', { x: ROOT.x + 42, y: ROOT.y + 4, 'font-size': 13, 'font-weight': 700, fill: '#27408b', text: 'MAX' }));
-  // MIN
-  MIN.forEach((m, gi) => {
-    let cc = svg('circle', { cx: m.x, cy: m.y, r: 20, fill: '#fdecec', stroke: '#b23b3b', 'stroke-width': 2 });
-    let tt = svg('text', { x: m.x, y: m.y + 6, 'text-anchor': 'middle', 'font-size': 17, 'font-weight': 700, fill: '#b23b3b', text: '?' });
-    s.append(cc, tt); els['min-' + gi] = { shape: cc, txt: tt };
-  });
-  s.appendChild(svg('text', { x: 540, y: 165, 'font-size': 13, 'font-weight': 700, fill: '#b23b3b', text: 'MIN' }));
-  // עלים
-  groups.forEach((g, gi) => g.forEach((val, li) => {
-    const lx = LEAFX[gi][li];
-    let r = svg('rect', { x: lx - 15, y: LEAFY - 15, width: 30, height: 30, rx: 5, fill: '#eef2ff', stroke: '#27408b', 'stroke-width': 1.5, class: 'gx-node locked' });
-    let tx = svg('text', { x: lx, y: LEAFY + 6, 'text-anchor': 'middle', 'font-size': 16, 'font-weight': 700, fill: '#1f2533', text: val });
-    const gEl = svg('g');
-    gEl.append(r, tx);
-    gEl.addEventListener('click', () => onLeafClick(gi, li));
-    s.appendChild(gEl);
-    els['leaf-' + gi + '-' + li] = { shape: r, txt: tx, g: gEl, val };
-  }));
+  host.appendChild(s);
 }
 
-// ---------- שלב 1: מילוי ----------
-const fillSeq = [
-  { id: 'min-0', correct: minVals[0], cands: groups[0], isMax: false },
-  { id: 'min-1', correct: minVals[1], cands: groups[1], isMax: false },
-  { id: 'min-2', correct: minVals[2], cands: groups[2], isMax: false },
-  { id: 'root', correct: rootVal, cands: minVals, isMax: true }
-];
-let fi = 0, phase = 1, misses = 0;
-
-function highlight(id, on) {
-  const e = els[id]; if (!e) return;
-  e.shape.setAttribute('stroke-width', on ? 4 : 2);
-  if (on) e.shape.setAttribute('stroke', '#3a5bd9');
-}
-function fillNode(id, val) {
-  const e = els[id];
-  e.txt.textContent = val;
-  e.shape.setAttribute('fill', '#e8f7ef'); e.shape.setAttribute('stroke', '#1b7f5a'); e.shape.setAttribute('stroke-width', 2.5);
-  e.txt.setAttribute('fill', '#0f5a3e');
-}
-
-function askFill() {
-  const node = fillSeq[fi];
-  highlight(node.id, true);
-  const kind = node.isMax ? 'MAX (מקסימום)' : 'MIN (מינימום)';
-  document.getElementById('prompt').innerHTML = '🤔 מהו ערך הצומת המודגש? &nbsp;<b>' + kind + '</b> של הילדים';
-  const ch = document.getElementById('choices'); ch.innerHTML = '';
-  const uniq = [...new Set(node.cands)].sort((a, b) => a - b);
-  uniq.forEach(v => ch.appendChild(el('button', {
-    class: 'gx-btn', text: v, onclick: () => pickFill(v)
-  })));
-}
-function pickFill(v) {
-  const node = fillSeq[fi];
-  if (v === node.correct) {
-    highlight(node.id, false); fillNode(node.id, v); score.add(10);
-    toast('✓ נכון!', 'good');
-    fi++;
-    if (fi >= fillSeq.length) startPhase2();
-    else askFill();
-  } else {
-    misses++; score.miss(); shake(els[node.id].shape);
-    toast('✗ נסה שוב — ' + (node.isMax ? 'הכי גבוה' : 'הכי נמוך'), 'bad');
-  }
+// ---------- סבב: מלא ערכים ----------
+function roundFill(treeId) {
+  const tree = T(treeId);
+  return {
+    title: 'מלא ערכי MIN/MAX', data: tree, play(host, ctx) {
+      const { nodes, edges, W } = layoutTree(tree);
+      const internal = nodes.filter(n => !n.isLeaf).sort((a, b) => b.depth - a.depth || a.x - b.x);
+      const filled = new Map(); let idx = 0;
+      host.append(el('p', { class: 'gx-panel', html: tree.name + ' — מלא כל צומת מסומן לפי ילדיו (<b style="color:#b23b3b">MIN</b>=מינימום, <b style="color:#1b7f5a">MAX</b>=מקסימום), מלמטה למעלה.' }));
+      const prompt = el('p', { class: 'gx-prompt' }), svgWrap = el('div', {}), opts = el('div', { class: 'gx-row' });
+      host.append(prompt, svgWrap, opts);
+      function render() {
+        svgWrap.innerHTML = ''; const cur = internal[idx];
+        drawTree(svgWrap, nodes, edges, W, { filled, highlight: cur ? cur.id : null });
+        if (!cur) return;
+        prompt.innerHTML = 'הצומת המסומן הוא <b>' + cur.type + '</b> — מה ערכו? (' + (cur.type === 'MAX' ? 'מקסימום' : 'מינימום') + ' של ילדיו)';
+        opts.innerHTML = '';
+        const childVals = cur.children.map(c => c.isLeaf ? c.value : filled.get(c.id));
+        [...new Set(childVals)].sort((a, b) => a - b).forEach(v => opts.appendChild(el('button', { class: 'gx-btn', text: v, onclick: () => pick(v, cur) })));
+      }
+      function pick(v, cur) {
+        if (v === cur.value) {
+          filled.set(cur.id, v); ctx.score.add(10); toast('✓', 'good'); idx++;
+          if (idx >= internal.length) { render(); opts.innerHTML = ''; prompt.innerHTML = '🎉 שורש = ' + cur.value; setTimeout(ctx.done, 1000); }
+          else render();
+        } else { ctx.score.miss(); ctx.addMiss(); shake(svgWrap); toast('✗ ' + (cur.type === 'MAX' ? 'קח את הערך הגבוה' : 'קח את הערך הנמוך'), 'bad'); }
+      }
+      render();
+    }
+  };
 }
 
-// ---------- שלב 2: גיזום ----------
-const marked = new Set();
-function startPhase2() {
-  phase = 2;
-  document.getElementById('prompt').innerHTML = '✂️ <b>שלב 2:</b> לחץ על העלים שייגזמו ב-Alpha-Beta (שמאל→ימין), ואז "בדוק"';
-  const ch = document.getElementById('choices'); ch.innerHTML = '';
-  // הפוך עלים לבחירים
-  for (const k in els) if (k.startsWith('leaf-')) {
-    els[k].shape.classList.remove('locked'); els[k].shape.classList.add('gx-node');
-  }
-  ch.appendChild(el('button', { class: 'gx-btn gx-btn-primary', text: '✓ בדוק גיזום', onclick: checkPrune }));
-}
-function onLeafClick(gi, li) {
-  if (phase !== 2) return;
-  const id = gi + '-' + li, e = els['leaf-' + id];
-  if (marked.has(id)) {
-    marked.delete(id);
-    e.shape.setAttribute('fill', '#eef2ff'); e.shape.setAttribute('stroke', '#27408b'); e.shape.setAttribute('stroke-dasharray', '');
-    e.txt.setAttribute('fill', '#1f2533');
-  } else {
-    marked.add(id);
-    e.shape.setAttribute('fill', '#fdecec'); e.shape.setAttribute('stroke', '#b23b3b'); e.shape.setAttribute('stroke-dasharray', '4 3');
-    e.txt.setAttribute('fill', '#b23b3b');
-  }
-}
-function checkPrune() {
-  const same = marked.size === PRUNED.size && [...marked].every(x => PRUNED.has(x));
-  if (same) {
-    score.add(20);
-    const stars = misses === 0 ? 3 : misses <= 2 ? 2 : 1;
-    winModal({
-      title: 'עץ הושלם! 🌳', stars, gameId: 'minimax',
-      html: '<p>ערך המשחק: <code>' + rootVal + '</code> · המהלך הנבחר = הענף שמוביל אליו.</p>' +
-            '<p><b>נגזמו:</b> ' + PRUNED.size + ' עלים (אחרי שראינו ערך ≤ α בצומת MIN).</p>' +
-            '<p>ניקוד: <b>' + score.score + '</b></p>'
-    });
-  } else {
-    misses++; score.miss();
-    toast('✗ לא מדויק — חשוב: גוזמים ב-MIN כש-v ≤ α', 'bad');
-  }
+// ---------- סבב: גיזום Alpha-Beta ----------
+function roundPrune(treeId) {
+  const tree = T(treeId);
+  return {
+    title: 'גיזום Alpha-Beta', data: tree, play(host, ctx) {
+      const sol = minimaxSolve(tree), prunedSet = new Set(sol.prunedLeafIndices);
+      const { nodes, edges, W } = layoutTree(tree);
+      const leaves = nodes.filter(n => n.isLeaf);
+      const need = new Set(leaves.filter((l, i) => prunedSet.has(i))), marked = new Set();
+      host.append(el('p', { class: 'gx-panel', html: tree.name + ' · סריקה שמאל→ימין. לחץ על <b>' + need.size + '</b> העלים ש<b>נגזמים</b> (לא נבדקים כלל). שורש=' + sol.rootValue + '.' }));
+      const prompt = el('p', { class: 'gx-prompt', html: 'לחץ עלים שנגזמים.' }), svgWrap = el('div', {});
+      host.append(prompt, svgWrap);
+      function render() {
+        svgWrap.innerHTML = '';
+        drawTree(svgWrap, nodes, edges, W, {
+          filled: fullValues(nodes), markPruned: marked, onLeaf: n => {
+            if (marked.has(n)) return;
+            if (need.has(n)) { marked.add(n); ctx.score.add(12); toast('✓ נגזם', 'good'); if ([...need].every(x => marked.has(x))) { render(); prompt.innerHTML = '🎉 כל הגזומים סומנו!'; setTimeout(ctx.done, 900); } else render(); }
+            else { ctx.score.miss(); ctx.addMiss(); shake(svgWrap); toast('✗ עלה זה דווקא נבדק', 'bad'); }
+          }
+        });
+      }
+      if (need.size === 0) { prompt.innerHTML = 'בעץ הזה אין גיזום — לחץ "אין גיזום".'; const b = el('button', { class: 'gx-btn gx-btn-primary', text: 'אין גיזום ✓', onclick: () => { ctx.score.add(12); toast('✓ נכון, אין גיזום', 'good'); setTimeout(ctx.done, 700); } }); host.append(el('div', { class: 'gx-row' }, [b])); drawTree(svgWrap, nodes, edges, W, { filled: fullValues(nodes) }); }
+      else render();
+    }
+  };
 }
 
-function restart() {
-  fi = 0; phase = 1; misses = 0; marked.clear(); score.reset();
-  drawTree(); document.getElementById('prompt').innerHTML = 'מתחילים! 🌳'; askFill();
+// ---------- סבב: המהלך הטוב ----------
+function roundBest(treeId) {
+  const tree = T(treeId);
+  return {
+    title: 'המהלך הטוב בשורש', data: tree, play(host, ctx) {
+      const sol = minimaxSolve(tree), { nodes, edges, W } = layoutTree(tree);
+      const root = nodes.find(n => n.depth === 0);
+      host.append(el('p', { class: 'gx-panel', html: tree.name + ' — איזה ענף של השורש (<b>' + root.type + '</b>) ייבחר? שורש=' + sol.rootValue + '.' }));
+      const svgWrap = el('div', {}); host.append(svgWrap);
+      drawTree(svgWrap, nodes, edges, W, { filled: fullValues(nodes) });
+      const opts = el('div', { class: 'gx-row' }); host.append(opts);
+      root.children.forEach((c, i) => opts.appendChild(el('button', { class: 'gx-btn', text: 'ענף ' + (i + 1) + ' (=' + c.value + ')', onclick: () => {
+        if (i === sol.bestChild) { ctx.score.add(15); toast('✓ נכון!', 'good'); setTimeout(ctx.done, 800); }
+        else { ctx.score.miss(); ctx.addMiss(); shake(opts); toast('✗ ' + root.type + ' בוחר את הערך ה' + (root.type === 'MAX' ? 'גבוה' : 'נמוך') + ' ביותר', 'bad'); }
+      } })));
+    }
+  };
 }
-document.getElementById('restart').addEventListener('click', restart);
 
-drawTree(); askFill();
+runLevels({
+  gameId: 'minimax',
+  levels: [
+    { key: '1', name: 'מלא ערכים', badge: 'יסוד', desc: 'חישוב MIN/MAX מלמטה למעלה', rounds: [roundFill('t0'), roundFill('t1')] },
+    { key: '2', name: 'גיזום Alpha-Beta', badge: 'תרגול', desc: 'אילו עלים נחסכים', rounds: [roundPrune('t0'), roundPrune('t1'), roundBest('t0')] },
+    { key: '3', name: 'עומק 3', badge: 'אתגר', desc: 'עץ עמוק יותר', rounds: [roundFill('t2'), roundBest('t2'), roundPrune('t2')] }
+  ]
+});
 </script>
 </body>
 </html>

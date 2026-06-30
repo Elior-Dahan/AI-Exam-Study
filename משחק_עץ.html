@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>בנה את עץ ההחלטה 🎾 | משחקי למידה</title>
+<title>בונה עצי החלטה 🎾 | משחקי למידה</title>
 <link rel="stylesheet" href="style.css">
 <link rel="stylesheet" href="games.css">
 </head>
@@ -20,204 +20,132 @@
 <div class="wrap">
   <div class="page-head">
     <p class="eyebrow">משחק · נושא 07</p>
-    <h1>🎾 בנה את עץ ההחלטה</h1>
-    <span class="ref">דאטה PlayTennis · בחר בכל צומת את התכונה עם ה-IG המקסימלי — ואז סווג</span>
+    <h1>🎾 בונה עצי החלטה</h1>
+    <span class="ref">3 רמות · אנטרופיה ו-IG ← בניית עץ ← סיווג ואתגר</span>
   </div>
 
   <div class="card">
-    <p>הדאטה הקלאסי <b>PlayTennis</b>: 14 ימים, 9 "כן" ו-5 "לא", <code>E(S)=0.94</code>. בכל שלב בחר את התכונה שמפצלת הכי טוב (Information Gain מקסימלי), צפה בעץ גדל — ואז סווג ימים חדשים.</p>
+    <p>חשב אנטרופיה ו-Information Gain, בחר בכל צומת את התכונה עם ה-IG המקסימלי (ID3), וסווג דוגמאות חדשות. נתחיל בסט קטן וממשיכים ל-PlayTennis.</p>
   </div>
 
-  <div id="score"></div>
+  <div id="game-root"></div>
 
-  <div class="gx-board">
-    <svg id="tree" class="gx-tree" viewBox="0 0 600 320" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="עץ החלטה גדל"></svg>
-  </div>
-
-  <div id="igwrap" style="max-width:460px;margin:0 auto"></div>
-  <div class="gx-prompt" id="prompt"></div>
-  <div class="gx-row" id="choices"></div>
-
-  <div class="gx-row" style="margin-top:14px">
-    <button class="gx-btn" id="restart">↻ התחל מחדש</button>
+  <div class="gx-row" style="margin-top:18px">
     <a class="gx-btn gx-btn-ghost" href="07_עצי_החלטה.html">📖 חזרה להסבר</a>
   </div>
 </div>
 
 <script type="module">
-import { PLAYTENNIS } from './games-data.js';
-import { Scoreboard, toast, winModal, el, svg, shake } from './games-core.js';
+import { PLAYTENNIS, DTREE_TOY } from './games-data.js';
+import { id3Solve, runLevels } from './games-engine.js';
+import { el, toast, shake } from './games-core.js';
 
-const DT = PLAYTENNIS;
-const score = new Scoreboard('dtree');
-document.getElementById('score').appendChild(score.el);
-let misses = 0, phase = 0, ti = 0;
-const flags = { root: false, sunny: false, rain: false };
+const PT = { attrs: PLAYTENNIS.attrs, target: 'Play', rows: PLAYTENNIS.rows };
+const sunny = r => r.Outlook === 'Sunny', rain = r => r.Outlook === 'Rain';
 
-// ---------- ציור העץ ----------
-function drawTree() {
-  const s = document.getElementById('tree');
-  s.innerHTML = '';
-  const E = (x1, y1, x2, y2) => s.appendChild(svg('line', { x1, y1, x2, y2, class: 't-edge' }));
-  const BL = (x, y, t) => s.appendChild(svg('text', { x, y, 'text-anchor': 'middle', class: 't-branch' }, t));
-  const N = (cx, cy, label, cls, w = 98) => {
-    const h = 34, isLeaf = cls.indexOf('leaf') >= 0;
-    const g = svg('g', { class: 't-node' });
-    g.appendChild(svg('rect', { x: cx - w / 2, y: cy - h / 2, width: w, height: h, rx: isLeaf ? 16 : 8, class: cls }));
-    g.appendChild(svg('text', { x: cx, y: cy + 5, 'text-anchor': 'middle', 'font-size': 14, fill: '#1f2533' }, label));
-    s.appendChild(g);
+// ---------- סבב: אנטרופיה ----------
+function roundEntropy(ds, filter, label) {
+  return {
+    title: 'אנטרופיה' + (label ? ' · ' + label : ''), data: ds, play(host, ctx) {
+      const rows = filter ? ds.rows.filter(filter) : ds.rows, id3 = id3Solve(ds), H = id3.entropy(rows);
+      const pos = rows.filter(r => r[ds.target] === 1).length, neg = rows.length - pos;
+      host.append(el('p', { class: 'gx-panel', html: (label ? '<b>' + label + '</b>: ' : '') + 'חשב <b>H(S)</b> עבור <b>' + pos + '</b> חיובי ו-<b>' + neg + '</b> שלילי (סה"כ ' + rows.length + '). עגל ל-2 ספרות.' }));
+      host.append(el('div', { class: 'gx-calc' }, [el('div', { class: 'expr', html: 'H = −(' + pos + '/' + rows.length + ')·log₂(' + pos + '/' + rows.length + ') − (' + neg + '/' + rows.length + ')·log₂(' + neg + '/' + rows.length + ')' })]));
+      const input = el('input', { class: 'gx-num-in', type: 'text', inputmode: 'decimal', placeholder: 'H=?' });
+      input.addEventListener('keydown', e => { if (e.key === 'Enter') check(); });
+      function check() {
+        const v = parseFloat(String(input.value).replace(',', '.'));
+        if (isNaN(v)) { toast('הקלד מספר', 'info'); return; }
+        if (Math.abs(v - H) <= 0.02) { input.classList.add('ok'); input.disabled = true; ctx.score.add(15); toast('✓ H=' + H.toFixed(3), 'good'); setTimeout(ctx.done, 900); }
+        else { input.classList.add('bad'); ctx.score.miss(); ctx.addMiss(); shake(input); toast('✗ טהור→0, חצי-חצי→1', 'bad'); setTimeout(() => input.classList.remove('bad'), 500); }
+      }
+      host.append(el('div', { class: 'gx-row' }, [input, el('button', { class: 'gx-btn gx-btn-primary', text: 'בדוק', onclick: check }),
+        el('button', { class: 'gx-btn gx-btn-ghost', text: '💡 רמז', onclick: () => toast('log₂(1/2)=−1 · log₂(1/4)=−2 · log₂(3/8)≈−1.415', 'info') })]));
+      input.focus();
+    }
   };
-
-  if (!flags.root) { N(300, 50, '? שורש', 't-pending'); return; }
-
-  N(300, 45, 'Outlook', 't-attr');
-  E(300, 62, 135, 133); E(300, 62, 300, 123); E(300, 62, 465, 133);
-  BL(205, 100, 'Sunny'); BL(305, 100, 'Overcast'); BL(398, 100, 'Rain');
-  N(300, 140, 'כן ✓', 't-leaf-yes', 72);
-  N(135, 150, flags.sunny ? 'Humidity' : '?', 't-' + (flags.sunny ? 'attr' : 'pending'), flags.sunny ? 98 : 56);
-  N(465, 150, flags.rain ? 'Wind' : '?', 't-' + (flags.rain ? 'attr' : 'pending'), flags.rain ? 98 : 56);
-
-  if (flags.sunny) {
-    E(135, 167, 72, 243); E(135, 167, 200, 243);
-    BL(92, 205, 'High'); BL(180, 205, 'Normal');
-    N(72, 262, 'לא', 't-leaf-no', 60); N(200, 262, 'כן', 't-leaf-yes', 60);
-  }
-  if (flags.rain) {
-    E(465, 167, 402, 243); E(465, 167, 528, 243);
-    BL(425, 205, 'Weak'); BL(520, 205, 'Strong');
-    N(402, 262, 'כן', 't-leaf-yes', 60); N(528, 262, 'לא', 't-leaf-no', 60);
-  }
 }
 
-// ---------- עמודות IG ----------
-function igBars(gains, winner) {
-  const wrap = el('div', {});
-  const max = Math.max(...Object.values(gains));
-  Object.keys(gains).forEach(k => {
-    const v = gains[k], pct = Math.round(v / max * 100);
-    wrap.appendChild(el('div', { class: 'gx-ig-bar' + (k === winner ? ' win' : '') }, [
-      el('span', { class: 'name', text: k }),
-      el('div', { class: 'track' }, [el('div', { class: 'fill', style: { width: pct + '%' } })]),
-      el('span', { class: 'val', text: 'IG=' + v.toFixed(3) })
-    ]));
-  });
-  return wrap;
+// ---------- סבב: IG של תכונה ----------
+function roundGain(ds, attr) {
+  return {
+    title: 'IG של ' + attr, data: ds, play(host, ctx) {
+      const id3 = id3Solve(ds), g = id3.gain(ds.rows, attr), H = id3.entropy(ds.rows);
+      host.append(el('p', { class: 'gx-panel', html: 'חשב את <b>IG(' + attr + ')</b> על כל הסט (H(S)=' + H.toFixed(2) + '). עגל ל-2 ספרות.' }));
+      host.append(el('div', { class: 'gx-calc' }, [el('div', { class: 'expr', html: 'IG = H(S) − Σ (|S_v|/|S|)·H(S_v)' })]));
+      const input = el('input', { class: 'gx-num-in', type: 'text', inputmode: 'decimal', placeholder: 'IG=?' });
+      input.addEventListener('keydown', e => { if (e.key === 'Enter') check(); });
+      function check() {
+        const v = parseFloat(String(input.value).replace(',', '.'));
+        if (isNaN(v)) { toast('הקלד מספר', 'info'); return; }
+        if (Math.abs(v - g) <= 0.02) { input.classList.add('ok'); input.disabled = true; ctx.score.add(18); toast('✓ IG=' + g.toFixed(3), 'good'); setTimeout(ctx.done, 900); }
+        else { input.classList.add('bad'); ctx.score.miss(); ctx.addMiss(); shake(input); toast('✗ פצל לפי ערכי ' + attr + ' ושקלל', 'bad'); setTimeout(() => input.classList.remove('bad'), 500); }
+      }
+      host.append(el('div', { class: 'gx-row' }, [input, el('button', { class: 'gx-btn gx-btn-primary', text: 'בדוק', onclick: check }),
+        el('button', { class: 'gx-btn gx-btn-ghost', text: '💡 רמז', onclick: () => toast('IG(' + attr + ')=' + g.toFixed(3), 'info') })]));
+      input.focus();
+    }
+  };
 }
 
-// ---------- שלב 1: שורש ----------
-function phaseRoot() {
-  phase = 0;
-  document.getElementById('igwrap').innerHTML = '';
-  document.getElementById('prompt').innerHTML = '🌳 איזו תכונה לבחור ל<b>שורש</b>? (IG מקסימלי ביחס ל-E(S)=0.94)';
-  const ch = document.getElementById('choices'); ch.innerHTML = '';
-  DT.attrs.forEach(a => ch.appendChild(el('button', { class: 'gx-btn', text: a, onclick: () => pickRoot(a) })));
-}
-function pickRoot(a) {
-  if (a === 'Outlook') {
-    score.add(15); toast('✓ Outlook! IG=0.247 — הגבוה ביותr', 'good');
-    flags.root = true; drawTree();
-    document.getElementById('choices').innerHTML = '';
-    document.getElementById('igwrap').appendChild(igBars(DT.rootGain, 'Outlook'));
-    setTimeout(phaseSunny, 1500);
-  } else {
-    misses++; score.miss(); shake(document.getElementById('choices'));
-    toast('✗ ל-' + a + ' יש IG נמוך יותר. רמז: overcast תמיד "כן"', 'bad');
-  }
-}
-
-// ---------- שלב 2: ענף Sunny ----------
-function phaseSunny() {
-  phase = 1;
-  document.getElementById('igwrap').innerHTML = '';
-  document.getElementById('prompt').innerHTML = '☀️ ענף <b>Sunny</b> (3 "לא", 2 "כן") — איזו תכונה מפצלת אותו <b>מושלם</b>?';
-  const ch = document.getElementById('choices'); ch.innerHTML = '';
-  ['Humidity', 'Temperature', 'Wind'].forEach(a => ch.appendChild(el('button', { class: 'gx-btn', text: a, onclick: () => pickSunny(a) })));
-}
-function pickSunny(a) {
-  if (a === 'Humidity') {
-    score.add(15); toast('✓ Humidity מפריד מושלם: High→לא, Normal→כן', 'good');
-    flags.sunny = true; drawTree();
-    document.getElementById('choices').innerHTML = '';
-    document.getElementById('igwrap').appendChild(igBars(DT.sunnyGain, 'Humidity'));
-    setTimeout(phaseRain, 1500);
-  } else {
-    misses++; score.miss(); shake(document.getElementById('choices'));
-    toast('✗ נסה שוב — חפש הפרדה מושלמת של 3/2', 'bad');
-  }
+// ---------- סבב: בחר תכונה מפצלת ----------
+function roundPickBest(ds, filter, avail, label) {
+  return {
+    title: 'בחר תכונה מפצלת' + (label ? ' · ' + label : ''), data: ds, play(host, ctx) {
+      const rows = filter ? ds.rows.filter(filter) : ds.rows, id3 = id3Solve(ds);
+      const gains = {}; avail.forEach(a => gains[a] = id3.gain(rows, a));
+      const best = avail.reduce((b, a) => gains[a] > gains[b] ? a : b, avail[0]);
+      host.append(el('p', { class: 'gx-panel', html: (label ? '<b>' + label + '</b> — ' : '') + 'איזו תכונה נותנת את ה-<b>IG הגבוה ביותר</b>? (' + rows.length + ' דוגמאות)' }));
+      const ig = el('div', { style: { maxWidth: '440px', margin: '6px auto' } }), opts = el('div', { class: 'gx-row' });
+      host.append(ig, opts);
+      avail.forEach(a => opts.appendChild(el('button', { class: 'gx-btn', text: a, onclick: () => {
+        if (a === best) { ctx.score.add(15); toast('✓ ' + a + ' (IG=' + gains[a].toFixed(3) + ')', 'good'); showBars(); setTimeout(ctx.done, 1500); }
+        else { ctx.score.miss(); ctx.addMiss(); shake(opts); toast('✗ ל-' + a + ' IG נמוך יותר', 'bad'); }
+      } })));
+      function showBars() {
+        opts.innerHTML = ''; ig.innerHTML = ''; const mx = Math.max(...Object.values(gains));
+        avail.forEach(a => ig.appendChild(el('div', { class: 'gx-ig-bar' + (a === best ? ' win' : '') }, [
+          el('span', { class: 'name', text: a }),
+          el('div', { class: 'track' }, [el('div', { class: 'fill', style: { width: Math.round(gains[a] / mx * 100) + '%' } })]),
+          el('span', { class: 'val', text: 'IG=' + gains[a].toFixed(3) })])));
+      }
+    }
+  };
 }
 
-// ---------- שלב 3: ענף Rain ----------
-function phaseRain() {
-  phase = 2;
-  document.getElementById('igwrap').innerHTML = '';
-  document.getElementById('prompt').innerHTML = '🌧️ ענף <b>Rain</b> (3 "כן", 2 "לא") — איזו תכונה מפצלת אותו <b>מושלם</b>?';
-  const ch = document.getElementById('choices'); ch.innerHTML = '';
-  ['Wind', 'Temperature', 'Humidity'].forEach(a => ch.appendChild(el('button', { class: 'gx-btn', text: a, onclick: () => pickRain(a) })));
-}
-function pickRain(a) {
-  if (a === 'Wind') {
-    score.add(15); toast('✓ Wind מפריד מושלם: Weak→כן, Strong→לא', 'good');
-    flags.rain = true; drawTree();
-    document.getElementById('choices').innerHTML = '';
-    document.getElementById('igwrap').appendChild(igBars(DT.rainGain, 'Wind'));
-    setTimeout(phaseClassify, 1600);
-  } else {
-    misses++; score.miss(); shake(document.getElementById('choices'));
-    toast('✗ נסה שוב — חפש הפרדה מושלמת', 'bad');
-  }
-}
-
-// ---------- שלב 4: סיווג ----------
-function treeSays(m) {
-  if (m.Outlook === 'Overcast') return 1;
-  if (m.Outlook === 'Sunny') return m.Humidity === 'Normal' ? 1 : 0;
-  return m.Wind === 'Weak' ? 1 : 0; // Rain
-}
-function phaseClassify() {
-  phase = 3; ti = 0;
-  document.getElementById('igwrap').innerHTML = '';
-  nextClassify();
-}
-function nextClassify() {
-  if (ti >= DT.test.length) return finish();
-  const m = DT.test[ti];
-  const info = 'Outlook=' + m.Outlook + ', Humidity=' + m.Humidity + ', Wind=' + m.Wind;
-  document.getElementById('prompt').innerHTML = '🎾 יום <b>' + m.id + '</b>: <span style="direction:ltr;unicode-bidi:isolate">' + info + '</span> — לשחק?';
-  const ch = document.getElementById('choices'); ch.innerHTML = '';
-  ch.append(
-    el('button', { class: 'gx-btn gx-btn-ok', text: '🎾 כן', onclick: () => classify(1) }),
-    el('button', { class: 'gx-btn', style: { background: 'var(--warn)', color: '#fff', borderColor: 'var(--warn)' }, text: '🚫 לא', onclick: () => classify(0) })
-  );
-}
-function classify(guess) {
-  const m = DT.test[ti];
-  if (guess === treeSays(m)) {
-    score.add(12); toast('✓ נכון! ' + m.id + ' = ' + (guess ? 'כן' : 'לא'), 'good');
-    ti++; setTimeout(nextClassify, 750);
-  } else {
-    misses++; score.miss(); shake(document.getElementById('choices'));
-    toast('✗ עקוב בעץ: קודם Outlook, ואז Humidity/Wind', 'bad');
-  }
+// ---------- סבב: סיווג ----------
+function roundClassify(ds, instances) {
+  return {
+    title: 'סיווג לפי העץ', data: ds, play(host, ctx) {
+      const id3 = id3Solve(ds); let ti = 0;
+      host.append(el('p', { class: 'gx-panel', html: 'סווג כל יום לפי עץ ה-ID3 (Outlook → Humidity/Wind, overcast תמיד "כן").' }));
+      const prompt = el('p', { class: 'gx-prompt' }), ctr = el('div', { class: 'gx-row' }); host.append(prompt, ctr);
+      function next() {
+        if (ti >= instances.length) return ctx.done();
+        const m = instances[ti];
+        prompt.innerHTML = 'יום ' + m.id + ': <span style="direction:ltr;unicode-bidi:isolate;display:inline-block">Outlook=' + m.Outlook + ', Humidity=' + m.Humidity + ', Wind=' + m.Wind + '</span> — לשחק?';
+        ctr.innerHTML = '';
+        ctr.append(el('button', { class: 'gx-btn gx-btn-ok', text: '🎾 כן', onclick: () => ans(1) }),
+          el('button', { class: 'gx-btn', style: { background: 'var(--warn)', color: '#fff', borderColor: 'var(--warn)' }, text: '🚫 לא', onclick: () => ans(0) }));
+      }
+      function ans(g) {
+        const m = instances[ti];
+        if (g === id3.classify(m)) { ctx.score.add(12); toast('✓ נכון', 'good'); ti++; setTimeout(next, 650); }
+        else { ctx.score.miss(); ctx.addMiss(); shake(ctr); toast('✗ עקוב בעץ: קודם Outlook', 'bad'); }
+      }
+      next();
+    }
+  };
 }
 
-function finish() {
-  const stars = misses === 0 ? 3 : misses <= 3 ? 2 : 1;
-  document.getElementById('prompt').innerHTML = '🎉 בנית וסיווגת את כל העץ!';
-  document.getElementById('choices').innerHTML = '';
-  winModal({
-    title: 'אלוף עצי ההחלטה! 🎾', stars, gameId: 'dtree',
-    html: '<p>העץ: <b>Outlook</b> → {overcast=כן, sunny→Humidity(High=לא,Normal=כן), rain→Wind(Weak=כן,Strong=לא)}.</p>' +
-          '<p style="font-size:14px;color:#5b6478">הכלל: בכל צומת בוחרים את התכונה עם ה-IG הגבוה ביותר (ID3).</p>' +
-          '<p>ניקוד: <b>' + score.score + '</b></p>'
-  });
-}
-
-function restart() {
-  misses = 0; flags.root = flags.sunny = flags.rain = false;
-  score.reset(); drawTree(); phaseRoot();
-}
-document.getElementById('restart').addEventListener('click', restart);
-drawTree(); phaseRoot();
+runLevels({
+  gameId: 'dtree',
+  levels: [
+    { key: '1', name: 'אנטרופיה ו-IG', badge: 'יסוד', desc: 'מדידת אי-סדר ורווח אינפורמציה', rounds: [roundEntropy(DTREE_TOY, null, 'ללמוד?'), roundGain(DTREE_TOY, 'Exam'), roundPickBest(DTREE_TOY, null, DTREE_TOY.attrs)] },
+    { key: '2', name: 'בנה עץ — PlayTennis', badge: 'תרגול', desc: 'בחר שורש וענפים לפי IG', rounds: [roundPickBest(PT, null, PT.attrs, 'שורש'), roundPickBest(PT, sunny, ['Temperature', 'Humidity', 'Wind'], 'ענף Sunny'), roundPickBest(PT, rain, ['Temperature', 'Humidity', 'Wind'], 'ענף Rain')] },
+    { key: '3', name: 'סיווג ואתגר', badge: 'אתגר', desc: 'חישוב מדויק וסיווג', rounds: [roundEntropy(PT, null, 'PlayTennis'), roundGain(PT, 'Humidity'), roundClassify(PT, PLAYTENNIS.test)] }
+  ]
+});
 </script>
 </body>
 </html>

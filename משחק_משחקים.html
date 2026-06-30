@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>צייד הנאש 🎲 | משחקי למידה</title>
+<title>אסטרטג תורת המשחקים 🎲 | משחקי למידה</title>
 <link rel="stylesheet" href="style.css">
 <link rel="stylesheet" href="games.css">
 </head>
@@ -20,133 +20,274 @@
 <div class="wrap">
   <div class="page-head">
     <p class="eyebrow">משחק · נושא 04</p>
-    <h1>🎲 צייד הנאש</h1>
-    <span class="ref">מצא שיווי משקל נאש · ושחק דילמת אסיר נגד ה-AI</span>
+    <h1>🎲 אסטרטג תורת המשחקים</h1>
+    <span class="ref">3 רמות · נאש טהור ← שליטה ו-Maximin ← מעורב, 2/3 ומשחק חוזר</span>
   </div>
 
-  <div class="gx-row" style="margin:6px 0 14px"><div id="mode"></div></div>
-  <div id="score"></div>
-  <div class="gx-prompt" id="prompt"></div>
-  <div id="stage"></div>
+  <div class="card">
+    <p>כל רמה כוללת כמה מיני-משחקים ומטריצות שונות. בתאים: <b style="color:#b23b3b">אדום=שחקן שורה</b>, <b style="color:#1b7f5a">ירוק=שחקן עמודה</b>. השלם רמה כדי לפתוח את הבאה. ⭐</p>
+  </div>
 
-  <div class="gx-row" style="margin-top:14px">
+  <div id="game-root"></div>
+
+  <div class="gx-row" style="margin-top:18px">
     <a class="gx-btn gx-btn-ghost" href="04_תורת_משחקים.html">📖 חזרה להסבר</a>
   </div>
 </div>
 
 <script type="module">
-import { PD_MATRIX, IESDS } from './games-data.js';
-import { Scoreboard, toast, winModal, segmented, el, shake } from './games-core.js';
+import { GT_MATRICES, GUESS23 } from './games-data.js';
+import { matrixSolve, runLevels } from './games-engine.js';
+import { el, toast, shake } from './games-core.js';
 
-const score = new Scoreboard('nash');
-document.getElementById('score').appendChild(score.el);
-const stage = document.getElementById('stage');
-const prompt = document.getElementById('prompt');
-
-// ============ מצב 1: מצא את הנאש ============
-const puzzles = [PD_MATRIX, IESDS];
-let pi = 0, misses = 0;
-
-function isNash(M, r, c) { return M.nash.some(([nr, nc]) => nr === r && nc === c); }
-
-function renderFindNash() {
-  const M = puzzles[pi];
-  prompt.innerHTML = '🎯 לחץ על התא שהוא <b>שיווי משקל נאש</b> &nbsp;(' + M.title + ')';
-  stage.innerHTML = '';
-  const tbl = el('table', { class: 'gx-matrix' });
-  const head = el('tr', {}, [el('th', { text: '' }), ...M.cols.map(c => el('th', { text: 'עמודה ' + c }))]);
-  tbl.appendChild(head);
-  M.rows.forEach(r => {
-    const tr = el('tr', {}, [el('th', { text: 'שורה ' + r })]);
-    M.cols.forEach(c => {
-      const [u1, u2] = M.pay[r][c];
-      const td = el('td', { class: 'cell', text: '(' + u1 + ', ' + u2 + ')' });
-      td.addEventListener('click', () => {
-        if (isNash(M, r, c)) {
-          td.classList.add('nash'); score.add(15);
-          toast('✓ נכון! אף שחקן לא רוצה לסטות מכאן', 'good');
-          [...tbl.querySelectorAll('.cell')].forEach(x => x.style.pointerEvents = 'none');
-          pi++;
-          setTimeout(() => { pi < puzzles.length ? renderFindNash() : finishFind(); }, 1100);
-        } else {
-          misses++; score.miss(); td.classList.add('wrong'); shake(td);
-          toast('✗ בדוק: האם מישהו ירצה לסטות מכאן?', 'bad');
-          setTimeout(() => td.classList.remove('wrong'), 600);
-        }
-      });
+// ---------- טבלת מטריצה ----------
+function cellHtml(u) { return '<span style="color:#b23b3b">' + u[0] + '</span>, <span style="color:#1b7f5a">' + u[1] + '</span>'; }
+function matrixTable(m, onCell) {
+  const t = el('table', { class: 'gx-matrix' });
+  t.appendChild(el('tr', {}, [el('th', { text: '' }), ...m.cols.map(c => el('th', { html: (m.colName ? m.colName[c] + '<br>' : '') + '(' + c + ')' }))]));
+  m.rows.forEach(r => {
+    const tr = el('tr', {}, [el('th', { html: (m.rowName ? m.rowName[r] + '<br>' : '') + '(' + r + ')' })]);
+    m.cols.forEach(c => {
+      const td = el('td', { class: onCell ? 'cell' : '', html: cellHtml(m.pay[r][c]) });
+      if (onCell) td.addEventListener('click', () => onCell(r, c, td));
       tr.appendChild(td);
     });
-    tbl.appendChild(tr);
+    t.appendChild(tr);
   });
-  stage.appendChild(tbl);
-  stage.appendChild(el('p', { class: 'cap', style: { textAlign: 'center', color: 'var(--muted)' }, text: '(u₁ = תשלום שחקן השורה, u₂ = תשלום שחקן העמודה)' }));
-}
-function finishFind() {
-  const stars = misses === 0 ? 3 : misses <= 2 ? 2 : 1;
-  winModal({ title: 'מצאת את כל שיווי המשקל! 🎯', stars, gameId: 'nash',
-    html: '<p>נאש = אף שחקן לא משתפר מסטייה חד-צדדית.</p><p>ניקוד: <b>' + score.score + '</b></p>' });
+  return t;
 }
 
-// ============ מצב 2: שחק דילמת אסיר נגד ה-AI ============
-const ROUNDS = 8;
-let round, myTotal, aiTotal, lastMine;
-
-function renderPlay() {
-  round = 0; myTotal = 0; aiTotal = 0; lastMine = null;
-  prompt.innerHTML = '🤖 שחק נגד <b>Tit-for-Tat</b>: משתף בהתחלה, ואז מחקה את המהלך הקודם שלך. 8 סבבים.';
-  stage.innerHTML = '';
-  const board = el('div', { class: 'gx-board' });
-  const totals = el('div', { class: 'gx-row', style: { fontSize: '18px', fontWeight: '700', marginBottom: '10px' } });
-  board.appendChild(totals);
-  const log = el('div', { id: 'pdlog', style: { maxWidth: '440px', margin: '0 auto' } });
-  board.appendChild(log);
-  const controls = el('div', { class: 'gx-row', style: { marginTop: '12px' } }, [
-    el('button', { class: 'gx-btn gx-btn-ok', html: '🤝 שתף פעולה (C)', onclick: () => play('C') }),
-    el('button', { class: 'gx-btn', style: { background: 'var(--warn)', color: '#fff', borderColor: 'var(--warn)' }, html: '😈 בגוד (D)', onclick: () => play('D') })
-  ]);
-  board.appendChild(controls);
-  stage.appendChild(board);
-  updateTotals();
-  function updateTotals() {
-    totals.innerHTML = '';
-    totals.append(
-      el('span', { html: '🙂 אתה: <b style="color:var(--ok)">' + myTotal + '</b>' }),
-      el('span', { html: '&nbsp;·&nbsp;' }),
-      el('span', { html: '🤖 ה-AI: <b style="color:var(--warn)">' + aiTotal + '</b>' }),
-      el('span', { html: '&nbsp;·&nbsp; סבב ' + (round) + '/' + ROUNDS })
-    );
-  }
-  window._pdUpdate = updateTotals;
-}
-function play(mine) {
-  if (round >= ROUNDS) return;
-  const ai = lastMine == null ? 'C' : lastMine; // Tit-for-Tat
-  const [u1, u2] = PD_MATRIX.pay[mine][ai];
-  myTotal += u1; aiTotal += u2; lastMine = mine; round++;
-  const log = document.getElementById('pdlog');
-  const txt = (mine === 'C' ? '🤝' : '😈') + ' אתה: ' + mine + ' &nbsp;|&nbsp; ' + (ai === 'C' ? '🤝' : '😈') + ' AI: ' + ai
-    + ' &nbsp;→&nbsp; +' + u1 + ' / +' + u2;
-  log.appendChild(el('div', { html: txt, style: { padding: '6px 0', borderBottom: '1px solid var(--line)', textAlign: 'center' } }));
-  window._pdUpdate();
-  if (round >= ROUNDS) {
-    const won = myTotal >= aiTotal;
-    const lesson = lastMine === 'D' && myTotal < aiTotal
-      ? 'בגידה גררה עונש בסבב הבא — לכן שיתוף פעולה משתלם יותר במשחק חוזר.'
-      : 'שיתוף פעולה הדדי נתן לשניכם תשלום גבוה לאורך זמן — בדיוק כוח המשחק החוזר.';
-    score.add(myTotal);
-    winModal({ title: won ? 'סיימת חזק! 🤝' : 'סיבוב הסתיים', stars: 3, gameId: 'nash',
-      html: '<p>אתה: <b>' + myTotal + '</b> · AI: <b>' + aiTotal + '</b></p><p>' + lesson + '</p>' });
-  }
+// ---------- סבב: מצא נאש ----------
+function roundFindNash(m) {
+  return {
+    title: 'מצא שיווי משקל נאש', data: m, play(host, ctx) {
+      const sol = matrixSolve(m).pureNash, need = new Set(sol.map(([r, c]) => r + c)), found = new Set();
+      host.appendChild(el('p', { class: 'gx-prompt', html: 'מטריצת <b>' + m.title + '</b> — לחץ על <b>' + sol.length + '</b> תא(י) שיווי-משקל (best-response לשני השחקנים).' }));
+      const t = matrixTable(m, (r, c, td) => {
+        if (td.classList.contains('nash') || td.classList.contains('wrong')) return;
+        if (need.has(r + c)) {
+          td.classList.add('nash'); found.add(r + c); ctx.score.add(15); toast('✓ נאש!', 'good');
+          if (found.size === need.size) setTimeout(ctx.done, 750);
+        } else { td.classList.add('wrong'); ctx.score.miss(); ctx.addMiss(); shake(t); toast('✗ לא יציב — שחקן ירצה לסטות', 'bad'); setTimeout(() => td.classList.remove('wrong'), 600); }
+      });
+      host.appendChild(t);
+    }
+  };
 }
 
-// ============ בורר מצב ============
-const seg = segmented(
-  [{ label: '🎯 מצא נאש', value: 'find' }, { label: '🤖 שחק נגד AI', value: 'play' }],
-  v => { score.reset(); misses = 0; if (v === 'find') { pi = 0; renderFindNash(); } else renderPlay(); },
-  'find'
-);
-document.getElementById('mode').appendChild(seg);
-renderFindNash();
+// ---------- סבב: Pareto מול נאש ----------
+function roundPareto(m) {
+  return {
+    title: 'Pareto מול נאש', data: m, play(host, ctx) {
+      const nash = matrixSolve(m).pureNash[0]; let phase = 0;
+      const prompt = el('p', { class: 'gx-prompt', html: 'שלב 1: לחץ על תא <b>שיווי המשקל (נאש)</b>.' });
+      host.appendChild(prompt);
+      const t = matrixTable(m, (r, c, td) => {
+        if (phase === 0) {
+          if (r === nash[0] && c === nash[1]) { td.classList.add('nash'); ctx.score.add(12); toast('✓ זה הנאש', 'good'); phase = 1; prompt.innerHTML = 'שלב 2: לחץ על התא ש<b>טוב יותר לשני השחקנים</b> (Pareto) — אך אינו יציב.'; }
+          else { ctx.score.miss(); ctx.addMiss(); shake(t); toast('✗ זה לא הנאש', 'bad'); }
+        } else if (phase === 1) {
+          const np = m.pay[nash[0]][nash[1]];
+          if (m.pay[r][c][0] > np[0] && m.pay[r][c][1] > np[1]) { td.classList.add('pareto'); phase = 2; ctx.score.add(15); toast('✓ (' + m.pay[r][c][0] + ',' + m.pay[r][c][1] + ') עדיף לשניהם — אך לא יציב!', 'good'); setTimeout(ctx.done, 1300); }
+          else { ctx.score.miss(); ctx.addMiss(); shake(t); toast('✗ חפש תא שמשפר את שני השחקנים מול הנאש', 'bad'); }
+        }
+      });
+      host.appendChild(t);
+    }
+  };
+}
+
+// ---------- סבב: IESDS ----------
+function roundIesds(m) {
+  return {
+    title: 'מחיקת אסטרטגיות נשלטות', data: m, play(host, ctx) {
+      const steps = matrixSolve(m).iesds.steps; let si = 0;
+      const remR = new Set(), remC = new Set();
+      const prompt = el('p', { class: 'gx-prompt' }), tWrap = el('div', {});
+      host.append(prompt, tWrap);
+      function render() {
+        const expect = steps[si];
+        if (expect) prompt.innerHTML = 'לחץ על <b>כותרת</b> האסטרטגיה ה<b>נשלטת ממש</b> שיש למחוק (שחקן ' + (expect.player === 1 ? '1 — שורה' : '2 — עמודה') + ').';
+        tWrap.innerHTML = '';
+        const t = el('table', { class: 'gx-matrix' });
+        t.appendChild(el('tr', {}, [el('th', { text: '' }), ...m.cols.map(c => {
+          const th = el('th', { text: c, style: { cursor: 'pointer' } });
+          if (remC.has(c)) th.classList.add('removed');
+          th.addEventListener('click', () => hit(2, c)); return th;
+        })]));
+        m.rows.forEach(r => {
+          const rh = el('th', { text: r, style: { cursor: 'pointer' } });
+          if (remR.has(r)) rh.classList.add('removed');
+          rh.addEventListener('click', () => hit(1, r));
+          const tr = el('tr', {}, [rh, ...m.cols.map(c => {
+            const td = el('td', { html: cellHtml(m.pay[r][c]) });
+            if (remR.has(r) || remC.has(c)) td.classList.add('removed');
+            return td;
+          })]);
+          t.appendChild(tr);
+        });
+        tWrap.appendChild(t);
+      }
+      function hit(player, key) {
+        const expect = steps[si];
+        if (expect && player === expect.player && key === expect.removed) {
+          (player === 1 ? remR : remC).add(key);
+          ctx.score.add(14); toast('✓ ' + key + ' נשלטת ע"י ' + expect.by, 'good'); si++;
+          if (si >= steps.length) { prompt.innerHTML = '🎉 נשאר רק שיווי המשקל!'; render(); setTimeout(ctx.done, 950); }
+          else render();
+        } else { ctx.score.miss(); ctx.addMiss(); shake(tWrap); toast('✗ זו לא נשלטת ממש — צריך שכל ערכי האסטרטגיה האחרת יהיו גבוהים', 'bad'); }
+      }
+      render();
+    }
+  };
+}
+
+// ---------- סבב: Maximin ----------
+function roundMaximin(m) {
+  return {
+    title: 'אסטרטגיית Maximin', data: m, play(host, ctx) {
+      const mx = matrixSolve(m).maximin; let phase = 0;
+      const prompt = el('p', { class: 'gx-prompt', html: 'בחר את אסטרטגיית ה<b>ביטחון</b> של <b>שחקן 1</b> — השורה שממקסמת את ה<b>מינימום</b> שלו. לחץ כותרת שורה.' });
+      const tWrap = el('div', {}); host.append(prompt, tWrap);
+      function render() {
+        tWrap.innerHTML = '';
+        const t = el('table', { class: 'gx-matrix' });
+        t.appendChild(el('tr', {}, [el('th', { text: '' }), ...m.cols.map(c => el('th', { text: c })), el('th', { html: 'min<br>שורה', style: { fontSize: '11px' } })]));
+        m.rows.forEach(r => {
+          const rowMin = Math.min(...m.cols.map(c => m.pay[r][c][0]));
+          const rh = el('th', { text: r, style: { cursor: phase === 0 ? 'pointer' : 'default' } });
+          if (phase === 0) rh.addEventListener('click', () => pickRow(r));
+          if (phase >= 1 && r === mx.p1) rh.classList.add('sel');
+          t.appendChild(el('tr', {}, [rh, ...m.cols.map(c => el('td', { html: cellHtml(m.pay[r][c]) })), el('td', { text: rowMin, style: { fontWeight: '700', color: '#b23b3b' } })]));
+        });
+        if (phase >= 1) {
+          t.appendChild(el('tr', {}, [el('th', { html: 'min<br>עמ׳', style: { fontSize: '11px' } }), ...m.cols.map(c => {
+            const colMin = Math.min(...m.rows.map(r => m.pay[r][c][1]));
+            const th = el('th', { text: colMin, style: { cursor: 'pointer', background: '#fff', color: '#1b7f5a' } });
+            th.addEventListener('click', () => pickCol(c));
+            if (phase >= 2 && c === mx.p2) th.classList.add('sel');
+            return th;
+          }), el('td', { text: '' })]));
+        }
+        tWrap.appendChild(t);
+      }
+      function pickRow(r) {
+        if (r === mx.p1) { ctx.score.add(15); toast('✓ ביטחון שחקן 1: ' + r + ' (ערך ' + mx.p1val + ')', 'good'); phase = 1; prompt.innerHTML = 'עכשיו <b>שחקן 2</b> — לחץ בשורת "min עמ׳" על העמודה שממקסמת את המינימום שלו.'; render(); }
+        else { ctx.score.miss(); ctx.addMiss(); shake(tWrap); toast('✗ חפש את השורה עם המינימום הגבוה ביותר', 'bad'); }
+      }
+      function pickCol(c) {
+        if (c === mx.p2) { ctx.score.add(15); phase = 2; toast('✓ ביטחון שחקן 2: ' + c + ' (ערך ' + mx.p2val + ')', 'good'); prompt.innerHTML = '🎉 שיווי-משקל ביטחון (Maximin): <b>(' + mx.p1 + ', ' + mx.p2 + ')</b>'; render(); setTimeout(ctx.done, 1100); }
+        else { ctx.score.miss(); ctx.addMiss(); shake(tWrap); toast('✗ חפש את העמודה עם min(u₂) הגבוה ביותר', 'bad'); }
+      }
+      render();
+    }
+  };
+}
+
+// ---------- סבב: שיווי משקל מעורב ----------
+function roundMixed(m) {
+  return {
+    title: 'שיווי משקל מעורב', data: m, play(host, ctx) {
+      const q = matrixSolve(m).mixed.q, r0 = m.rows[0], r1 = m.rows[1], c0 = m.cols[0];
+      const a = m.pay[r0][c0][0], b = m.pay[r0][m.cols[1]][0], c = m.pay[r1][c0][0], d = m.pay[r1][m.cols[1]][0];
+      host.appendChild(el('p', { class: 'gx-prompt', html: '<b>' + m.title + '</b>: מצא <b>q</b> = ההסתברות ששחקן 2 משחק <b>' + c0 + '</b>, כך ש<b>שחקן 1 אדיש</b> בין ' + r0 + ' ל-' + r1 + '.' }));
+      host.appendChild(matrixTable(m, null));
+      host.appendChild(el('div', { class: 'gx-calc' }, [
+        el('div', { class: 'expr', html: 'E[' + r0 + '] = q·(' + a + ') + (1−q)·(' + b + ')' }),
+        el('div', { class: 'expr', html: 'E[' + r1 + '] = q·(' + c + ') + (1−q)·(' + d + ')' }),
+        el('div', { class: 'lead', text: 'פתור  E[' + r0 + '] = E[' + r1 + ']  →  q = ?' })
+      ]));
+      const input = el('input', { class: 'gx-num-in', type: 'text', inputmode: 'decimal', placeholder: 'q=?' });
+      input.addEventListener('keydown', e => { if (e.key === 'Enter') check(); });
+      function check() {
+        const v = parseFloat(String(input.value).replace(',', '.'));
+        if (isNaN(v)) { toast('הקלד מספר', 'info'); return; }
+        if (Math.abs(v - q) <= 0.02) { input.classList.add('ok'); input.disabled = true; ctx.score.add(20); toast('✓ q = ' + q, 'good'); setTimeout(ctx.done, 900); }
+        else { input.classList.add('bad'); ctx.score.miss(); ctx.addMiss(); shake(input); toast('✗ נסה שוב', 'bad'); setTimeout(() => input.classList.remove('bad'), 500); }
+      }
+      host.appendChild(el('div', { class: 'gx-row' }, [
+        input,
+        el('button', { class: 'gx-btn gx-btn-primary', text: 'בדוק ✓', onclick: check }),
+        el('button', { class: 'gx-btn gx-btn-ghost', text: '💡 רמז', onclick: () => toast('q = (d−b)/(a−b−c+d) · כאן a=' + a + ', b=' + b + ', c=' + c + ', d=' + d, 'info') })
+      ]));
+      input.focus();
+    }
+  };
+}
+
+// ---------- סבב: 2/3 מהממוצע ----------
+function roundGuess23() {
+  return {
+    title: '2/3 מהממוצע', data: GUESS23, play(host, ctx) {
+      let round = 0; const N = 3;
+      const prompt = el('p', { class: 'gx-prompt' }), area = el('div', {});
+      host.append(prompt, area);
+      function go() {
+        area.innerHTML = '';
+        prompt.innerHTML = 'סבב ' + (round + 1) + '/' + N + ': בחר מספר 0–100. ה<b>זוכה</b> = הקרוב ביותר ל-2/3 מהממוצע של כולם.';
+        const input = el('input', { class: 'gx-num-in', type: 'text', inputmode: 'numeric', placeholder: '0-100' });
+        function submit() {
+          const g = parseFloat(input.value);
+          if (isNaN(g) || g < 0 || g > 100) { toast('מספר בין 0 ל-100', 'info'); return; }
+          const bots = GUESS23.bots.map(bt => Math.round(50 * Math.pow(2 / 3, bt.depth + round)));
+          const all = [g, ...bots], avg = all.reduce((s, x) => s + x, 0) / all.length, target = 2 / 3 * avg;
+          const minD = Math.min(...all.map(x => Math.abs(x - target))), youWin = Math.abs(g - target) <= minD + 1e-9;
+          area.innerHTML = '';
+          area.appendChild(el('div', { class: 'gx-bot' }, [el('span', { text: 'אתה:' }), el('b', { class: 'guess', text: g })]));
+          GUESS23.bots.forEach((bt, i) => area.appendChild(el('div', { class: 'gx-bot' }, [el('span', { text: bt.name + ':' }), el('span', { class: 'guess', text: bots[i] })])));
+          area.appendChild(el('p', { class: 'gx-prompt', html: 'ממוצע=' + avg.toFixed(1) + ' · יעד(2/3)=' + target.toFixed(1) + ' → ' + (youWin ? '<b style="color:var(--ok)">ניצחת! 🏆</b>' : 'הפסדת') }));
+          if (youWin) ctx.score.add(15); else { ctx.score.miss(); ctx.addMiss(); }
+          round++;
+          area.appendChild(el('div', { class: 'gx-row' }, [el('button', { class: 'gx-btn gx-btn-primary', text: round < N ? 'סבב הבא' : 'סיים', onclick: () => round < N ? go() : ctx.done() })]));
+        }
+        input.addEventListener('keydown', e => { if (e.key === 'Enter') submit(); });
+        area.appendChild(el('div', { class: 'gx-row' }, [input, el('button', { class: 'gx-btn gx-btn-primary', text: 'שלח', onclick: submit })]));
+        if (round === 0) area.appendChild(el('p', { class: 'cap', style: { textAlign: 'center', color: 'var(--muted)', marginTop: '8px' }, html: 'טיפ: אם כולם חושבים "2/3 מהממוצע", ואז 2/3 מ<i>זה</i>... המספרים יורדים ל-0 (שיווי המשקל). נחש נמוך מהבוטים!' }));
+        input.focus();
+      }
+      go();
+    }
+  };
+}
+
+// ---------- סבב: דילמת אסיר חוזרת ----------
+function roundRepeated() {
+  const m = GT_MATRICES.pd;
+  return {
+    title: 'דילמת אסיר חוזרת נגד Tit-for-Tat', data: m, play(host, ctx) {
+      const N = 6; let r = 0, you = 0, ai = 0, last = null;
+      const prompt = el('p', { class: 'gx-prompt' }), log = el('div', { style: { textAlign: 'center', margin: '8px 0' } }), ctr = el('div', { class: 'gx-row' });
+      host.append(prompt, log, ctr);
+      function show() {
+        prompt.innerHTML = 'סבב ' + (r + 1) + '/' + N + ' · אתה: <b>' + you + '</b> · יריב (Tit-for-Tat): <b>' + ai + '</b>. בחר:';
+        ctr.innerHTML = '';
+        ctr.append(
+          el('button', { class: 'gx-btn gx-btn-ok', text: '🤝 שתף (C)', onclick: () => move('C') }),
+          el('button', { class: 'gx-btn', style: { background: 'var(--warn)', color: '#fff', borderColor: 'var(--warn)' }, text: '😈 בגוד (D)', onclick: () => move('D') })
+        );
+      }
+      function move(mine) {
+        const aiMove = last === null ? 'C' : last;
+        const [u1, u2] = m.pay[mine][aiMove];
+        you += u1; ai += u2; last = mine; r++;
+        log.appendChild(el('div', { class: 'gx-bot', html: 'סבב ' + r + ': אתה <b>' + mine + '</b> / יריב <b>' + aiMove + '</b> → +' + u1 + ' / +' + u2 }));
+        if (r >= N) { prompt.innerHTML = 'סיום! אתה <b>' + you + '</b> · יריב <b>' + ai + '</b>. ' + (you >= ai ? '👍' : 'שיתוף הדדי היה מניב יותר.'); ctr.innerHTML = ''; ctx.score.add(you); setTimeout(ctx.done, 1500); }
+        else show();
+      }
+      show();
+    }
+  };
+}
+
+// ---------- הרכבת הרמות ----------
+runLevels({
+  gameId: 'nash',
+  levels: [
+    { key: '1', name: 'נאש טהור', badge: 'יסוד', desc: 'מצא שיווי-משקל, וזהה Pareto מול נאש', rounds: [roundFindNash(GT_MATRICES.coord), roundFindNash(GT_MATRICES.pd), roundPareto(GT_MATRICES.pd)] },
+    { key: '2', name: 'שליטה ו-Maximin', badge: 'תרגול', desc: 'מחיקת אסטרטגיות נשלטות ובחירת ביטחון', rounds: [roundIesds(GT_MATRICES.iesds2), roundIesds(GT_MATRICES.iesds3), roundMaximin(GT_MATRICES.maximin1)] },
+    { key: '3', name: 'מעורב, 2/3 וחוזר', badge: 'אתגר', desc: 'אסטרטגיות מעורבות, משחק 2/3, ומשחק חוזר', rounds: [roundMixed(GT_MATRICES.chicken), roundMixed(GT_MATRICES.chicken2), roundGuess23(), roundRepeated()] }
+  ]
+});
 </script>
 </body>
 </html>
