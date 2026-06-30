@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>פתרונות תרגילים | חבילת למידה</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="topbar"><div class="inner">
+  <a class="home" href="index.html">🏠 דף הבית</a>
+  <span class="sep">|</span>
+  <a href="#t1">תרגיל 1</a><span class="sep">·</span>
+  <a href="#t2">תרגיל 2</a><span class="sep">·</span>
+  <a href="#t3">תרגיל עץ החלטה</a>
+</div></div>
+
+<div class="wrap">
+
+  <div class="page-head">
+    <p class="eyebrow">פתרונות מלאים</p>
+    <h1>✅ פתרונות תרגילים</h1>
+    <span class="ref">תרגיל 1 (חיפוש) · תרגיל 2 (חיפוש יוריסטי ומשחקים) · תרגיל עץ החלטה</span>
+  </div>
+
+  <div class="card"><p>כל פתרון מנומק צעד-אחר-צעד. ההסברים המלאים של השיטות נמצאים בקובצי הנושאים (<a href="01_חיפוש_לא_מיודע.html">חיפוש</a>, <a href="02_חיפוש_מיודע.html">A*</a>, <a href="03_חיפוש_יריבי.html">יריבי</a>, <a href="07_עצי_החלטה.html">עצי החלטה</a>).</p></div>
+
+  <!-- ============ תרגיל 1 ============ -->
+  <h2 id="t1">תרגיל 1 — חיפוש</h2>
+
+  <h3>שאלה 1 — איכר, שועל, אווז וחיטה</h3>
+  <p><strong>ייצוג מצב:</strong> רביעייה <span class="math">(איכר, שועל, אווז, חיטה)</span> כאשר כל רכיב = הגדה שבה הוא נמצא (L=שמאל, R=ימין). <strong>התחלה:</strong> <code>(L,L,L,L)</code> · <strong>מטרה:</strong> <code>(R,R,R,R)</code>.</p>
+  <p><strong>חוקי הפעלה:</strong> האיכר חוצה את הנהר (תמיד), ויכול לקחת איתו פריט אחד מאותה גדה (או כלום). <strong>מצבים אסורים:</strong> שועל+אווז יחד בלי האיכר, או אווז+חיטה יחד בלי האיכר.</p>
+  <div class="box example">
+    <p class="box-title"><span class="ico">🧩</span> הפתרון (7 חציות)</p>
+    <table>
+      <thead><tr><th>צעד</th><th>פעולה</th><th>מצב חדש (F,שועל,אווז,חיטה)</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>האיכר לוקח את האווז ימינה</td><td><code>(R,L,R,L)</code></td></tr>
+        <tr><td>2</td><td>האיכר חוזר לבד</td><td><code>(L,L,R,L)</code></td></tr>
+        <tr><td>3</td><td>האיכר לוקח את השועל ימינה</td><td><code>(R,R,R,L)</code></td></tr>
+        <tr><td>4</td><td>האיכר מחזיר את האווז שמאלה</td><td><code>(L,R,L,L)</code></td></tr>
+        <tr><td>5</td><td>האיכר לוקח את החיטה ימינה</td><td><code>(R,R,L,R)</code></td></tr>
+        <tr><td>6</td><td>האיכר חוזר לבד</td><td><code>(L,R,L,R)</code></td></tr>
+        <tr><td>7</td><td>האיכר לוקח את האווז ימינה</td><td class="good"><code>(R,R,R,R)</code> ✓</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="box tip"><p class="box-title"><span class="ico">🎯</span> איך לבנות את עץ החיפוש והתור</p>
+    <p style="margin:0">מ-<code>(L,L,L,L)</code> הפעולה החוקית היחידה שלא יוצרת מצב אסור היא "קח אווז" (אם ניקח שועל/חיטה — האווז יישאר עם השני). לכן השורש מסתעף בעיקר ל-<code>(R,L,R,L)</code>. <strong>DFS</strong> צולל לאורך ענף יחיד עד הסוף (תוך backtrack ממצבים אסורים/חזרות), ו-<strong>BFS</strong> מפתח שכבה-שכבה. בתור רושמים את המצבים הממתינים לפיתוח; ב-BFS (FIFO) נקבל את המסלול הקצר ביותר (7 צעדים), שזהה כאן ל-DFS כי הפתרון יחיד כמעט.</p>
+  </div>
+
+  <h3>שאלה 2 — מבוך על רשת (DFS / BFS / Greedy)</h3>
+  <div class="box tip"><p class="box-title"><span class="ico">🎯</span> שיטת הפתרון (סדר עדיפות התנועה: מעלה ← שמאלה ← ימינה ← למטה)</p>
+    <ul class="clean" style="margin:0">
+      <li><strong>DFS:</strong> מכל תא, נסה ללכת לפי סדר העדיפות (מעלה תחילה). צלול עד שנתקעים (קיר/ביקור), ואז backtrack. רשום במחסנית את התאים הממתינים.</li>
+      <li><strong>BFS:</strong> פתח את כל השכנים החוקיים (לפי אותו סדר עדיפות) שכבה-שכבה; מבטיח את המסלול הקצר ביותר במספר צעדים.</li>
+      <li><strong>Greedy:</strong> בחר בכל צעד את התא עם המרחק היוריסטי הקטן ביותר ל-G. <strong>יוריסטיקה מתאימה:</strong> מרחק מנהטן <span class="math">|Δשורה|+|Δעמודה|</span> (אין אלכסונים).</li>
+    </ul>
+  </div>
+  <div class="box mistake"><p class="box-title"><span class="ico">⚠️</span> כלל הזהב למבוך</p><p style="margin:0">תמיד יישם את <strong>סדר העדיפות</strong> בעקביות (מעלה→שמאלה→ימינה→למטה), אל תיכנס לתא מושחר (קיר), ואל תחזור לתא שכבר ביקרת בו (closed). עקוב אחר התור/מחסנית בכל צעד — זה מה שנותן את הניקוד.</p></div>
+
+  <h3>שאלה 3 — A* על הגרף</h3>
+  <p><strong>נתונים:</strong> יוריסטיקה <span class="math">h</span>: S=17, A=10, B=13, C=4, D=2, E=4, F=1, G=0. עלויות קשתות: S-A=6, S-B=5, S-C=10, A-E=6, B-E=6, B-D=7, C-D=6, E-F=4, D-F=6, F-G=3.</p>
+  <p>מפעילים A* עם תור עדיפויות של <strong>מסלולים</strong> לפי <span class="math">f=g+h</span>, מבחן יעד בהוצאה, שובר שוויון אלפביתי:</p>
+  <table>
+    <caption>מעקב התור (מסלול : f) — מוציאים את f המינימלי</caption>
+    <thead><tr><th>#</th><th>מוּצא</th><th>נוספים (g+h=f)</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>S</td><td>S-A(6+10=16), S-B(5+13=18), S-C(10+4=14)</td></tr>
+      <tr><td>2</td><td>S-C (14)</td><td>S-C-D(16+2=18)</td></tr>
+      <tr><td>3</td><td>S-A (16)</td><td>S-A-E(12+4=16)</td></tr>
+      <tr><td>4</td><td>S-A-E (16)</td><td>S-A-E-F(16+1=17)</td></tr>
+      <tr><td>5</td><td>S-A-E-F (17)</td><td>S-A-E-F-G(19+0=19)</td></tr>
+      <tr><td>6</td><td>S-B (18)</td><td>S-B-E(11+4=15), S-B-D(12+2=14)</td></tr>
+      <tr><td>7</td><td>S-B-D (14)</td><td>S-B-D-F(18+1=19)</td></tr>
+      <tr><td>8</td><td>S-B-E (15)</td><td>S-B-E-F(15+1=16)</td></tr>
+      <tr><td>9</td><td>S-B-E-F (16)</td><td>S-B-E-F-G(18+0=18)</td></tr>
+      <tr><td>10</td><td class="good">S-B-E-F-G (18) ✓ יעד</td><td>—</td></tr>
+    </tbody>
+  </table>
+  <p><strong>התשובה:</strong> A* מחזיר את המסלול <code>S→B→E→F→G</code> בעלות <strong>18</strong> (האופטימלי).</p>
+  <div class="box mistake"><p class="box-title"><span class="ico">⚠️</span> דקות חשובה</p><p style="margin:0">היוריסטיקה כאן <strong>אינה עקבית</strong> (למשל <span class="math">h(S)=17 &gt; c(S,A)+h(A)=16</span>). לכן <strong>חובה</strong> לנהל תור של <em>מסלולים</em> ולא "לסגור" צמתים מוקדם — אחרת היינו מחזירים בטעות את S-A-E-F-G בעלות 19. ניהול מסלולים (tree-search) עם יוריסטיקה קבילה מבטיח אופטימליות.</p></div>
+
+  <!-- ============ תרגיל 2 ============ -->
+  <h2 id="t2">תרגיל 2 — חיפוש יוריסטי ומשחקים</h2>
+
+  <h3>שאלה 1 — טבלת השוואת אלגוריתמים</h3>
+  <p><strong>נתונים (גרף מכוון):</strong> קשתות S→A=2, S→B=1, S→G=9, A→C=2, A→D=3, B→D=2, B→E=4, C→G=4, D→G=4. יוריסטיקה: S=6, A=0, B=6, C=4, D=1, E=10, G=0.</p>
+  <table>
+    <caption>תוצאות (היעד היחיד הוא G; בודקים איזה מסלול כל אלגוריתם מחזיר)</caption>
+    <thead><tr><th>אלגוריתם</th><th>מסלול שמוחזר</th><th>עלות</th><th>הסבר</th></tr></thead>
+    <tbody>
+      <tr><td>BFS</td><td><code>S→G</code></td><td>9</td><td>G הוא שכן ישיר של S (עומק 1) — BFS מוצא אותו ראשון (מתעלם מעלות).</td></tr>
+      <tr><td>UCS</td><td class="good"><code>S→B→D→G</code></td><td class="good">7</td><td>מינימום עלות: 1+2+4=7 (זול מ-S→G=9 ומ-S→A→C→G=8).</td></tr>
+      <tr><td>Greedy</td><td><code>S→G</code></td><td>9</td><td>אחרי פיתוח A (h=0), הצומת הבא לפי h הוא G (h=0) — מגיע ל-G ישירות.</td></tr>
+      <tr><td>A*</td><td class="good"><code>S→B→D→G</code></td><td class="good">7</td><td>f=g+h מאזן עלות והיוריסטיקה ומוצא את המסלול האופטימלי.</td></tr>
+    </tbody>
+  </table>
+  <p style="font-size:14px;color:var(--muted)">מסלולים אפשריים ל-G: S→G=9 · S→A→C→G=8 · S→A→D→G=9 · <strong>S→B→D→G=7 (אופטימלי)</strong>.</p>
+
+  <h3>שאלה 2 — Minimax עם גיזום Alpha-Beta</h3>
+  <p>העץ: שורש <strong>MAX</strong>, שלושה צמתי <strong>MIN</strong>, ותחתיהם צמתי <strong>MAX</strong> עם עלים (3 בכל קבוצה).</p>
+  <div class="box tip"><p class="box-title"><span class="ico">🎯</span> שיטת הפתרון (זהה לדוגמה המלאה ב<a href="03_חיפוש_יריבי.html">עמוד חיפוש יריבי</a>)</p>
+    <ol class="steps" style="margin:8px 0 0">
+      <li><span class="st">חשב מלמטה למעלה</span> — בכל צומת MAX קח max של העלים, בכל צומת MIN קח min.</li>
+      <li><span class="st">סעיף 1 (שמאל→ימין):</span> עבור שמאל→ימין, תחזק <span class="math">α</span> (גבול MAX, עולה) ו-<span class="math">β</span> (גבול MIN, יורד). גזום בצומת MIN כש-<span class="math">v≤α</span>, ובצומת MAX כש-<span class="math">v≥β</span>.</li>
+      <li><span class="st">סעיף 2 (ימין→שמאל):</span> חזור על אותו תהליך אך התחל מהענף הימני. <strong>הערך הסופי זהה</strong>, אך <strong>הצמתים הנגזמים שונים</strong> (כי הסדר משפיע על הגיזום).</li>
+      <li><span class="st">דווח</span> את ערך ה-MAX בשורש, את הצעד הנבחר, ואת רשימת הצמתים הגזומים בכל כיוון.</li>
+    </ol>
+  </div>
+  <div class="box mistake"><p class="box-title"><span class="ico">⚠️</span> הערה</p><p style="margin:0">השוו את כמות הגיזום בין שני הכיוונים — לרוב כיוון אחד גוזם יותר. ערך ה-MAX וצעד ה-MAX <strong>זהים</strong> בשני הכיוונים (הגיזום לא משנה את התוצאה). הציבו את ערכי העלים מהעותק שלכם לפי השיטה — התבנית המלאה עם α/β בכל צומת מודגמת בעמוד חיפוש יריבי.</p></div>
+
+  <!-- ============ תרגיל עץ החלטה ============ -->
+  <h2 id="t3">תרגיל עץ החלטה (ID3)</h2>
+  <p>פתרון מלא ומפורט (חישוב אנטרופיה, IG לכל תכונה, בניית העץ וחיזוי U/V/W) נמצא ב<a href="07_עצי_החלטה.html">עמוד עצי החלטה</a> — זוהי בדיוק דוגמת הפטריות.</p>
+  <div class="box example">
+    <p class="box-title"><span class="ico">🧩</span> תמצית התשובה</p>
+    <ul class="clean" style="margin:0">
+      <li><strong>שורש:</strong> Smooth (IG הכי גבוה ≈ 0.049). שני הענפים מתפצלים לפי Smelly.</li>
+      <li><strong>העץ:</strong> Smooth=0 → (Smelly=0→אכיל, Smelly=1→רעיל) · Smooth=1 → (Smelly=1→אכיל, Smelly=0→רעיל).</li>
+      <li><strong>חיזוי:</strong> <span class="good">U = אכיל</span>, <span class="good">V = אכיל</span>, <span class="bad">W = רעיל</span>.</li>
+    </ul>
+  </div>
+
+  <div class="card" style="text-align:center;margin-top:26px">
+    <a class="home" href="פתרונות_מבחנים.html" style="display:inline-block">להמשך ◀ פתרונות המבחנים</a>
+  </div>
+
+</div>
+</body>
+</html>

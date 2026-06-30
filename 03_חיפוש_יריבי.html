@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>חיפוש יריבי | חבילת למידה</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="topbar"><div class="inner">
+  <a class="home" href="index.html">🏠 דף הבית</a>
+  <span class="sep">|</span>
+  <a href="02_חיפוש_מיודע.html">▶ חיפוש מיודע</a>
+  <span class="sep">·</span>
+  <a href="04_תורת_משחקים.html">תורת המשחקים ◀</a>
+</div></div>
+
+<div class="wrap">
+
+  <div class="page-head">
+    <p class="eyebrow">שיעור 4 · נושא 03</p>
+    <h1>חיפוש יריבי (Adversarial Search)</h1>
+    <span class="ref">AIMA פרק 5 · Minimax · גיזום Alpha-Beta · פתולוגיה · פונקציית הערכה</span>
+  </div>
+
+  <div class="card">
+    <p>בחיפוש יריבי שני שחקנים מתחלפים: <strong>MAX</strong> רוצה למקסם את הערך, ו-<strong>MIN</strong> רוצה למזער אותו. שניהם משחקים <strong>אופטימלית</strong>. השאלה הקלאסית במבחן: לתת ערכים בעץ Minimax, ולסמן אילו ענפים נגזמים ב-Alpha-Beta.</p>
+  </div>
+
+  <!-- ============ ניסוח ============ -->
+  <h2>1. ניסוח משחק</h2>
+  <div class="kv">
+    <dt>שחקנים</dt><dd>MAX (אנחנו) ו-MIN (היריב), מתחלפים בתורות.</dd>
+    <dt>מצב יעד / סיום</dt><dd>מצב טרמינלי (סוף משחק).</dd>
+    <dt>תועלת (Utility)</dt><dd>ערך מספרי בעלי העץ — התוצאה עבור MAX.</dd>
+    <dt>הנחה</dt><dd>שני השחקנים <strong>רציונליים</strong> ומשחקים אופטימלית.</dd>
+  </div>
+
+  <!-- ============ Minimax ============ -->
+  <h2>2. Minimax — כלל הערך</h2>
+  <div class="box def">
+    <p class="box-title"><span class="ico">📘</span> הכלל</p>
+    <ul class="clean" style="margin:0">
+      <li><strong>צומת MAX</strong> → לוקח את ה-<strong>מקסימום</strong> של ערכי הילדים.</li>
+      <li><strong>צומת MIN</strong> → לוקח את ה-<strong>מינימום</strong> של ערכי הילדים.</li>
+      <li>מחשבים <strong>מלמטה למעלה</strong> (מהעלים אל השורש).</li>
+    </ul>
+  </div>
+  <p>נעבוד על העץ הבא (מבחן הדוגמה): שורש <strong>MAX</strong> (רמה 0), שלושה צמתי <strong>MIN</strong> (רמה 1), ותשעה עלים. נחשב מלמטה למעלה:</p>
+
+  <div class="fig">
+    <svg viewBox="0 0 620 320" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="עץ Minimax עם ערכים">
+      <!-- edges -->
+      <g stroke="#9aa6c0" stroke-width="2">
+        <line x1="310" y1="62" x2="120" y2="150"/><line x1="310" y1="62" x2="310" y2="150"/><line x1="310" y1="62" x2="500" y2="150"/>
+        <!-- MIN1 to leaves -->
+        <line x1="120" y1="170" x2="65" y2="252"/><line x1="120" y1="170" x2="120" y2="252"/><line x1="120" y1="170" x2="175" y2="252"/>
+        <!-- MIN2 -->
+        <line x1="310" y1="170" x2="255" y2="252"/><line x1="310" y1="170" x2="310" y2="252"/><line x1="310" y1="170" x2="365" y2="252"/>
+        <!-- MIN3 -->
+        <line x1="500" y1="170" x2="445" y2="252"/><line x1="500" y1="170" x2="500" y2="252"/><line x1="500" y1="170" x2="555" y2="252"/>
+      </g>
+      <!-- root MAX -->
+      <circle cx="310" cy="45" r="22" fill="#27408b" stroke="#1b2a5e" stroke-width="2"/><text x="310" y="52" text-anchor="middle" fill="#fff" font-size="19" font-weight="700">4</text>
+      <text x="350" y="50" fill="#27408b" font-size="14" font-weight="700">MAX</text>
+      <!-- MIN nodes -->
+      <g>
+        <circle cx="120" cy="160" r="20" fill="#fdecec" stroke="#b23b3b" stroke-width="2"/><text x="120" y="167" text-anchor="middle" fill="#b23b3b" font-size="18" font-weight="700">3</text>
+        <circle cx="310" cy="160" r="20" fill="#fdecec" stroke="#b23b3b" stroke-width="2"/><text x="310" y="167" text-anchor="middle" fill="#b23b3b" font-size="18" font-weight="700">4</text>
+        <circle cx="500" cy="160" r="20" fill="#fdecec" stroke="#b23b3b" stroke-width="2"/><text x="500" y="167" text-anchor="middle" fill="#b23b3b" font-size="18" font-weight="700">2</text>
+      </g>
+      <text x="540" y="165" fill="#b23b3b" font-size="14" font-weight="700">MIN</text>
+      <!-- leaves -->
+      <g font-family="Segoe UI,Arial" font-size="16" font-weight="700" text-anchor="middle">
+        <g fill="#1f2533">
+          <rect x="50" y="252" width="30" height="30" rx="5" fill="#eef2ff" stroke="#27408b"/><text x="65" y="273">3</text>
+          <rect x="105" y="252" width="30" height="30" rx="5" fill="#eef2ff" stroke="#27408b"/><text x="120" y="273">7</text>
+          <rect x="160" y="252" width="30" height="30" rx="5" fill="#eef2ff" stroke="#27408b"/><text x="175" y="273">8</text>
+          <rect x="240" y="252" width="30" height="30" rx="5" fill="#eef2ff" stroke="#27408b"/><text x="255" y="273">10</text>
+          <rect x="295" y="252" width="30" height="30" rx="5" fill="#eef2ff" stroke="#27408b"/><text x="310" y="273">8</text>
+          <rect x="350" y="252" width="30" height="30" rx="5" fill="#eef2ff" stroke="#27408b"/><text x="365" y="273">4</text>
+          <rect x="430" y="252" width="30" height="30" rx="5" fill="#eef2ff" stroke="#27408b"/><text x="445" y="273">2</text>
+          <rect x="485" y="252" width="30" height="30" rx="5" fill="#eef2ff" stroke="#27408b"/><text x="500" y="273">7</text>
+          <rect x="540" y="252" width="30" height="30" rx="5" fill="#eef2ff" stroke="#27408b"/><text x="555" y="273">5</text>
+        </g>
+      </g>
+    </svg>
+    <div class="cap">איור: MIN של כל שלישייה — <code>min(3,7,8)=3</code>, <code>min(10,8,4)=4</code>, <code>min(2,7,5)=2</code>. השורש MAX: <code>max(3,4,2)=4</code>.</div>
+  </div>
+  <p><strong>ערך המשחק = 4</strong>, והמהלך המומלץ ל-MAX הוא <strong>הענף האמצעי</strong> (זה שמוביל לערך 4).</p>
+
+  <h3>שיטת פתרון — "מלא את ערכי עץ ה-Minimax"</h3>
+  <ol class="steps">
+    <li><span class="st">סמן את סוג כל רמה</span> — מי MAX ומי MIN (השורש בד"כ MAX אלא אם נאמר אחרת).</li>
+    <li><span class="st">התחל מהעלים</span> וטפס שכבה-שכבה כלפי מעלה.</li>
+    <li><span class="st">בכל צומת MAX קח max, בכל צומת MIN קח min</span> של הילדים.</li>
+    <li><span class="st">בשורש — קרא את הערך</span> וסמן את הענף שהוביל אליו = המהלך הנבחר.</li>
+  </ol>
+
+  <!-- ============ Alpha-Beta ============ -->
+  <h2>3. גיזום Alpha-Beta</h2>
+  <p>Alpha-Beta מחשב את <strong>אותו ערך</strong> כמו Minimax, אבל <strong>חוסך</strong> פיתוח של ענפים שלא יכולים להשפיע על התוצאה.</p>
+  <div class="box def">
+    <p class="box-title"><span class="ico">📘</span> המשתנים ותנאי הגיזום</p>
+    <ul class="clean" style="margin:0">
+      <li><span class="math">α</span> = הערך הטוב ביותר ש-<strong>MAX</strong> מובטח לו עד כה במסלול (גבול תחתון).</li>
+      <li><span class="math">β</span> = הערך הטוב ביותר ש-<strong>MIN</strong> מובטח לו עד כה במסלול (גבול עליון).</li>
+      <li><strong>גיזום בצומת MIN (α-cutoff):</strong> אם <span class="math">v ≤ α</span> → גזום את שאר הילדים.</li>
+      <li><strong>גיזום בצומת MAX (β-cutoff):</strong> אם <span class="math">v ≥ β</span> → גזום את שאר הילדים.</li>
+      <li>בקיצור: גוזמים כש-<span class="math">α ≥ β</span>.</li>
+    </ul>
+  </div>
+
+  <h3>מעקב שמאל→ימין על העץ שלנו</h3>
+  <table>
+    <caption>הרצת Alpha-Beta (שורש MAX, α=−∞, β=+∞)</caption>
+    <thead><tr><th>צעד</th><th>פעולה</th><th>α</th><th>β</th><th>הערה</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>MIN₁: עלים 3,7,8</td><td>−∞</td><td>3</td><td>MIN₁ = 3. חוזר לשורש.</td></tr>
+      <tr><td>2</td><td>שורש מעדכן α</td><td class="hl">3</td><td>+∞</td><td>MAX מובטח ≥ 3.</td></tr>
+      <tr><td>3</td><td>MIN₂: עלה 10 → 8 → 4</td><td>3</td><td>4</td><td>v=4 &gt; α=3, אין גיזום. MIN₂ = 4.</td></tr>
+      <tr><td>4</td><td>שורש מעדכן α</td><td class="hl">4</td><td>+∞</td><td>MAX מובטח ≥ 4.</td></tr>
+      <tr><td>5</td><td>MIN₃: עלה 2</td><td>4</td><td>2</td><td><span style="color:var(--warn);font-weight:700">v=2 ≤ α=4 → גיזום!</span></td></tr>
+      <tr><td>6</td><td class="bad">עלים 7, 5 — נגזמים</td><td>4</td><td>—</td><td>לא מפותחים כלל.</td></tr>
+    </tbody>
+  </table>
+  <p><strong>נגזמו 2 עלים (7 ו-5 מתחת ל-MIN₃).</strong> הערך הסופי נשאר <strong>4</strong>.</p>
+
+  <div class="fig">
+    <svg viewBox="0 0 620 320" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="עץ Alpha-Beta עם עלים גזומים">
+      <g stroke="#9aa6c0" stroke-width="2">
+        <line x1="310" y1="62" x2="120" y2="150"/><line x1="310" y1="62" x2="310" y2="150"/><line x1="310" y1="62" x2="500" y2="150"/>
+        <line x1="120" y1="170" x2="65" y2="252"/><line x1="120" y1="170" x2="120" y2="252"/><line x1="120" y1="170" x2="175" y2="252"/>
+        <line x1="310" y1="170" x2="255" y2="252"/><line x1="310" y1="170" x2="310" y2="252"/><line x1="310" y1="170" x2="365" y2="252"/>
+        <line x1="500" y1="170" x2="445" y2="252"/>
+      </g>
+      <!-- pruned edges dashed red -->
+      <g stroke="#b23b3b" stroke-width="2" stroke-dasharray="5 4">
+        <line x1="500" y1="170" x2="500" y2="252"/><line x1="500" y1="170" x2="555" y2="252"/>
+      </g>
+      <circle cx="310" cy="45" r="22" fill="#27408b" stroke="#1b2a5e" stroke-width="2"/><text x="310" y="52" text-anchor="middle" fill="#fff" font-size="19" font-weight="700">4</text>
+      <circle cx="120" cy="160" r="20" fill="#fdecec" stroke="#b23b3b" stroke-width="2"/><text x="120" y="167" text-anchor="middle" fill="#b23b3b" font-size="18" font-weight="700">3</text>
+      <circle cx="310" cy="160" r="20" fill="#fdecec" stroke="#b23b3b" stroke-width="2"/><text x="310" y="167" text-anchor="middle" fill="#b23b3b" font-size="18" font-weight="700">4</text>
+      <circle cx="500" cy="160" r="20" fill="#fdecec" stroke="#b23b3b" stroke-width="2"/><text x="500" y="167" text-anchor="middle" fill="#b23b3b" font-size="18" font-weight="700">2</text>
+      <g font-family="Segoe UI,Arial" font-size="16" font-weight="700" text-anchor="middle" fill="#1f2533">
+        <rect x="50" y="252" width="30" height="30" rx="5" fill="#eef2ff" stroke="#27408b"/><text x="65" y="273">3</text>
+        <rect x="105" y="252" width="30" height="30" rx="5" fill="#eef2ff" stroke="#27408b"/><text x="120" y="273">7</text>
+        <rect x="160" y="252" width="30" height="30" rx="5" fill="#eef2ff" stroke="#27408b"/><text x="175" y="273">8</text>
+        <rect x="240" y="252" width="30" height="30" rx="5" fill="#eef2ff" stroke="#27408b"/><text x="255" y="273">10</text>
+        <rect x="295" y="252" width="30" height="30" rx="5" fill="#eef2ff" stroke="#27408b"/><text x="310" y="273">8</text>
+        <rect x="350" y="252" width="30" height="30" rx="5" fill="#eef2ff" stroke="#27408b"/><text x="365" y="273">4</text>
+        <rect x="430" y="252" width="30" height="30" rx="5" fill="#eef2ff" stroke="#27408b"/><text x="445" y="273">2</text>
+        <!-- pruned leaves -->
+        <rect x="485" y="252" width="30" height="30" rx="5" fill="#fdecec" stroke="#b23b3b" stroke-dasharray="4 3"/><text x="500" y="273" fill="#b23b3b">7</text>
+        <rect x="540" y="252" width="30" height="30" rx="5" fill="#fdecec" stroke="#b23b3b" stroke-dasharray="4 3"/><text x="555" y="273" fill="#b23b3b">5</text>
+        <line x1="487" y1="254" x2="513" y2="280" stroke="#b23b3b" stroke-width="2"/><line x1="513" y1="254" x2="487" y2="280" stroke="#b23b3b" stroke-width="2"/>
+        <line x1="542" y1="254" x2="568" y2="280" stroke="#b23b3b" stroke-width="2"/><line x1="568" y1="254" x2="542" y2="280" stroke="#b23b3b" stroke-width="2"/>
+      </g>
+    </svg>
+    <div class="cap">איור: העלים 7 ו-5 (אדום מקווקו, עם X) נגזמים — אחרי שראינו עלה=2 ב-MIN₃ ידענו שהוא ≤2&lt;4, ו-MAX לעולם לא יבחר בו.</div>
+  </div>
+
+  <h3>שיטת פתרון — "סמן את הגיזום ב-Alpha-Beta"</h3>
+  <ol class="steps">
+    <li><span class="st">עבור שמאל→ימין</span> (אלא אם נאמר אחרת) וחשב ערכים כמו Minimax.</li>
+    <li><span class="st">תחזק α ו-β לאורך המסלול</span> — α עולה בצמתי MAX, β יורד בצמתי MIN.</li>
+    <li><span class="st">בכל ילד בדוק את תנאי הגיזום</span> — בצומת MIN: <span class="math">v≤α</span>? בצומת MAX: <span class="math">v≥β</span>?</li>
+    <li><span class="st">סמן בבירור את הענפים הנגזמים</span> (X / מקווקו) וכתוב "לא מפותח".</li>
+    <li><span class="st">ודא שהערך בשורש זהה ל-Minimax</span> — בדיקת שפיות.</li>
+  </ol>
+
+  <!-- ============ Move ordering ============ -->
+  <h2>4. סדר המהלכים והגיזום המקסימלי</h2>
+  <p>יעילות הגיזום תלויה ב<strong>סדר</strong>: אם בודקים קודם את המהלכים הטובים ביותר — גוזמים יותר.</p>
+  <div class="box formula">
+    <p class="box-title"><span class="ico">📐</span> סיבוכיות</p>
+    <p style="margin:0">בלי גיזום: <span class="math">O(b<sup>d</sup>)</span>. עם <strong>סדר אופטימלי</strong>: <span class="math">O(b<sup>d/2</sup>)</span> — מאפשר להגיע לעומק <strong>כפול</strong> באותו זמן.</p>
+  </div>
+  <div class="box tip"><p class="box-title"><span class="ico">🎯</span> "סדר מחדש לגיזום מקסימלי"</p><p style="margin:0">בכל צומת MIN שים <strong>קודם</strong> את הערך ה<strong>נמוך</strong> ביותר (כדי לחסום מהר את MAX); בכל צומת MAX שים קודם את ה<strong>גבוה</strong> ביותר. כך α ו-β "נסגרים" מוקדם ונגזם הכי הרבה.</p></div>
+
+  <!-- ============ Eval + horizon ============ -->
+  <h2>5. פונקציית הערכה, חיתוך עומק ואפקט האופק</h2>
+  <div class="kv">
+    <dt>פונקציית הערכה <span class="math">e(s)</span></dt><dd>במשחקים גדולים אי-אפשר לפתח עד הסוף, אז חותכים בעומק קבוע ומעריכים את המצב. למשל בשחמט: <span class="math">e = w₁f₁ + w₂f₂ + ...</span> (חייל=1, פרש=3, מלכה=9...).</dd>
+    <dt>אפקט האופק (Horizon)</dt><dd>איום רע נדחק "מעבר לאופק" החיפוש ולא נראה. פתרון: הרחבות סלקטיביות (singular/quiescence) למהלכים "כופים".</dd>
+  </div>
+
+  <!-- ============ פתולוגיה ============ -->
+  <h2>6. פתולוגיה של עצי משחק (Search Tree Pathology)</h2>
+  <div class="box def">
+    <p class="box-title"><span class="ico">📘</span> מה זה</p>
+    <p style="margin:0">תופעה מפתיעה שבה <strong>חיפוש עמוק יותר דווקא מחמיר את ההחלטה</strong> (במקום לשפר). זה קורה כשפונקציית ההערכה רועשת ושגיאות מתפשטות ומתעצמות במעלה העץ. בדרך כלל זה <em>לא</em> קורה במשחקים אמיתיים (שם עומק עוזר), אך בעצים מלאכותיים עם שגיאת הערכה אחידה זה אפשרי.</p>
+  </div>
+
+  <!-- ============ N-players ============ -->
+  <h2>7. משחקי N שחקנים (מעבר ל-2)</h2>
+  <table>
+    <thead><tr><th>אלגוריתם</th><th>הנחה</th><th>אופי</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Max<sup>n</sup></strong></td><td>כל שחקן ממקסם את הציון <em>של עצמו</em>.</td><td>ריאליסטי יותר, מורכב.</td></tr>
+      <tr><td><strong>Paranoid</strong></td><td>כל שאר השחקנים "מתאחדים" נגד השחקן הנוכחי.</td><td>פסימי; מאפשר גיזום כמו Alpha-Beta.</td></tr>
+    </tbody>
+  </table>
+
+  <div class="box mistake">
+    <p class="box-title"><span class="ico">⚠️</span> טעויות נפוצות</p>
+    <ul class="clean" style="margin:0">
+      <li>להחליף max ו-min בין הרמות, או להניח שהשורש MIN כשהוא MAX.</li>
+      <li>לטעון ש-Alpha-Beta מחזיר ערך שונה מ-Minimax — <strong>לא</strong>; רק חוסך צמתים.</li>
+      <li>לגזום בצומת MIN לפי <span class="math">v≥β</span> (זה תנאי MAX) — בצומת MIN גוזמים כש-<span class="math">v≤α</span>.</li>
+      <li>לשכוח שהגיזום תלוי <strong>סדר</strong> — ימין→שמאל ייתן גיזום שונה.</li>
+      <li>לבלבל בין α (גבול MAX) ל-β (גבול MIN).</li>
+    </ul>
+  </div>
+
+  <div class="box formula">
+    <p class="box-title"><span class="ico">📐</span> לסיכום הנושא</p>
+    <ul class="clean" style="margin:0">
+      <li>MAX→max, MIN→min, מחשבים מלמטה למעלה.</li>
+      <li>Alpha-Beta: גיזום ב-MIN כש-<span class="math">v≤α</span>, ב-MAX כש-<span class="math">v≥β</span>. אותו ערך, פחות צמתים.</li>
+      <li>סדר אופטימלי ⇐ <span class="math">O(b<sup>d/2</sup>)</span> במקום <span class="math">O(b<sup>d</sup>)</span>.</li>
+    </ul>
+  </div>
+
+  <div class="card" style="text-align:center;margin-top:26px">
+    <a class="home" href="04_תורת_משחקים.html" style="display:inline-block">הנושא הבא ◀ תורת המשחקים</a>
+  </div>
+
+</div>
+</body>
+</html>

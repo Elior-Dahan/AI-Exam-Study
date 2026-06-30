@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>חיפוש לא-מיודע | חבילת למידה</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="topbar"><div class="inner">
+  <a class="home" href="index.html">🏠 דף הבית</a>
+  <span class="sep">|</span>
+  <a href="00_מבוא.html">▶ מבוא</a>
+  <span class="sep">·</span>
+  <a href="02_חיפוש_מיודע.html">חיפוש מיודע (A*) ◀</a>
+</div></div>
+
+<div class="wrap">
+
+  <div class="page-head">
+    <p class="eyebrow">שיעור 2 · נושא 01</p>
+    <h1>חיפוש לא-מיודע (Uninformed Search)</h1>
+    <span class="ref">AIMA פרק 3.4 · BFS · DFS · IDS · UCS — מופיע בכל מבחן</span>
+  </div>
+
+  <div class="card">
+    <p>חיפוש <strong>לא-מיודע</strong> ("עיוור") אינו יודע כלום על הקרבה ליעד — הוא רק יודע להבחין במצב יעד. ההבדל בין האלגוריתמים הוא <strong>איזה צומת נבחר לפיתוח הבא</strong>, וזה נקבע ע"י <strong>מבנה הנתונים של גבול החיפוש (Frontier / תור)</strong>. זהו הלב של כל שאלות החיפוש במבחן.</p>
+  </div>
+
+  <!-- ============ ניסוח בעיה ============ -->
+  <h2>1. ניסוח בעיית חיפוש — 5 רכיבים</h2>
+  <p>כל בעיית חיפוש מוגדרת ע"י (AIMA):</p>
+  <div class="kv">
+    <dt>1. מצב התחלתי</dt><dd>המצב שממנו הסוכן מתחיל (<span class="math">S</span>).</dd>
+    <dt>2. פעולות</dt><dd>קבוצת הפעולות החוקיות בכל מצב.</dd>
+    <dt>3. מודל מעבר</dt><dd>תוצאת הפעלת פעולה על מצב: <span class="math">Result(s,a)=s'</span>.</dd>
+    <dt>4. מבחן יעד</dt><dd>האם מצב נתון הוא יעד.</dd>
+    <dt>5. עלות מסלול</dt><dd>סכום עלויות הקשתות לאורך המסלול (לצרכי אופטימליות).</dd>
+  </div>
+  <div class="box tip">
+    <p class="box-title"><span class="ico">🎯</span> "ייצוג מצב" — איך עונים (כמו בתרגיל החקלאי/נהר)</p>
+    <p style="margin:0">מגדירים <strong>מהו מצב</strong> (וקטור שמתאר את כל המידע הרלוונטי, למשל מי נמצא בכל גדה), <strong>מצב התחלה ומצב יעד</strong>, <strong>פעולות</strong> (מה מותר), ו<strong>אילוצים</strong> (מצבים אסורים — למשל זאב+עז לבד). תמיד לוודא שהייצוג <em>מבחין</em> בין מצבים שונים ו<em>סוגר</em> מצבים לא-חוקיים.</p>
+  </div>
+
+  <!-- ============ שלד החיפוש ============ -->
+  <h2>2. שלד החיפוש הכללי + מבנה התור</h2>
+  <p>כל אלגוריתמי החיפוש זהים בשלד, ונבדלים <strong>רק</strong> בסדר שבו מוציאים צמתים מהתור:</p>
+  <div class="pseudo"><span class="cm"># General Graph-Search</span>
+frontier ← {start};  explored ← {}
+<span class="kw">while</span> frontier not empty:
+    node ← REMOVE(frontier)        <span class="cm"># ← כאן ההבדל בין האלגוריתמים</span>
+    <span class="kw">if</span> GOAL(node): <span class="kw">return</span> path(node)   <span class="cm"># מבחן יעד בעת הוצאה מהתור</span>
+    add node to explored
+    <span class="kw">for</span> child in EXPAND(node):
+        <span class="kw">if</span> child not in explored ∪ frontier:
+            add child to frontier</div>
+
+  <table>
+    <caption>מבנה התור קובע את האלגוריתם</caption>
+    <thead><tr><th>אלגוריתם</th><th>מבנה הגבול (Frontier)</th><th>מי יוצא ראשון?</th></tr></thead>
+    <tbody>
+      <tr><td><strong>BFS</strong></td><td>תור FIFO</td><td>הוותיק ביותר (הרדוד ביותר)</td></tr>
+      <tr><td><strong>DFS</strong></td><td>מחסנית LIFO</td><td>החדש ביותר (העמוק ביותר)</td></tr>
+      <tr><td><strong>UCS</strong></td><td>תור עדיפויות לפי <span class="math">g(n)</span></td><td>בעל עלות המסלול הנמוכה ביותר</td></tr>
+    </tbody>
+  </table>
+  <div class="box tip">
+    <p class="box-title"><span class="ico">🎯</span> מוסכמות שנעבוד לפיהן (כתבו זאת במבחן)</p>
+    <ul class="clean" style="margin:0">
+      <li><strong>מבחן יעד בעת הוצאה מהתור (pop)</strong> — לא בעת יצירה. (הכרחי כדי ש-UCS/A* יהיו נכונים).</li>
+      <li><strong>שובר שוויון אלפביתי</strong> כשעלויות/עומק שווים.</li>
+      <li><strong>graph-search</strong>: צומת שכבר פותח לא מפותח שוב.</li>
+    </ul>
+  </div>
+
+  <!-- ============ הגרף לדוגמה ============ -->
+  <h2>3. הגרף שנעבוד עליו לכל האלגוריתמים</h2>
+  <p>נשתמש באותו גרף לאורך כל הנושא. המספרים על הקשתות הם <strong>עלויות</strong> (BFS/DFS/IDS מתעלמים מהן; רק UCS משתמש בהן). מצב התחלה <span class="badge">S</span>, מצב יעד <span class="badge" style="background:var(--ok-soft);color:var(--ok)">G</span>.</p>
+  <div class="fig">
+    <svg viewBox="0 0 560 370" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="גרף החיפוש לדוגמה">
+      <!-- edges -->
+      <g stroke="#9aa6c0" stroke-width="2.5">
+        <line x1="280" y1="45" x2="150" y2="140"/>
+        <line x1="280" y1="45" x2="410" y2="140"/>
+        <line x1="150" y1="140" x2="90" y2="245"/>
+        <line x1="150" y1="140" x2="280" y2="245"/>
+        <line x1="410" y1="140" x2="280" y2="245"/>
+        <line x1="90" y1="245" x2="235" y2="330"/>
+        <line x1="280" y1="245" x2="235" y2="330"/>
+      </g>
+      <!-- edge cost labels -->
+      <g font-family="Consolas,monospace" font-size="15" font-weight="700" fill="#b8860b">
+        <rect x="206" y="80" width="20" height="20" rx="4" fill="#fff7e0"/><text x="216" y="95" text-anchor="middle">1</text>
+        <rect x="335" y="80" width="20" height="20" rx="4" fill="#fff7e0"/><text x="345" y="95" text-anchor="middle">4</text>
+        <rect x="103" y="185" width="20" height="20" rx="4" fill="#fff7e0"/><text x="113" y="200" text-anchor="middle">2</text>
+        <rect x="208" y="185" width="20" height="20" rx="4" fill="#fff7e0"/><text x="218" y="200" text-anchor="middle">5</text>
+        <rect x="338" y="185" width="20" height="20" rx="4" fill="#fff7e0"/><text x="348" y="200" text-anchor="middle">1</text>
+        <rect x="148" y="282" width="20" height="20" rx="4" fill="#fff7e0"/><text x="158" y="297" text-anchor="middle">3</text>
+        <rect x="258" y="282" width="20" height="20" rx="4" fill="#fff7e0"/><text x="268" y="297" text-anchor="middle">1</text>
+      </g>
+      <!-- nodes -->
+      <g font-family="Segoe UI,Arial" font-size="20" font-weight="700" text-anchor="middle">
+        <circle cx="280" cy="45" r="26" fill="#27408b" stroke="#1b2a5e" stroke-width="2"/><text x="280" y="52" fill="#fff">S</text>
+        <circle cx="150" cy="140" r="26" fill="#eef2ff" stroke="#27408b" stroke-width="2"/><text x="150" y="147" fill="#27408b">A</text>
+        <circle cx="410" cy="140" r="26" fill="#eef2ff" stroke="#27408b" stroke-width="2"/><text x="410" y="147" fill="#27408b">B</text>
+        <circle cx="90" cy="245" r="26" fill="#eef2ff" stroke="#27408b" stroke-width="2"/><text x="90" y="252" fill="#27408b">C</text>
+        <circle cx="280" cy="245" r="26" fill="#eef2ff" stroke="#27408b" stroke-width="2"/><text x="280" y="252" fill="#27408b">D</text>
+        <circle cx="235" cy="330" r="26" fill="#1b7f5a" stroke="#0f5a3e" stroke-width="2"/><text x="235" y="337" fill="#fff">G</text>
+      </g>
+    </svg>
+    <div class="cap">איור: שכנים לפי סדר אלפביתי — S:{A,B} · A:{C,D} · B:{D} · C:{G} · D:{G}</div>
+  </div>
+
+  <!-- ============ BFS ============ -->
+  <h2>4. BFS — חיפוש לרוחב</h2>
+  <p>מפתח את הגרף <strong>שכבה-שכבה</strong>: כל צמתי עומק 1, ואז כל צמתי עומק 2, וכו'. משתמש ב<strong>תור FIFO</strong> — נכנס מאחור, יוצא מקדימה.</p>
+  <table>
+    <caption>מעקב תור FIFO ב-BFS (יוצא משמאל, נכנס מימין)</caption>
+    <thead><tr><th>צעד</th><th>מוּצָא לפיתוח</th><th>נוספים לתור</th><th>התור אחרי הצעד</th></tr></thead>
+    <tbody>
+      <tr><td>0</td><td>—</td><td>S</td><td><code>[S]</code></td></tr>
+      <tr><td>1</td><td>S</td><td>A, B</td><td><code>[A, B]</code></td></tr>
+      <tr><td>2</td><td>A</td><td>C, D</td><td><code>[B, C, D]</code></td></tr>
+      <tr><td>3</td><td>B</td><td>(D כבר בתור)</td><td><code>[C, D]</code></td></tr>
+      <tr><td>4</td><td>C</td><td>G</td><td><code>[D, G]</code></td></tr>
+      <tr><td>5</td><td>D</td><td>(G כבר בתור)</td><td><code>[G]</code></td></tr>
+      <tr><td>6</td><td class="good">G ✓ יעד!</td><td>—</td><td><code>[ ]</code></td></tr>
+    </tbody>
+  </table>
+  <p><strong>סדר פיתוח:</strong> <code>S → A → B → C → D → G</code> · <strong>מסלול שנמצא:</strong> <code>S→A→C→G</code> (3 קשתות — המסלול הקצר ביותר במספר קשתות).</p>
+
+  <!-- ============ DFS ============ -->
+  <h2>5. DFS — חיפוש לעומק</h2>
+  <p>צולל <strong>עמוק ככל האפשר</strong> בענף אחד לפני שחוזר אחורה (backtrack). משתמש ב<strong>מחסנית LIFO</strong>.</p>
+  <table>
+    <caption>מעקב מחסנית LIFO ב-DFS (הראש מימין; אלפבית → דוחפים בסדר הפוך כדי שהראשון אלפביתית ייצא ראשון)</caption>
+    <thead><tr><th>צעד</th><th>מוּצָא לפיתוח</th><th>נדחפים</th><th>המחסנית (ראש ←)</th></tr></thead>
+    <tbody>
+      <tr><td>0</td><td>—</td><td>S</td><td><code>[S]</code></td></tr>
+      <tr><td>1</td><td>S</td><td>B, A</td><td><code>[B, A]</code></td></tr>
+      <tr><td>2</td><td>A</td><td>D, C</td><td><code>[B, D, C]</code></td></tr>
+      <tr><td>3</td><td>C</td><td>G</td><td><code>[B, D, G]</code></td></tr>
+      <tr><td>4</td><td class="good">G ✓ יעד!</td><td>—</td><td><code>[B, D]</code></td></tr>
+    </tbody>
+  </table>
+  <p><strong>סדר פיתוח:</strong> <code>S → A → C → G</code> · <strong>מסלול:</strong> <code>S→A→C→G</code>. כאן DFS "התמזל" ומצא מהר, אך בכלל הוא <strong>לא מבטיח</strong> את המסלול הקצר.</p>
+
+  <!-- ============ IDS ============ -->
+  <h2>6. IDS — העמקה איטרטיבית</h2>
+  <p>מריץ DFS עם <strong>הגבלת עומק</strong> שגדלה בכל סבב: 0, 1, 2, 3... עד שנמצא יעד. משלב את <strong>חיסכון הזיכרון של DFS</strong> עם <strong>השלמות והאופטימליות של BFS</strong>.</p>
+  <table>
+    <caption>סבבי IDS על הגרף שלנו</caption>
+    <thead><tr><th>גבול עומק</th><th>צמתים שפותחו</th><th>נמצא יעד?</th></tr></thead>
+    <tbody>
+      <tr><td>0</td><td>S</td><td>לא</td></tr>
+      <tr><td>1</td><td>S, A, B</td><td>לא</td></tr>
+      <tr><td>2</td><td>S, A, C, D, B</td><td>לא (G בעומק 3)</td></tr>
+      <tr><td>3</td><td>S, A, C, <span class="good">G ✓</span></td><td>כן! מסלול <code>S→A→C→G</code></td></tr>
+    </tbody>
+  </table>
+  <div class="box tip"><p class="box-title"><span class="ico">💡</span> למה לא מבזבזים?</p><p style="margin:0">החזרה על שכבות רדודות זולה: רוב הצמתים נמצאים ב<em>שכבה האחרונה</em>, ולכן העלות הכוללת נשארת <span class="math">O(b<sup>d</sup>)</span> — מאותו סדר גודל כמו BFS, אבל עם זיכרון <span class="math">O(b·d)</span> בלבד.</p></div>
+
+  <!-- ============ UCS ============ -->
+  <h2>7. UCS — חיפוש בעלות אחידה (Dijkstra)</h2>
+  <p>מפתח תמיד את הצומת עם <strong>עלות המסלול המצטברת הנמוכה ביותר</strong> <span class="math">g(n)</span>. זהו האלגוריתם הלא-מיודע <strong>היחיד שמתחשב בעלויות</strong>, ולכן <strong>אופטימלי</strong>.</p>
+  <table>
+    <caption>מעקב תור עדיפויות לפי <span class="math">g</span> (מוציאים את המינימום)</caption>
+    <thead><tr><th>צעד</th><th>מוּצָא (g)</th><th>עדכוני שכנים</th><th>תור העדיפויות אחרי</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>S (0)</td><td>A=1, B=4</td><td><code>{A:1, B:4}</code></td></tr>
+      <tr><td>2</td><td>A (1)</td><td>C=1+2=3, D=1+5=6</td><td><code>{C:3, B:4, D:6}</code></td></tr>
+      <tr><td>3</td><td>C (3)</td><td>G=3+3=6</td><td><code>{B:4, D:6, G:6}</code></td></tr>
+      <tr><td>4</td><td>B (4)</td><td>D: 4+1=5 &lt; 6 → <span class="hl">עדכון D=5</span></td><td><code>{D:5, G:6}</code></td></tr>
+      <tr><td>5</td><td>D (5)</td><td>G: 5+1=6 (לא משתפר)</td><td><code>{G:6}</code></td></tr>
+      <tr><td>6</td><td class="good">G (6) ✓ יעד!</td><td>—</td><td><code>{ }</code></td></tr>
+    </tbody>
+  </table>
+  <p><strong>סדר פיתוח:</strong> <code>S → A → C → B → D → G</code> · <strong>עלות אופטימלית:</strong> <span class="math">6</span> (למשל דרך <code>S→A→C→G</code> = 1+2+3, או <code>S→B→D→G</code> = 4+1+1).</p>
+  <div class="box mistake"><p class="box-title"><span class="ico">⚠️</span> שימו לב</p><p style="margin:0">ב-UCS חובה לבצע מבחן יעד <strong>בעת ההוצאה</strong> מהתור ולא בעת היצירה — אחרת היינו "מוצאים" את G בעלות 6 בצעד 3, ומפספסים את העובדה שהוא נכון, אבל גם <em>היינו עלולים להחזיר עלות לא-אופטימלית</em> במקרים אחרים. כאן G יוצא בעלות 6 שהיא באמת המינימום.</p></div>
+
+  <!-- ============ השוואה ============ -->
+  <h2>8. טבלת השוואה — לזכור בעל-פה</h2>
+  <table>
+    <caption><span class="math">b</span> = גורם הסתעפות, <span class="math">d</span> = עומק הפתרון, <span class="math">m</span> = עומק מקסימלי, <span class="math">C*</span> = עלות אופטימלית, <span class="math">ε</span> = עלות קשת מינימלית</caption>
+    <thead><tr><th>אלגוריתם</th><th>שלם?</th><th>אופטימלי?</th><th>זמן</th><th>מקום</th></tr></thead>
+    <tbody>
+      <tr><td><strong>BFS</strong></td><td class="good">כן<sup>1</sup></td><td class="good">כן<sup>2</sup></td><td><span class="math">O(b<sup>d</sup>)</span></td><td class="bad"><span class="math">O(b<sup>d</sup>)</span></td></tr>
+      <tr><td><strong>DFS</strong></td><td class="bad">לא<sup>3</sup></td><td class="bad">לא</td><td><span class="math">O(b<sup>m</sup>)</span></td><td class="good"><span class="math">O(b·m)</span></td></tr>
+      <tr><td><strong>IDS</strong></td><td class="good">כן</td><td class="good">כן<sup>2</sup></td><td><span class="math">O(b<sup>d</sup>)</span></td><td class="good"><span class="math">O(b·d)</span></td></tr>
+      <tr><td><strong>UCS</strong></td><td class="good">כן<sup>4</sup></td><td class="good">כן</td><td colspan="2"><span class="math">O(b<sup>1+⌊C*/ε⌋</sup>)</span></td></tr>
+    </tbody>
+  </table>
+  <p style="font-size:14px;color:var(--muted)"><sup>1</sup> אם <span class="math">b</span> סופי. <sup>2</sup> רק אם עלויות הקשתות שוות (אחרת UCS). <sup>3</sup> שלם רק ב-graph-search על מרחב סופי; לא שלם אם יש עומק אינסופי. <sup>4</sup> אם כל העלויות <span class="math">≥ ε &gt; 0</span>.</p>
+
+  <!-- ============ שיטת פתרון ============ -->
+  <h2>9. שיטת פתרון — "עקוב אחר האלגוריתם ותן סדר/תור"</h2>
+  <ol class="steps">
+    <li><span class="st">זהה את האלגוריתם ואת מבנה התור</span> — FIFO (BFS) / LIFO (DFS) / עדיפות לפי g (UCS).</li>
+    <li><span class="st">קבע מוסכמות וכתוב אותן</span> — מבחן יעד בהוצאה, שובר שוויון אלפביתי, graph-search.</li>
+    <li><span class="st">בנה טבלת מעקב</span> — עמודות: "מוּצָא", "נוספים", "התור אחרי". שורה לכל צעד. <strong>זה מה שנותן ניקוד מלא.</strong></li>
+    <li><span class="st">עצור כשהיעד יוצא מהתור</span> — רשום "G ✓ יעד".</li>
+    <li><span class="st">כתוב את התשובה הסופית</span> — סדר הפיתוח, היעד שנמצא, והמסלול (ועלותו ב-UCS).</li>
+  </ol>
+
+  <div class="box mistake">
+    <p class="box-title"><span class="ico">⚠️</span> טעויות נפוצות</p>
+    <ul class="clean" style="margin:0">
+      <li><strong>DFS בלי סדר דחיפה הפוך:</strong> כדי שהשכן הראשון אלפביתית ייצא ראשון, דוחפים את השכנים בסדר הפוך למחסנית.</li>
+      <li><strong>בלבול תור/מחסנית:</strong> BFS = FIFO (מקדימה), DFS = LIFO (מהראש). החלפה משנה את כל הסדר.</li>
+      <li><strong>UCS שמתעלם מעדכון עלות:</strong> כשמגיעים לצומת בעלות זולה יותר — חובה לעדכן (כמו D מ-6 ל-5).</li>
+      <li><strong>מבחן יעד בעת יצירה ב-UCS:</strong> טעות נפוצה שמובילה לעלות לא-אופטימלית. תמיד בהוצאה.</li>
+      <li><strong>לטעון ש-DFS חוסך זיכרון לעומת IDS:</strong> שניהם <span class="math">O(b·d)</span>; ל-IDS גם שלמות ואופטימליות.</li>
+      <li><strong>לשכוח את closed set:</strong> בלי זה נכנסים ללולאות אינסופיות בגרפים עם מעגלים.</li>
+    </ul>
+  </div>
+
+  <!-- ============ נוסחאות ============ -->
+  <div class="box formula">
+    <p class="box-title"><span class="ico">📐</span> לסיכום הנושא</p>
+    <ul class="clean" style="margin:0">
+      <li>עלות מסלול: <span class="math">g(n) = </span> סכום עלויות הקשתות מ-S עד n.</li>
+      <li>סיבוכיות זמן כללית: <span class="math">O(b<sup>d</sup>)</span> — אקספוננציאלית בעומק.</li>
+      <li>BFS/IDS אופטימליים <em>רק</em> בעלויות שוות; UCS אופטימלי תמיד (עלויות חיוביות).</li>
+      <li>זיכרון: BFS גרוע (<span class="math">O(b<sup>d</sup>)</span>), DFS/IDS חסכוניים (<span class="math">O(b·d)</span>).</li>
+    </ul>
+  </div>
+
+  <div class="card" style="text-align:center;margin-top:26px">
+    <a class="home" href="02_חיפוש_מיודע.html" style="display:inline-block">הנושא הבא ◀ חיפוש מיודע (A*)</a>
+  </div>
+
+</div>
+</body>
+</html>

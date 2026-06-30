@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>פתרונות מבחנים | חבילת למידה</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="topbar"><div class="inner">
+  <a class="home" href="index.html">🏠 דף הבית</a>
+  <span class="sep">|</span>
+  <a href="#e2015">2015</a><span class="sep">·</span>
+  <a href="#e2018">2018</a><span class="sep">·</span>
+  <a href="#e2019">2019</a><span class="sep">·</span>
+  <a href="#e2023">2023</a><span class="sep">·</span>
+  <a href="#edoog">דוגמה</a>
+</div></div>
+
+<div class="wrap">
+
+  <div class="page-head">
+    <p class="eyebrow">פתרונות מלאים</p>
+    <h1>✅ פתרונות מבחנים</h1>
+    <span class="ref">2015 · 2018 · 2019 · 2023 · מבחן דוגמה — לכל שאלה: שיטה + תשובה</span>
+  </div>
+
+  <div class="box tip" style="margin-top:0">
+    <p class="box-title"><span class="ico">ℹ️</span> איך לקרוא את הקובץ</p>
+    <p style="margin:0">השאלות ה<strong>מושגיות</strong> פתורות במלואן כאן. לשאלות ה<strong>חישוביות</strong> (גרף חיפוש/עץ Minimax/מטריצת תשלומים/משקולות רשת ספציפיים) — מובאת השיטה המדויקת + התשובה, כשהדוגמה המלאה הפתורה צעד-אחר-צעד נמצאת בעמוד הנושא המקושר. כך תוכלו להציב את המספרים מהעותק שלכם ולקבל את אותו פתרון. אין למבחנים אלו פתרון רשמי מפורסם.</p>
+  </div>
+
+  <!-- ===================== 2015 ===================== -->
+  <h2 id="e2015">מבחן 2015 (מועד א')</h2>
+
+  <h3>שאלה 1 — חיפוש (BFS/IDS/A*, קבילות)</h3>
+  <p><span class="badge">חישובי</span> גרף עם 3 יעדים. <strong>שיטה:</strong> לכל אלגוריתם בנה טבלת מעקב תור (FIFO ל-BFS, עומק גדל ל-IDS, <span class="math">f=g+h</span> ל-A*), מבחן יעד בהוצאה, שובר שוויון אלפביתי. דווח את היעד שהושג ואת סדר הפיתוח. לבדיקת קבילות: ודא <span class="math">h(n)≤h*(n)</span> בכל צומת. <strong>דוגמה מלאה זהה:</strong> <a href="01_חיפוש_לא_מיודע.html">חיפוש לא-מיודע</a> + <a href="02_חיפוש_מיודע.html">A* וקבילות</a>.</p>
+
+  <h3>שאלה 2 — משחק Nim ופתולוגיה</h3>
+  <ul class="clean">
+    <li><strong>2a (סיווג):</strong> Nim הוא משחק <strong>דטרמיניסטי</strong> (אין אקראיות) עם <strong>מידע מלא</strong> (שני השחקנים רואים את כל המצב).</li>
+    <li><strong>2b (ייצוג מצב טרמינלי):</strong> מצב = מספר המקלות בכל ערימה (למשל <code>(1,1,2)</code>). מצב טרמינלי = כל הערימות ריקות <code>(0,0,0)</code>; המנצח/מפסיד נקבע לפי מי לקח אחרון (לפי חוקי המשחק).</li>
+    <li><strong>2c (עץ המשחק):</strong> צייר את העץ מ-<code>(1,1,2)</code>: כל מהלך מסיר ≥1 מקל מערימה אחת. סמן רמות MAX/MIN לסירוגין עד העלים.</li>
+    <li><strong>2d (Minimax — מהלך מומלץ):</strong> חשב Minimax על העץ; המהלך הראשון המומלץ ל-A הוא זה שמוביל לערך הטוב ביותר עבורו (ניצחון אם קיים).</li>
+    <li><strong>2e (פתולוגיה):</strong> ראה הגדרה מלאה ב<a href="03_חיפוש_יריבי.html">עמוד חיפוש יריבי</a> — חיפוש עמוק יותר מחמיר את ההחלטה כשפונקציית ההערכה רועשת והשגיאות מתעצמות במעלה העץ.</li>
+    <li><strong>2f (ניתוח שגיאה 15%):</strong> פתולוגיה מתרחשת כשהסתברות השגיאה אחרי מינימקס גדולה מהשגיאה הסטטית. מצא <span class="math">e₁,e₂</span> שמקיימים את התנאי (השגיאה ה"מתפשטת" &gt; 15%) והסבר.</li>
+  </ul>
+
+  <h3>שאלה 3 — תורת המשחקים (מושגי)</h3>
+  <ul class="clean">
+    <li><strong>3a (הגדרה והנחות):</strong> תורת המשחקים חוקרת קבלת החלטות אסטרטגית בין שחקנים <strong>רציונליים</strong> שכל אחד ממקסם את תועלתו, בידיעה שהאחרים עושים כמותו.</li>
+    <li><strong>3b (מטריצה 5×5):</strong> החל <strong>מחיקת אסטרטגיות נשלטות</strong> איטרטיבית עד שמגיעים לנאש. שיטה מלאה: <a href="04_תורת_משחקים.html">תורת המשחקים</a>.</li>
+    <li><strong>3c (משחק 2/3 מהממוצע):</strong> מחיקה איטרטיבית של אסטרטגיות נשלטות מובילה לכך שכולם בוחרים <strong>0</strong> (שיווי המשקל היחיד). ראה <a href="04_תורת_משחקים.html#game">הסבר</a>.</li>
+    <li><strong>3d (דילמת האסיר חוזרת, כולם Tit-for-Tat):</strong> מומלץ <strong>לשתף פעולה</strong> — בגידה תיענש בסיבוב הבא, ושיתוף שומר על תשלום גבוה לאורך זמן.</li>
+    <li><strong>3e (בעיית השידוך, אוּמן):</strong> אלגוריתם Gale-Shapley (הצעות-נישואין) מייצר שידוך <strong>יציב</strong> שבו אין זוג שמעדיף זה את זה על פני בני-הזוג שקיבלו.</li>
+    <li><strong>3f (סמית' מול כהנמן):</strong> סמית' (כלכלה ניסויית) הראה ששווקים מתכנסים לתוצאה רציונלית/יעילה; כהנמן (כלכלה התנהגותית) הראה שבני-אדם <strong>סוטים</strong> מרציונליות (הטיות). המתח: רציונליות מצרפית מול אי-רציונליות פרטנית.</li>
+  </ul>
+
+  <h3>שאלה 4 — אלגוריתמים גנטיים</h3>
+  <div class="box example"><p class="box-title"><span class="ico">🧩</span> פתרון מלא</p>
+    <ul class="clean" style="margin:0">
+      <li><strong>4a (מספר ביטים):</strong> תחום <span class="math">[−2,2]</span>, דיוק 0.01 → מספר ערכים <span class="math">=4/0.01+1=401</span>. כיוון ש-<span class="math">2⁸=256&lt;401≤512=2⁹</span> → צריך <strong>9 ביטים</strong>.</li>
+      <li><strong>4b (הסתברות למקסימום גלובלי):</strong> המקסימום של <span class="math">f(x)=2x³+3x²+2</span> ב-<span class="math">[−2,2]</span> הוא ב-<span class="math">x=2</span> (<span class="math">f=30</span>), כלומר הכרומוזום <code>(1,1,1,1)</code>. ההסתברות לייצר אותו בהכלאה חד-נקודתית תלויה באוכלוסייה ההתחלתית: בדוק לאילו זוגות הורים יש <strong>1 בכל מיקום נדרש</strong> כך שנקודת חיתוך כלשהי תיתן <code>1111</code>, וחשב את ההסתברות לבחור זוג כזה ונקודת חיתוך מתאימה.</li>
+      <li><strong>4c (הכלאת TSP):</strong> הכלאה חד-נקודתית בין <code>P1=[1,2,3,4|5,6,7,8,9]</code> ל-<code>P2=[9,6,8,1|7,2,3,5,4]</code> בנקודה 4 נותנת צאצא <code>[1,2,3,4,7,2,3,5,4]</code> — <strong>לא חוקי</strong>: הערים 2,3,4 כפולות והערים 6,8,9 חסרות. <strong>הבעיה:</strong> בבעיות תמורה צריך אופרטור מיוחד (OX/PMX). ראה <a href="08_אלגוריתמים_גנטיים.html">גנטי</a>.</li>
+    </ul>
+  </div>
+
+  <!-- ===================== 2018 ===================== -->
+  <h2 id="e2018">מבחן 2018 (מועד א')</h2>
+  <ul class="clean">
+    <li><strong>ש' 1 (חיפוש DFS/UCS/IDS/A* + פתולוגיה):</strong> טבלת מעקב לכל אלגוריתם → <a href="01_חיפוש_לא_מיודע.html">חיפוש</a>/<a href="02_חיפוש_מיודע.html">A*</a>. ניתוח שגיאת 15% → פתולוגיה (<a href="03_חיפוש_יריבי.html">יריבי</a>).</li>
+    <li><strong>ש' 2 (Alpha-Beta + שיפור גיזום + מגבלת זמן):</strong> בצע גיזום שמאל→ימין וסמן α/β (דוגמה מלאה: <a href="03_חיפוש_יריבי.html">יריבי</a>). שיפור ע"י <strong>סידור מחדש</strong> של מהלכים (הטוב קודם). מגבלת 90 שניות → <strong>Iterative Deepening</strong> בעומק שגדל עד שנגמר הזמן.</li>
+    <li><strong>ש' 3 (Version Space — טניס):</strong> 6 תכונות, 4 דוגמאות. החל Candidate-Elimination (הרחב S בחיוביות, צמצם G בשליליות). שיטה מלאה ודוגמה: <a href="05_למידת_מושג.html">למידת מושג</a>.</li>
+    <li><strong>ש' 4 (אסטרטגיות נשלטות + Focal Points + נאש מעורב):</strong> מחיקה איטרטיבית (3×3); הגדרת Focal Points; נאש מעורב במטריצת Swerve/Straight (שיטת האדישות → ראה הפתרון המלא למטה בשאלת 2019/דוגמה). הכול ב<a href="04_תורת_משחקים.html">תורת המשחקים</a>.</li>
+    <li><strong>ש' 5 (גנטי — הכלאה):</strong> תאר דור הבא: כושר → בחירה → הכלאה → מוטציה. <a href="08_אלגוריתמים_גנטיים.html">גנטי</a>.</li>
+    <li><strong>ש' 6 (מושגי):</strong> ראה תשובות מלאות בטבלה למטה.</li>
+  </ul>
+  <div class="box example"><p class="box-title"><span class="ico">🧩</span> שאלה 6 — תשובות מלאות</p>
+    <ul class="clean" style="margin:0">
+      <li><strong>טיורינג + המבחן:</strong> אלן טיורינג, אבי מדעי המחשב; "משחק החיקוי" — אם חוקר לא מבחין בין מכונה לאדם בשיחת טקסט, המכונה עברה. (<a href="00_מבוא.html">מבוא</a>).</li>
+      <li><strong>סיווגי AI:</strong> 4 הגישות — לחשוב/לפעול × כמו אדם/רציונלי.</li>
+      <li><strong>נכון/לא-נכון:</strong> "IDS פחות זיכרון מ-DFS" — <span style="color:var(--warn)">לא</span> (שניהם O(b·d)); "Minimax≡Alpha-Beta בערך" — <span style="color:var(--ok)">נכון</span> (אותו ערך); "GA מבטיח אופטימום" — <span style="color:var(--warn)">לא</span>; "דילמת האסיר תקפה" — תלוי ניסוח. ראה <a href="00_מבוא.html">טבלת הטענות</a>.</li>
+    </ul>
+  </div>
+
+  <!-- ===================== 2019 ===================== -->
+  <h2 id="e2019">מבחן 2019 (מועד א')</h2>
+  <ul class="clean">
+    <li><strong>ש' 1 (BFS/UCS/Greedy/A*):</strong> טבלת מעקב לכל אלגוריתם → <a href="01_חיפוש_לא_מיודע.html">חיפוש</a>/<a href="02_חיפוש_מיודע.html">A*</a>.</li>
+    <li><strong>ש' 2 (עץ החלטה — 8 דוגמאות, F1/F2/F3):</strong> חשב <span class="math">H(S)</span>, ואז IG לכל תכונה; השורש = ה-IG הגבוה. דוגמה מלאה זהה (חישוב אנטרופיה+IG+בניית עץ): <a href="07_עצי_החלטה.html">עצי החלטה</a>.</li>
+    <li><strong>ש' 3 (Minimax + נאש מעורב):</strong> מלא ערכי Minimax (max/min); נאש מעורב במטריצת Swerve/Straight → <strong>פתרון מלא למטה</strong>.</li>
+    <li><strong>ש' 4 (רשת נוירונים, η=0.3):</strong> Forward (סיגמואיד) ואז Backprop. דוגמה מספרית מלאה זהה: <a href="06_רשתות_נוירונים.html">רשתות נוירונים</a>.</li>
+    <li><strong>ש' 5 (גנטי — כרומוזום 8 גנים):</strong> (a) חשב כושר ודרג; (b) הכלאה חד-נקודתית; (c) הכלאה דו-נקודתית; (d) כושר הדור החדש; (e) האם ניתן להגיע לפתרון בלי מוטציה (תלוי אם הביטים הדרושים קיימים באוכלוסייה). <a href="08_אלגוריתמים_גנטיים.html">גנטי</a>.</li>
+    <li><strong>ש' 6 (מושגי כולל החדר הסיני):</strong> ראה <a href="00_מבוא.html">מבוא</a>.</li>
+  </ul>
+  <div class="box example"><p class="box-title"><span class="ico">🧩</span> נאש מעורב — משחק Swerve/Straight (מופיע ב-2018/2019/2023)</p>
+    <p style="margin:0 0 6px">מטריצה (סטייה S / ישר T), תשלומים <span class="math">(u₁,u₂)</span>: <code>(S,S)=(0,0)</code>, <code>(S,T)=(−1,1)</code>, <code>(T,S)=(1,−1)</code>, <code>(T,T)=(−10,−10)</code>.</p>
+    <ul class="clean" style="margin:0">
+      <li><strong>נאש טהורים:</strong> <span class="math">(S,T)</span> ו-<span class="math">(T,S)</span>.</li>
+      <li><strong>נאש מעורב (שיטת האדישות):</strong> נניח היריב משחק S בהסתברות <span class="math">q</span>. אדישות: <span class="math">0·q+(−1)(1−q) = 1·q+(−10)(1−q)</span> → <span class="math">q−1 = 11q−10</span> → <span class="math">q=0.9</span>. כל שחקן <strong>סוטה בהסתברות 0.9</strong>, ישר 0.1.</li>
+    </ul>
+  </div>
+
+  <!-- ===================== 2023 ===================== -->
+  <h2 id="e2023">מבחן 2023 (מועד א')</h2>
+  <ul class="clean">
+    <li><strong>ש' 1 (חיפוש + A* משוקלל):</strong> (a) טבלת מעקב IDS/Greedy/UCS/A*. (b) <strong>A* משוקלל</strong> <span class="math">f=w·g+(100−w)·h</span>: <span class="math">w=0</span>→Greedy, <span class="math">w=50</span>→A*, <span class="math">w=100</span>→UCS, אופטימלי עבור <span class="math">50≤w≤100</span>. <strong>פתרון מלא:</strong> <a href="02_חיפוש_מיודע.html">חיפוש מיודע</a>.</li>
+    <li><strong>ש' 2 (רשת נוירונים 2-2-2 + עץ החלטה):</strong> (a) Forward+Backprop עם סיגמואיד, η=0.3, 4 ספרות → <a href="06_רשתות_נוירונים.html">נוירונים</a>. (b) אנטרופיה+IG ל-A,B ובניית עץ → <a href="07_עצי_החלטה.html">עצי החלטה</a>; כן — שני עצים שונים יכולים לסווג נכון אימון ולהיבדל על דוגמאות חדשות.</li>
+    <li><strong>ש' 3 (ניתוח תנאי גיזום Alpha-Beta + נאש מעורב):</strong> זו שאלת ה"מתי צומת לא מתפתח" — לכל תת-סעיף קבע את תנאי α/β שמבטיח גיזום (ראה את התנאים המדויקים ב<a href="03_חיפוש_יריבי.html">יריבי</a>). נאש מעורב 2×2 → שיטת האדישות (למעלה).</li>
+    <li><strong>ש' 4 (גנטי — שיבוץ צוותי טיסה):</strong> (1) ייצוג: כרומוזום באורך 7 ימים, כל גן = הצוות המשובץ. (2) כושר: מתגמל כיסוי טיסות, מעניש הפרת אילוץ (צוות &gt;2 ימים רצופים). (3) מספר פתרונות אסטרונומי → GA כדאי. (4) האופרטור שמייצג פתרון = הכרומוזום עצמו. <a href="08_אלגוריתמים_גנטיים.html">גנטי</a>.</li>
+  </ul>
+  <div class="box example"><p class="box-title"><span class="ico">🧩</span> שאלה 5 — הגדרת 5 מושגים (3 שורות כל אחד)</p>
+    <ul class="clean" style="margin:0">
+      <li><strong>פתולוגיה של עצי חיפוש:</strong> חיפוש עמוק יותר מחמיר את ההחלטה (שגיאת הערכה מתפשטת).</li>
+      <li><strong>החדר הסיני (Searle):</strong> מניפולציה תחבירית של סמלים אינה יוצרת הבנה אמיתית — תחביר ≠ סמנטיקה.</li>
+      <li><strong>שיווי משקל נאש:</strong> צירוף אסטרטגיות שבו אף שחקן לא משתפר מסטייה חד-צדדית.</li>
+      <li><strong>תער אוקאם:</strong> מבין הסברים שווי-כוח — בחר את הפשוט ביותר.</li>
+      <li><strong>שלמות אלגוריתם:</strong> מובטח למצוא פתרון אם קיים (ולהכריז שאין אם אין).</li>
+    </ul>
+  </div>
+
+  <!-- ===================== דוגמה ===================== -->
+  <h2 id="edoog">מבחן דוגמה</h2>
+  <div class="box example"><p class="box-title"><span class="ico">🧩</span> שאלה 1 — Minimax + Alpha-Beta (פתרון מלא)</p>
+    <p style="margin:0 0 6px">עלים: <code>3,7,8 | 10,8,4 | 2,7,5</code> (שורש MAX, 3 צמתי MIN).</p>
+    <ul class="clean" style="margin:0">
+      <li><strong>(a) ערכי Minimax:</strong> MIN של כל שלישייה = 3, 4, 2. השורש MAX = <strong>4</strong>. המהלך הנבחר = הענף האמצעי.</li>
+      <li><strong>(b) Alpha-Beta:</strong> אחרי שמחשבים MIN₁=3 ו-MIN₂=4 (α=4), בצומת MIN₃ רואים עלה=2 → <span class="math">2≤α=4</span> → <strong>גיזום</strong> של 2 העלים האחרונים (7 ו-5).</li>
+      <li><strong>(c) סידור לגיזום מקסימלי:</strong> סדר את העלים כך שהמהלך הטוב יבדק קודם (בצומת MIN — הנמוך קודם; בצומת MAX — הגבוה קודם). <strong>פתרון מלא ומצויר:</strong> <a href="03_חיפוש_יריבי.html">חיפוש יריבי</a>.</li>
+    </ul>
+  </div>
+  <div class="box example"><p class="box-title"><span class="ico">🧩</span> שאלה 2 — מבוך (DFS / Hill Climbing / A*) + קבילות</p>
+    <ul class="clean" style="margin:0">
+      <li><strong>DFS/Hill-Climbing/A*</strong> על המבוך עם מרחק מנהטן: ראה שיטת המבוך ב<a href="פתרונות_תרגילים.html">פתרונות תרגילים</a> ו-A* ב<a href="02_חיפוש_מיודע.html">חיפוש מיודע</a>.</li>
+      <li><strong>קבילות:</strong> מנהטן <strong>קביל</strong> (לעולם לא מעריך ביתר ברשת ללא אלכסונים). <span class="math">h₂=min(2,h)</span> <strong>קביל</strong>; <span class="math">h₂=max(2,h)</span> <strong>לא בהכרח קביל</strong> (ראה <a href="02_חיפוש_מיודע.html">חיפוש מיודע</a>).</li>
+    </ul>
+  </div>
+  <div class="box example"><p class="box-title"><span class="ico">🧩</span> שאלה 3 — Version Space (קלפים) — פתרון מלא</p>
+    <p style="margin:0">זוהי בדיוק דוגמת הקלפים הפתורה במלואה (אבולוציית S ו-G אחרי כל דוגמה, עד התכנסות ל-<code>[N,R]</code>): <a href="05_למידת_מושג.html">למידת מושג</a>.</p>
+  </div>
+  <div class="box example"><p class="box-title"><span class="ico">🧩</span> שאלה 4 — נאש (הגדרה + מחיקת נשלטות + דילמת האסיר) ושאלה 5 — מבנה GA</p>
+    <ul class="clean" style="margin:0">
+      <li><strong>4a הגדרת נאש</strong> + <strong>4b מחיקת נשלטות (3×3)</strong> + <strong>4c דילמת האסיר</strong> → <a href="04_תורת_משחקים.html">תורת המשחקים</a> (כולל IESDS מלא ודילמת האסיר).</li>
+      <li><strong>5 מבנה GA:</strong> מחזור הדורות — אוכלוסייה → כושר → בחירה → הכלאה → מוטציה → דור חדש. דיאגרמה: <a href="08_אלגוריתמים_גנטיים.html">גנטי</a>.</li>
+    </ul>
+  </div>
+
+  <div class="card" style="text-align:center;margin-top:26px">
+    <a class="home" href="index.html" style="display:inline-block">🏠 חזרה לדף הבית</a>
+  </div>
+
+</div>
+</body>
+</html>

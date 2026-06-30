@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>תורת המשחקים | חבילת למידה</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="topbar"><div class="inner">
+  <a class="home" href="index.html">🏠 דף הבית</a>
+  <span class="sep">|</span>
+  <a href="03_חיפוש_יריבי.html">▶ חיפוש יריבי</a>
+  <span class="sep">·</span>
+  <a href="05_למידת_מושג.html">למידת מושג ◀</a>
+</div></div>
+
+<div class="wrap">
+
+  <div class="page-head">
+    <p class="eyebrow">שיעורים 5–7 · נושא 04</p>
+    <h1>תורת המשחקים (Game Theory)</h1>
+    <span class="ref">AIMA 17.5 · מטריצת תשלומים · אסטרטגיות נשלטות · נאש טהור ומעורב · דילמת האסיר</span>
+  </div>
+
+  <div class="card">
+    <p>בניגוד לחיפוש היריבי (תורות), כאן השחקנים בוחרים <strong>בו-זמנית</strong>. מתארים את המשחק ב<strong>מטריצת תשלומים</strong> ומחפשים נקודות <strong>שיווי משקל</strong> — מצבים יציבים שאף שחקן לא רוצה לסטות מהם לבד. זהו אחד הנושאים הנבחנים ביותר.</p>
+  </div>
+
+  <!-- ============ מטריצה ============ -->
+  <h2>1. מטריצת תשלומים (Payoff Matrix)</h2>
+  <p>שחקן 1 בוחר <strong>שורה</strong>, שחקן 2 בוחר <strong>עמודה</strong>. בכל תא זוג ערכים <span class="math">(u₁, u₂)</span> — התשלום לשחקן 1 ולשחקן 2 בהתאמה. כל שחקן רוצה למקסם את התשלום שלו.</p>
+
+  <!-- ============ אסטרטגיות נשלטות ============ -->
+  <h2>2. אסטרטגיות נשלטות ומחיקה איטרטיבית (IESDS)</h2>
+  <div class="box def">
+    <p class="box-title"><span class="ico">📘</span> שליטה (Dominance)</p>
+    <p style="margin:0">אסטרטגיה <span class="math">s</span> <strong>נשלטת ממש</strong> ע"י <span class="math">s'</span> אם <span class="math">s'</span> נותנת תשלום <strong>גבוה יותר בכל מצב</strong> של היריב. שחקן רציונלי לעולם לא ישחק אסטרטגיה נשלטת — לכן אפשר <strong>למחוק אותה</strong>, ולחזור על התהליך.</p>
+  </div>
+  <p>נדגים על מטריצה 3×3 (שורות לשחקן 1: A,B,C · עמודות לשחקן 2: X,Y,Z):</p>
+
+  <table>
+    <caption>שלב 0 — המטריצה המקורית (u₁, u₂)</caption>
+    <thead><tr><th></th><th>X</th><th>Y</th><th>Z</th></tr></thead>
+    <tbody>
+      <tr><th>A</th><td>(4, 3)</td><td>(5, 1)</td><td>(6, 2)</td></tr>
+      <tr><th>B</th><td>(2, 1)</td><td>(8, 4)</td><td>(3, 6)</td></tr>
+      <tr><th>C</th><td>(3, 0)</td><td>(9, 6)</td><td>(2, 8)</td></tr>
+    </tbody>
+  </table>
+  <ol class="steps">
+    <li><span class="st">שחקן 2: Y נשלטת ע"י Z</span> — תשלומי שחקן 2 (הערך השני): עמודה Z=(2,6,8) גדולה מ-Y=(1,4,6) <em>בכל שורה</em>. מוחקים את Y.</li>
+    <li><span class="st">שחקן 1: B ו-C נשלטות ע"י A</span> — אחרי מחיקת Y, תשלומי שחקן 1: A=(4,6), B=(2,3), C=(3,2). A גדולה מ-B ומ-C בשתי העמודות. מוחקים את B ו-C.</li>
+    <li><span class="st">שחקן 2: בוחר X על פני Z</span> — נשארה שורה A: תשלומי שחקן 2 הם X=3 מול Z=2. בוחר X.</li>
+  </ol>
+  <table>
+    <caption>התוצאה — שיווי משקל יחיד</caption>
+    <thead><tr><th></th><th>X</th></tr></thead>
+    <tbody><tr><th>A</th><td class="good">(4, 3) ← נאש</td></tr></tbody>
+  </table>
+  <p><strong>שיווי משקל נאש יחיד: <span class="math">(A, X) = (4, 3)</span>.</strong></p>
+
+  <!-- ============ נאש טהור ============ -->
+  <h2>3. שיווי משקל נאש (טהור)</h2>
+  <div class="box def">
+    <p class="box-title"><span class="ico">📘</span> הגדרה מדויקת (כתבו כך במבחן)</p>
+    <p style="margin:0">צירוף אסטרטגיות <span class="math">(s₁*, s₂*)</span> הוא <strong>שיווי משקל נאש</strong> אם <strong>אף שחקן אינו יכול לשפר את תשלומו ע"י סטייה חד-צדדית</strong> — בהינתן שהיריב נשאר באסטרטגיה שלו. כלומר כל אסטרטגיה היא ה<strong>תגובה הטובה ביותר</strong> (best response) לשנייה.</p>
+  </div>
+  <div class="box tip">
+    <p class="box-title"><span class="ico">🎯</span> שיטת הסימון (Best-Response) למציאת נאש טהור</p>
+    <ol class="steps" style="margin:8px 0 0">
+      <li><span class="st">לכל עמודה של שחקן 2</span>, סמן את תשלום שחקן 1 הגבוה ביותר (התגובה הטובה של שחקן 1).</li>
+      <li><span class="st">לכל שורה של שחקן 1</span>, סמן את תשלום שחקן 2 הגבוה ביותר (התגובה הטובה של שחקן 2).</li>
+      <li><span class="st">תא שבו <em>שני</em> הערכים מסומנים</span> = שיווי משקל נאש טהור.</li>
+    </ol>
+  </div>
+
+  <!-- ============ דילמת האסיר ============ -->
+  <h2>4. דילמת האסיר (Prisoner's Dilemma)</h2>
+  <p>הדוגמה המפורסמת ביותר. שני שחקנים בוחרים: <strong>שתף פעולה (C)</strong> או <strong>בגוד (D)</strong>. תשלום גבוה = טוב יותר.</p>
+  <table>
+    <caption>דילמת האסיר — התגובות הטובות מסומנות (✔)</caption>
+    <thead><tr><th></th><th>שחקן 2: C</th><th>שחקן 2: D</th></tr></thead>
+    <tbody>
+      <tr><th>שחקן 1: C</th><td>(3, 3)</td><td>(0, <span class="badge">5✔</span>)</td></tr>
+      <tr><th>שחקן 1: D</th><td>(<span class="badge">5✔</span>, 0)</td><td class="good">(<span class="badge">1✔</span>, <span class="badge">1✔</span>) ← נאש</td></tr>
+    </tbody>
+  </table>
+  <div class="box tip"><p class="box-title"><span class="ico">🎯</span> הניתוח</p><p style="margin:0">"בגוד" (D) <strong>שולטת</strong> ב"שתף" (C) עבור שני השחקנים (5&gt;3 ו-1&gt;0). לכן שיווי המשקל היחיד הוא <span class="math">(D,D)=(1,1)</span>. הפרדוקס: <span class="math">(C,C)=(3,3)</span> <strong>עדיף לשניהם</strong> (Pareto), אך אינו יציב — כל אחד מתפתה לבגוד. מסקנה: שיווי משקל נאש <strong>אינו בהכרח</strong> התוצאה האופטימלית-חברתית.</p></div>
+
+  <!-- ============ נאש מעורב ============ -->
+  <h2>5. שיווי משקל נאש מעורב — שאלת ה-2×2 (Swerve/Straight)</h2>
+  <p>כשאין נאש טהור (או יש כמה), מחפשים <strong>אסטרטגיה מעורבת</strong>: כל שחקן בוחר בהסתברות. נדגים על משחק ה"תרנגול" (Chicken): שני נהגים נוסעים זה מול זה ובוחרים <strong>לסטות (S)</strong> או <strong>להמשיך ישר (T)</strong>.</p>
+  <table>
+    <caption>משחק התרנגול (u₁, u₂)</caption>
+    <thead><tr><th></th><th>שחקן 2: S</th><th>שחקן 2: T</th></tr></thead>
+    <tbody>
+      <tr><th>שחקן 1: S</th><td>(0, 0)</td><td class="good">(−1, +1) נאש</td></tr>
+      <tr><th>שחקן 1: T</th><td class="good">(+1, −1) נאש</td><td>(−10, −10)</td></tr>
+    </tbody>
+  </table>
+  <p>יש <strong>שני נאש טהורים</strong>: <span class="math">(S,T)</span> ו-<span class="math">(T,S)</span>. נחפש גם את הנאש <strong>המעורב</strong>:</p>
+  <div class="box tip">
+    <p class="box-title"><span class="ico">🎯</span> שיטת האדישות (Indifference)</p>
+    <p style="margin:0 0 6px">נניח ששחקן 2 משחק <span class="math">S</span> בהסתברות <span class="math">q</span> ו-<span class="math">T</span> בהסתברות <span class="math">1−q</span>. שחקן 1 ישחק מעורב רק אם הוא <strong>אדיש</strong> בין S ל-T — כלומר התוחלות שוות:</p>
+    <div class="math-block">E₁[S] = 0·q + (−1)(1−q) = q − 1<br>E₁[T] = 1·q + (−10)(1−q) = 11q − 10<br>q − 1 = 11q − 10 &nbsp;⟹&nbsp; 9 = 10q &nbsp;⟹&nbsp; q = 0.9</div>
+    <p style="margin:6px 0 0">כלומר כל נהג <strong>סוטה בהסתברות 0.9</strong> וממשיך ישר בהסתברות 0.1 (לפי הסימטריה). זהו הנאש המעורב.</p>
+  </div>
+  <div class="box mistake"><p class="box-title"><span class="ico">⚠️</span> טריק חשוב</p><p style="margin:0">בנאש מעורב, ההסתברות של שחקן <strong>אחד</strong> מחושבת כך שתהפוך את ה<strong>יריב</strong> לאדיש (ולא את עצמו!). זו הטעות הכי נפוצה — תמיד "אני קובע את ההסתברות שלי כדי שהיריב יהיה אדיש".</p></div>
+
+  <!-- ============ תיאום ו-focal ============ -->
+  <h2>6. משחקי תיאום ונקודות מוקד (Focal Points)</h2>
+  <div class="kv">
+    <dt>משחק תיאום</dt><dd>שני השחקנים מרוויחים אם הם <strong>בוחרים אותו דבר</strong> (למשל שניהם נוסעים מימין). יש כמה נאש טהורים, והבעיה היא <em>על איזה לתאם</em>.</dd>
+    <dt>נקודת מוקד (Schelling)</dt><dd>פתרון "טבעי" שאנשים מתכנסים אליו <strong>בלי תקשורת</strong>, מתוך הקשר/בולטות תרבותית. דוגמה קלאסית: "נפגשים בניו-יורק" → רובם יאמרו תחנת גרנד סנטרל בצהריים. ה"בולטוּת" פותרת את בעיית התיאום.</dd>
+  </div>
+
+  <!-- ============ דוגמאות מיוחדות ============ -->
+  <h2>7. דוגמאות מושגיות שחוזרות במבחן</h2>
+  <div class="box example">
+    <p class="box-title"><span class="ico">🧩</span> משחק הניחוש "2/3 מהממוצע"</p>
+    <p style="margin:0">כל אחד בוחר מספר ב-[0,100]; המנצח קרוב ביותר ל-<span class="math">2/3</span> מהממוצע. <strong>פתרון תורת-משחקי (מחיקה איטרטיבית):</strong> אף אחד לא יבחר מעל 67 (כי 2/3·100≈67), אז גם לא מעל 44, וכך הלאה — עד שכולם בוחרים <strong>0</strong>. זהו שיווי המשקל היחיד. (במציאות אנשים לא רציונליים לגמרי, אז הממוצע יוצא חיובי).</p>
+  </div>
+  <div class="box example">
+    <p class="box-title"><span class="ico">🧩</span> דילמת האסיר החוזרת + Tit-for-Tat</p>
+    <p style="margin:0">כשהמשחק חוזר שוב ושוב, שיתוף פעולה הופך אפשרי. אם <strong>כולם משחקים Tit-for-Tat</strong> (משתף בהתחלה, ואז מחקה את מהלך היריב הקודם), הכי כדאי גם לך <strong>לשתף פעולה</strong> — בגידה תגרור עונש בסיבוב הבא. כך מושג שיתוף פעולה יציב.</p>
+  </div>
+
+  <!-- ============ שיטות פתרון ============ -->
+  <h2>8. שיטות פתרון — סיכום</h2>
+  <table>
+    <thead><tr><th>סוג שאלה</th><th>שיטה</th></tr></thead>
+    <tbody>
+      <tr><td>"מצא נאש טהור"</td><td>שיטת הסימון: סמן best-response לכל שחקן; תא עם שני סימונים = נאש.</td></tr>
+      <tr><td>"השתמש במחיקת אסטרטגיות נשלטות"</td><td>מחק אסטרטגיה נשלטת ממש (שורה/עמודה), חזור עד שנשאר/ים תא/ים.</td></tr>
+      <tr><td>"מצא נאש מעורב (2×2)"</td><td>שיטת האדישות: קבע את ההסתברות שלך כך שהיריב אדיש; פתור משוואה לינארית.</td></tr>
+      <tr><td>"הגדר נאש"</td><td>אף שחקן לא משפר ע"י סטייה חד-צדדית = כל אסטרטגיה היא תגובה מיטבית לשנייה.</td></tr>
+    </tbody>
+  </table>
+
+  <div class="box mistake">
+    <p class="box-title"><span class="ico">⚠️</span> טעויות נפוצות</p>
+    <ul class="clean" style="margin:0">
+      <li>לבלבל "נשלטת" (גרועה בכל מצב) עם "לא נבחרת אף פעם" — מוחקים רק שליטה <strong>ממש</strong>.</li>
+      <li>בנאש מעורב — לחשב את ההסתברות שתהפוך אותך לאדיש במקום את היריב.</li>
+      <li>לחשוב ש-(C,C) בדילמת האסיר הוא נאש — הוא Pareto-אופטימלי אך <strong>לא</strong> יציב.</li>
+      <li>לשכוח שיכולים להיות <strong>כמה</strong> נאש (טהורים) או אף אחד (אז יש מעורב).</li>
+      <li>לערבב בין מי בוחר שורה (שחקן 1) למי בוחר עמודה (שחקן 2) ולקרוא תשלום הפוך.</li>
+    </ul>
+  </div>
+
+  <div class="box formula">
+    <p class="box-title"><span class="ico">📐</span> לסיכום הנושא</p>
+    <ul class="clean" style="margin:0">
+      <li>נאש: אין סטייה חד-צדדית משתלמת. נמצא ע"י סימון best-response.</li>
+      <li>אסטרטגיה נשלטת ממש → מוחקים (IESDS).</li>
+      <li>נאש מעורב 2×2: שיטת האדישות — <span class="math">E[s_a]=E[s_b]</span> של היריב → פתור ל-<span class="math">q</span>.</li>
+      <li>דילמת האסיר: D שולטת; נאש=(D,D) אך לא Pareto-אופטימלי.</li>
+    </ul>
+  </div>
+
+  <div class="card" style="text-align:center;margin-top:26px">
+    <a class="home" href="05_למידת_מושג.html" style="display:inline-block">הנושא הבא ◀ למידת מושג</a>
+  </div>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,181 @@
+/* ============================================================
+   חבילת למידה — בינה מלאכותית | עיצוב משותף (RTL)
+   ============================================================ */
+
+:root{
+  --bg:#f4f6fb;
+  --ink:#1f2533;
+  --muted:#5b6478;
+  --line:#dfe3ee;
+  --card:#ffffff;
+  --primary:#27408b;      /* כחול אקדמי */
+  --primary-2:#3a5bd9;
+  --primary-soft:#eef2ff;
+  --accent:#b8860b;       /* ענבר לנוסחאות */
+  --accent-soft:#fff7e0;
+  --ok:#1b7f5a;           /* ירוק לטיפים */
+  --ok-soft:#e8f7ef;
+  --warn:#b23b3b;         /* אדום לטעויות */
+  --warn-soft:#fdecec;
+  --def:#6a4bb0;          /* סגול להגדרות */
+  --def-soft:#f3eefc;
+  --shadow:0 2px 10px rgba(31,37,51,.07);
+  --radius:14px;
+}
+
+*{box-sizing:border-box}
+
+html{scroll-behavior:smooth}
+
+body{
+  direction:rtl;
+  margin:0;
+  background:var(--bg);
+  color:var(--ink);
+  font-family:"Segoe UI","Assistant","Arial Hebrew",Arial,sans-serif;
+  font-size:18px;
+  line-height:1.75;
+}
+
+.wrap{max-width:980px;margin:0 auto;padding:28px 20px 90px}
+
+/* ---------- ניווט עליון ---------- */
+.topbar{
+  position:sticky;top:0;z-index:50;
+  background:rgba(255,255,255,.92);
+  backdrop-filter:blur(6px);
+  border-bottom:1px solid var(--line);
+  box-shadow:var(--shadow);
+}
+.topbar .inner{
+  max-width:980px;margin:0 auto;padding:10px 20px;
+  display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+}
+.topbar a{color:var(--primary);text-decoration:none;font-weight:600;font-size:15px}
+.topbar a:hover{text-decoration:underline}
+.topbar .home{background:var(--primary);color:#fff;padding:6px 14px;border-radius:999px}
+.topbar .home:hover{background:var(--primary-2);text-decoration:none}
+.topbar .sep{color:var(--line)}
+
+/* ---------- כותרת עמוד ---------- */
+.page-head{
+  background:linear-gradient(135deg,var(--primary),var(--primary-2));
+  color:#fff;border-radius:var(--radius);
+  padding:30px 28px;margin:6px 0 26px;box-shadow:var(--shadow);
+}
+.page-head .eyebrow{font-size:14px;opacity:.9;letter-spacing:.5px;margin:0 0 6px}
+.page-head h1{margin:0;font-size:32px;line-height:1.25}
+.page-head .ref{display:inline-block;margin-top:12px;background:rgba(255,255,255,.18);
+  padding:4px 12px;border-radius:999px;font-size:13.5px}
+
+/* ---------- כותרות ---------- */
+h2{font-size:25px;margin:34px 0 12px;padding-bottom:8px;border-bottom:3px solid var(--primary-soft);color:var(--primary)}
+h3{font-size:20px;margin:24px 0 10px;color:var(--ink)}
+h4{font-size:17px;margin:18px 0 8px;color:var(--muted)}
+p{margin:10px 0}
+a{color:var(--primary-2)}
+
+/* ---------- כרטיס/סקשן ---------- */
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+  padding:20px 22px;margin:16px 0;box-shadow:var(--shadow)}
+
+/* ---------- תיבות צבעוניות ---------- */
+.box{border-radius:12px;padding:14px 18px 14px 18px;margin:16px 0;border:1px solid;position:relative}
+.box .box-title{font-weight:700;margin:0 0 6px;display:flex;align-items:center;gap:8px;font-size:16.5px}
+.box .ico{font-size:20px;line-height:1}
+
+.def{background:var(--def-soft);border-color:#dccdf3}
+.def .box-title{color:var(--def)}
+
+.formula{background:var(--accent-soft);border-color:#f0dca0}
+.formula .box-title{color:var(--accent)}
+
+.tip{background:var(--ok-soft);border-color:#bce3d0}
+.tip .box-title{color:var(--ok)}
+
+.mistake{background:var(--warn-soft);border-color:#f3c3c3}
+.mistake .box-title{color:var(--warn)}
+
+.example{background:#eef6ff;border-color:#c6ddf7}
+.example .box-title{color:var(--primary)}
+
+/* ---------- נוסחאות מתמטיות ---------- */
+.math{font-family:"Cambria Math","Times New Roman",Georgia,serif;font-size:1.06em;direction:ltr;
+  display:inline-block;unicode-bidi:isolate}
+.math-block{font-family:"Cambria Math","Times New Roman",Georgia,serif;direction:ltr;
+  text-align:center;font-size:1.18em;background:#fff;border:1px dashed var(--accent);
+  border-radius:10px;padding:12px 14px;margin:12px auto;overflow-x:auto}
+sub,sup{font-size:.72em}
+
+/* ---------- שלבי פתרון ---------- */
+ol.steps{counter-reset:step;list-style:none;padding:0;margin:14px 0}
+ol.steps>li{position:relative;background:#fff;border:1px solid var(--line);border-right:4px solid var(--primary-2);
+  border-radius:10px;padding:12px 52px 12px 16px;margin:10px 0;box-shadow:var(--shadow)}
+ol.steps>li::before{counter-increment:step;content:counter(step);
+  position:absolute;right:-2px;top:-2px;transform:translate(40%,-30%);
+  background:var(--primary-2);color:#fff;width:30px;height:30px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;box-shadow:var(--shadow)}
+ol.steps>li .st{font-weight:700;color:var(--primary)}
+
+/* ---------- פסאודו-קוד ---------- */
+.pseudo{direction:ltr;text-align:left;background:#1f2533;color:#e7ecf5;border-radius:10px;
+  padding:14px 16px;margin:12px 0;font-family:Consolas,"Courier New",monospace;font-size:14.5px;
+  line-height:1.6;overflow-x:auto;white-space:pre}
+.pseudo .kw{color:#7fb4ff;font-weight:700}
+.pseudo .cm{color:#8a98ad;font-style:italic}
+
+code{background:#eef2ff;color:#27408b;padding:1px 6px;border-radius:6px;
+  font-family:Consolas,"Courier New",monospace;font-size:.92em;direction:ltr;display:inline-block}
+
+/* ---------- טבלאות ---------- */
+table{border-collapse:collapse;width:100%;margin:14px 0;background:#fff;border-radius:10px;overflow:hidden;box-shadow:var(--shadow)}
+th,td{border:1px solid var(--line);padding:9px 12px;text-align:center}
+th{background:var(--primary);color:#fff;font-weight:600}
+tr:nth-child(even) td{background:#f7f9ff}
+td.hl{background:var(--accent-soft);font-weight:700}
+td.good{background:var(--ok-soft)}
+td.bad{background:var(--warn-soft)}
+caption{caption-side:top;font-weight:700;color:var(--muted);margin-bottom:6px;font-size:14.5px}
+
+/* ---------- איור/SVG ---------- */
+.fig{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:16px;margin:18px 0;box-shadow:var(--shadow);text-align:center}
+.fig svg{max-width:100%;height:auto}
+.fig .cap{margin-top:10px;font-size:14.5px;color:var(--muted)}
+.fig-row{display:flex;gap:14px;flex-wrap:wrap;justify-content:center}
+
+/* ---------- רשימות ---------- */
+ul.clean{list-style:none;padding-right:0}
+ul.clean>li{padding:4px 26px 4px 0;position:relative}
+ul.clean>li::before{content:"◀";color:var(--primary-2);position:absolute;right:4px;font-size:11px;top:9px}
+
+.kv{display:grid;grid-template-columns:max-content 1fr;gap:6px 14px;margin:10px 0}
+.kv dt{font-weight:700;color:var(--primary)}
+.kv dd{margin:0}
+
+.badge{display:inline-block;background:var(--primary-soft);color:var(--primary);border-radius:999px;
+  padding:2px 10px;font-size:13px;font-weight:600;margin:2px}
+
+/* ---------- index ---------- */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:16px;margin:18px 0}
+.tile{display:block;background:#fff;border:1px solid var(--line);border-radius:var(--radius);
+  padding:18px 20px;text-decoration:none;color:var(--ink);box-shadow:var(--shadow);transition:transform .12s,box-shadow .12s}
+.tile:hover{transform:translateY(-3px);box-shadow:0 8px 20px rgba(31,37,51,.13)}
+.tile .num{font-size:13px;color:var(--primary-2);font-weight:700}
+.tile .t{font-size:19px;font-weight:700;margin:4px 0 6px;color:var(--primary)}
+.tile .d{font-size:14px;color:var(--muted);line-height:1.5}
+
+/* ---------- הדפסה ---------- */
+@media print{
+  body{background:#fff;font-size:12.5pt}
+  .topbar{display:none}
+  .wrap{max-width:100%;padding:0}
+  .card,.box,.fig,ol.steps>li,table{box-shadow:none}
+  .page-head{background:var(--primary)!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  h2{break-after:avoid}
+  .fig,table,.box{break-inside:avoid}
+}
+
+@media(max-width:560px){
+  body{font-size:16.5px}
+  .page-head h1{font-size:25px}
+}

@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>אלגוריתמים גנטיים | חבילת למידה</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="topbar"><div class="inner">
+  <a class="home" href="index.html">🏠 דף הבית</a>
+  <span class="sep">|</span>
+  <a href="07_עצי_החלטה.html">▶ עצי החלטה</a>
+  <span class="sep">·</span>
+  <a href="דף_נוסחאות.html">דף נוסחאות ◀</a>
+</div></div>
+
+<div class="wrap">
+
+  <div class="page-head">
+    <p class="eyebrow">שיעור 11 · נושא 08</p>
+    <h1>אלגוריתמים גנטיים (Genetic Algorithms)</h1>
+    <span class="ref">AIMA 4.1.4 · כרומוזום · כושר · בחירה · הכלאה · מוטציה — מופיע בכל מבחן</span>
+  </div>
+
+  <div class="card">
+    <p>אלגוריתם גנטי הוא חיפוש מקומי בהשראת האבולוציה: מתחזקים <strong>אוכלוסייה</strong> של פתרונות מועמדים (כרומוזומים), ובכל דור בוחרים את ה"חזקים", מכליאים אותם ומבצעים מוטציה — וכך מתקדמים לפתרונות טובים יותר. <strong>אין הבטחה</strong> למציאת האופטימום הגלובלי, אבל זה יעיל במרחבים ענקיים.</p>
+  </div>
+
+  <!-- ============ המחזור ============ -->
+  <h2>1. מחזור הדורות</h2>
+  <div class="fig">
+    <svg viewBox="0 0 460 320" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="מחזור האלגוריתם הגנטי">
+      <defs><marker id="a" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L9,3 L0,6 Z" fill="#27408b"/></marker></defs>
+      <g font-family="Segoe UI,Arial" font-size="15" font-weight="700" text-anchor="middle">
+        <rect x="150" y="14" width="200" height="36" rx="9" fill="#fff7e0" stroke="#b8860b" stroke-width="2"/><text x="250" y="37" fill="#b8860b">אוכלוסייה התחלתית</text>
+        <rect x="150" y="74" width="200" height="36" rx="9" fill="#eef2ff" stroke="#27408b" stroke-width="2"/><text x="250" y="97" fill="#27408b">הערכת כושר (Fitness)</text>
+        <rect x="150" y="134" width="200" height="36" rx="9" fill="#eef2ff" stroke="#27408b" stroke-width="2"/><text x="250" y="157" fill="#27408b">בחירה (Selection)</text>
+        <rect x="150" y="194" width="200" height="36" rx="9" fill="#eef2ff" stroke="#27408b" stroke-width="2"/><text x="250" y="217" fill="#27408b">הכלאה (Crossover)</text>
+        <rect x="150" y="254" width="200" height="36" rx="9" fill="#e8f7ef" stroke="#1b7f5a" stroke-width="2"/><text x="250" y="277" fill="#1b7f5a">מוטציה (Mutation)</text>
+      </g>
+      <g stroke="#27408b" stroke-width="2" fill="none">
+        <line x1="250" y1="50" x2="250" y2="72" marker-end="url(#a)"/>
+        <line x1="250" y1="110" x2="250" y2="132" marker-end="url(#a)"/>
+        <line x1="250" y1="170" x2="250" y2="192" marker-end="url(#a)"/>
+        <line x1="250" y1="230" x2="250" y2="252" marker-end="url(#a)"/>
+        <!-- loop back from mutation to fitness -->
+        <path d="M150 272 C 60 272, 60 92, 148 92" marker-end="url(#a)"/>
+      </g>
+      <text x="70" y="186" text-anchor="middle" font-family="Segoe UI,Arial" font-size="13" fill="#1b7f5a" transform="rotate(-90 70 186)">דור חדש → חוזרים</text>
+    </svg>
+    <div class="cap">בכל דור: מעריכים כושר → בוחרים הורים → מכליאים → מבצעים מוטציה → דור חדש, וחוזר חלילה עד תנאי עצירה.</div>
+  </div>
+
+  <!-- ============ קידוד ============ -->
+  <h2>2. ייצוג (Encoding) ומספר ביטים</h2>
+  <p>כל פתרון מקודד כ<strong>כרומוזום</strong>, לרוב מחרוזת ביטים. כשמייצגים מספר ממשי בתחום <span class="math">[a,b]</span> בדיוק נתון, צריך מספיק ביטים כדי לכסות את כל הערכים:</p>
+  <div class="box formula">
+    <p class="box-title"><span class="ico">📐</span> מספר ביטים לדיוק</p>
+    <div class="math-block">n = ⌈ log₂( (b − a) / precision + 1 ) ⌉</div>
+    <dl class="kv">
+      <dt>דוגמה (2015)</dt><dd><span class="math">f(x)</span> בתחום <span class="math">[−2, 2]</span> בדיוק 2 ספרות (0.01): מספר ערכים <span class="math">= 4/0.01 + 1 = 401</span>. כי <span class="math">2⁸=256 &lt; 401 ≤ 512=2⁹</span> → צריך <strong>9 ביטים</strong>.</dd>
+      <dt>זכירה</dt><dd>תמיד מעגלים <strong>כלפי מעלה</strong> — חייבים לכסות את כל הערכים.</dd>
+    </dl>
+  </div>
+
+  <!-- ============ דוגמה ============ -->
+  <h2>3. דוגמה מלאה — מקסום <span class="math">f(x)=x²</span></h2>
+  <p>נמקסם <span class="math">f(x)=x²</span> כאשר <span class="math">x∈[0,31]</span> מקודד ב-5 ביטים. אוכלוסייה התחלתית של 4 כרומוזומים:</p>
+  <table>
+    <caption>הערכת כושר ובחירה (רולטה)</caption>
+    <thead><tr><th>כרומוזום</th><th>x</th><th>כושר f=x²</th><th>P(בחירה)=f/Σf</th></tr></thead>
+    <tbody>
+      <tr><td><code>01101</code></td><td>13</td><td>169</td><td>0.144</td></tr>
+      <tr><td><code>11000</code></td><td>24</td><td class="hl">576</td><td class="hl">0.492</td></tr>
+      <tr><td><code>01000</code></td><td>8</td><td>64</td><td>0.055</td></tr>
+      <tr><td><code>10011</code></td><td>19</td><td>361</td><td>0.309</td></tr>
+      <tr><td colspan="2"><strong>סכום</strong></td><td><strong>1170</strong></td><td>1.000</td></tr>
+    </tbody>
+  </table>
+  <p>בבחירת <strong>רולטה</strong> כל כרומוזום מקבל "פרוסה" יחסית לכושרו — לכן <code>11000</code> (הכושר הגבוה) הכי סביר להיבחר, ו-<code>01000</code> (הנמוך) הכי פחות.</p>
+
+  <h3>הכלאה (Crossover)</h3>
+  <div class="fig">
+    <svg viewBox="0 0 480 170" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="הכלאה חד-נקודתית">
+      <g font-family="Consolas,monospace" font-size="20" font-weight="700">
+        <text x="40" y="40" fill="#5b6478" font-size="14" font-family="Segoe UI,Arial">הורים:</text>
+        <text x="120" y="42" fill="#27408b">0 1 1 0</text><text x="220" y="42" fill="#b23b3b">1</text>
+        <text x="120" y="74" fill="#1b7f5a">1 1 0 0</text><text x="220" y="74" fill="#b8860b">0</text>
+        <line x1="210" y1="20" x2="210" y2="84" stroke="#b23b3b" stroke-width="2" stroke-dasharray="4 3"/>
+        <text x="210" y="100" text-anchor="middle" fill="#b23b3b" font-size="12" font-family="Segoe UI,Arial">נקודת חיתוך</text>
+        <text x="40" y="135" fill="#5b6478" font-size="14" font-family="Segoe UI,Arial">צאצאים:</text>
+        <text x="120" y="137" fill="#27408b">0 1 1 0</text><text x="220" y="137" fill="#b8860b">0</text><text x="270" y="137" fill="#5b6478" font-size="14" font-family="Segoe UI,Arial">= 01100 = 12</text>
+      </g>
+    </svg>
+    <div class="cap">הכלאה חד-נקודתית: חותכים בנקודה ומחליפים זנבות. <code>01101</code>+<code>11000</code> בנק' 4 → <code>01100</code>(=12) ו-<code>11001</code>(=25).</div>
+  </div>
+  <ul class="clean">
+    <li><strong>חד-נקודתית (1-point):</strong> נקודת חיתוך אחת, מחליפים את החלק שאחריה.</li>
+    <li><strong>דו-נקודתית (2-point):</strong> שתי נקודות, מחליפים את הקטע האמצעי שביניהן.</li>
+    <li><strong>מוטציה:</strong> היפוך ביט אקראי בהסתברות נמוכה (שומר על גיוון, מונע התכנסות מוקדמת).</li>
+  </ul>
+
+  <!-- ============ TSP ============ -->
+  <h2>4. בעיית הכלאה בבעיות תמורה (TSP)</h2>
+  <div class="box mistake">
+    <p class="box-title"><span class="ico">⚠️</span> למה הכלאה רגילה נכשלת</p>
+    <p style="margin:0 0 6px">במסלול של סוכן נוסע, כל כרומוזום הוא <strong>תמורה</strong> של הערים. הכלאה חד-נקודתית רגילה יוצרת מסלול לא חוקי — עם ערים כפולות וערים חסרות:</p>
+    <p style="margin:0;direction:ltr;text-align:left"><code>P1=[1,2,3,4|5,6,7,8,9]</code>, <code>P2=[9,6,8,1|7,2,3,5,4]</code> → child=<code>[1,2,3,4|7,2,3,5,4]</code> ← 2,3,4 כפולים, 6,8,9 חסרים!</p>
+    <p style="margin:6px 0 0"><strong>פתרון:</strong> אופרטורים ייעודיים כמו <strong>Order Crossover (OX)</strong> או <strong>PMX</strong> — לוקחים קטע מהורה אחד וממלאים את השאר לפי סדר ההופעה בהורה השני, תוך שמירה על תמורה חוקית.</p>
+  </div>
+
+  <!-- ============ מושגים ============ -->
+  <h2>5. נקודות מושגיות חשובות</h2>
+  <ul class="clean">
+    <li><strong>אין הבטחה לאופטימום גלובלי</strong> — זהו חיפוש סטוכסטי (הטעות הנפוצה ביותר בשאלות נכון/לא-נכון).</li>
+    <li><strong>Exploration מול Exploitation</strong> — מוטציה והכלאה שומרות על גיוון (חקירה), בחירה מנצלת את הטוב הקיים.</li>
+    <li><strong>מתי כדאי GA?</strong> כשמרחב הפתרונות ענק מכדי לסרוק ממצה, אין נוסחה אנליטית, ויש פונקציית כושר שניתן להעריך.</li>
+  </ul>
+
+  <!-- ============ שיטות פתרון ============ -->
+  <h2>6. שיטות פתרון לפי סוג שאלה</h2>
+  <table>
+    <thead><tr><th>סוג שאלה</th><th>שיטה</th></tr></thead>
+    <tbody>
+      <tr><td>"כמה ביטים צריך?"</td><td><span class="math">n=⌈log₂((b−a)/precision+1)⌉</span>, מעגלים כלפי מעלה.</td></tr>
+      <tr><td>"חשב כושר ודרג"</td><td>הצב כל כרומוזום בפונקציה; דרג מהגבוה לנמוך; חשב הסתברויות רולטה.</td></tr>
+      <tr><td>"בצע הכלאה 1/2 נקודות"</td><td>חתוך בנקודה(ות) הנתונה(ות), החלף זנבות/קטע אמצעי, פענח חזרה למספר.</td></tr>
+      <tr><td>"הצע ייצוג + fitness לבעיה"</td><td>הגדר כרומוזום (מה כל גן מייצג) ופונקציית כושר שמתגמלת פתרון טוב ומענישה הפרת אילוצים.</td></tr>
+      <tr><td>"תאר את מבנה ה-GA"</td><td>מחזור: אוכלוסייה → כושר → בחירה → הכלאה → מוטציה → דור חדש.</td></tr>
+    </tbody>
+  </table>
+
+  <div class="box mistake">
+    <p class="box-title"><span class="ico">⚠️</span> טעויות נפוצות</p>
+    <ul class="clean" style="margin:0">
+      <li>לטעון ש-GA מבטיח אופטימום — <strong>לא</strong>.</li>
+      <li>לעגל ביטים כלפי מטה — תמיד כלפי מעלה.</li>
+      <li>בהכלאת תמורות — לשכוח שצריך אופרטור מיוחד (OX/PMX).</li>
+      <li>לבלבל בין בחירה (לפי כושר) לבין הכלאה (יצירת צאצאים).</li>
+      <li>לשכוח לפענח את הכרומוזום בחזרה לערך לפני חישוב הכושר.</li>
+    </ul>
+  </div>
+
+  <div class="box formula">
+    <p class="box-title"><span class="ico">📐</span> לסיכום הנושא</p>
+    <ul class="clean" style="margin:0">
+      <li>מחזור: אוכלוסייה → כושר → בחירה → הכלאה → מוטציה → דור חדש.</li>
+      <li>ביטים: <span class="math">n=⌈log₂((b−a)/precision+1)⌉</span> · בחירת רולטה: <span class="math">P(i)=f_i/Σf</span>.</li>
+      <li>חיפוש סטוכסטי — ללא הבטחה לאופטימום; תמורות דורשות OX/PMX.</li>
+    </ul>
+  </div>
+
+  <div class="card" style="text-align:center;margin-top:26px">
+    <a class="home" href="דף_נוסחאות.html" style="display:inline-block">להמשך ◀ דף הנוסחאות המרוכז</a>
+  </div>
+
+</div>
+</body>
+</html>

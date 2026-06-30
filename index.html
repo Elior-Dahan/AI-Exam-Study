@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>חבילת למידה — בינה מלאכותית</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="wrap">
+
+  <div class="page-head">
+    <p class="eyebrow">חבילת למידה מלאה למבחן</p>
+    <h1>בינה מלאכותית — סיכום, שיטות פתרון, נוסחאות ופתרונות מלאים</h1>
+    <span class="ref">מבוסס על Russell &amp; Norvig — AIMA, מהדורה שלישית · בהתאם להדגשי המרצה</span>
+  </div>
+
+  <div class="card">
+    <h2 style="margin-top:6px">איך להשתמש בחבילה הזו</h2>
+    <p>החבילה בנויה <strong>מודולרית לפי נושא</strong>. כל קובץ נושא כולל: סיכום מאפס · שיטת פתרון צעד-אחר-צעד לכל סוג שאלה · המחשות ויזואליות · תיבת טעויות נפוצות · נוסחאות הנושא. בנוסף יש <strong>דף נוסחאות מרוכז</strong> לכל הקורס, ושני קובצי <strong>פתרונות מלאים</strong> — לכל המבחנים ולכל התרגילים.</p>
+    <div class="box tip">
+      <p class="box-title"><span class="ico">🖨️</span> טיפ: הדפסה למחברת</p>
+      <p style="margin:0">כל קובץ נפתח בדפדפן בלחיצה כפולה. כדי לשמור כ-PDF או להדפיס: פתחו את הקובץ ולחצו <code>Ctrl+P</code> — העיצוב מותאם להדפסה נקייה.</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2 style="margin-top:6px">מאיפה כדאי להתחיל? (לפי תדירות במבחן)</h2>
+    <p>על סמך ניתוח 5 המבחנים, אלו הנושאים שמופיעים כמעט בכל מבחן — שווה לוודא שהם מוצקים קודם:</p>
+    <table>
+      <caption>תדירות נושאים על פני 5 מבחנים (2015, 2018, 2019, 2023, מבחן דוגמה)</caption>
+      <thead>
+        <tr><th>נושא</th><th>מופיע ב־</th><th>עדיפות</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>חיפוש (BFS/DFS/IDS/UCS/Greedy/A*)</td><td class="hl">5 / 5</td><td>🔴 גבוהה מאוד</td></tr>
+        <tr><td>תורת המשחקים — נאש ואסטרטגיות נשלטות</td><td class="hl">5 / 5</td><td>🔴 גבוהה מאוד</td></tr>
+        <tr><td>אלגוריתמים גנטיים</td><td class="hl">5 / 5</td><td>🔴 גבוהה מאוד</td></tr>
+        <tr><td>קבילות היוריסטיקה (Admissibility)</td><td>4 / 5</td><td>🟠 גבוהה</td></tr>
+        <tr><td>Minimax</td><td>4–5 / 5</td><td>🟠 גבוהה</td></tr>
+        <tr><td>גיזום Alpha-Beta</td><td>4 / 5</td><td>🟠 גבוהה</td></tr>
+        <tr><td>עצי החלטה (אנטרופיה + Information Gain)</td><td>3 / 5</td><td>🟡 בינונית</td></tr>
+        <tr><td>נאש מעורב (מטריצת 2×2)</td><td>3 / 5</td><td>🟡 בינונית</td></tr>
+        <tr><td>למידת מושג (Version Space)</td><td>2 / 5</td><td>🟡 בינונית</td></tr>
+        <tr><td>רשתות נוירונים (forward + backprop)</td><td>2 / 5</td><td>🟡 בינונית</td></tr>
+        <tr><td>שאלות מושגיות (טיורינג, חדר סיני, Occam, שלמות)</td><td>2–3 / 5</td><td>🟢 קלה לנקודות</td></tr>
+      </tbody>
+    </table>
+    <p class="math" style="direction:rtl"><strong>מבנה מבחן אופייני:</strong> 100 נק' · 150 דקות · ~5–6 שאלות · חלוקה: חיפוש (20–25) + משחקים/יריבי (30–45) + למידה (20) + גנטי (15) + מושגי.</p>
+  </div>
+
+  <h2>נושאי הקורס</h2>
+  <div class="grid">
+    <a class="tile" href="00_מבוא.html"><div class="num">שיעור 1</div><div class="t">מבוא ל-AI</div><div class="d">הגדרות, מבחן טיורינג, החדר הסיני, תכונות סביבה, Occam, שלמות ואופטימליות.</div></a>
+    <a class="tile" href="01_חיפוש_לא_מיודע.html"><div class="num">שיעור 2</div><div class="t">חיפוש לא-מיודע</div><div class="d">ייצוג מצבים, BFS, DFS, IDS, UCS — תור/מחסנית, סדר פיתוח, עץ חיפוש.</div></a>
+    <a class="tile" href="02_חיפוש_מיודע.html"><div class="num">שיעור 3</div><div class="t">חיפוש מיודע (A*)</div><div class="d">היוריסטיקות, Greedy, A*, קבילות ועקביות, Hill Climbing, Weighted A*.</div></a>
+    <a class="tile" href="03_חיפוש_יריבי.html"><div class="num">שיעור 4</div><div class="t">חיפוש יריבי</div><div class="d">Minimax, גיזום Alpha-Beta, אופטימיזציית סדר, פתולוגיה, פונקציית הערכה.</div></a>
+    <a class="tile" href="04_תורת_משחקים.html"><div class="num">שיעורים 5–7</div><div class="t">תורת המשחקים</div><div class="d">מטריצת תשלומים, אסטרטגיות נשלטות, נאש טהור ומעורב, דילמת האסיר, משחקי תיאום.</div></a>
+    <a class="tile" href="05_למידת_מושג.html"><div class="num">שיעור 8</div><div class="t">למידת מושג (Version Space)</div><div class="d">היחס "כללי-יותר", Find-S, Candidate-Elimination, גבולות S ו-G.</div></a>
+    <a class="tile" href="06_רשתות_נוירונים.html"><div class="num">שיעור 9</div><div class="t">רשתות נוירונים</div><div class="d">פרספטרון, סיגמואיד, forward pass, backpropagation, עדכון משקולות.</div></a>
+    <a class="tile" href="07_עצי_החלטה.html"><div class="num">שיעור 10</div><div class="t">עצי החלטה</div><div class="d">אנטרופיה, Information Gain, אלגוריתם ID3, בניית עץ וחיזוי.</div></a>
+    <a class="tile" href="08_אלגוריתמים_גנטיים.html"><div class="num">שיעור 11</div><div class="t">אלגוריתמים גנטיים</div><div class="d">ייצוג כרומוזום, fitness, בחירה, הכלאה (crossover), מוטציה, מחזור דורי.</div></a>
+  </div>
+
+  <h2>כלי עזר ופתרונות</h2>
+  <div class="grid">
+    <a class="tile" href="דף_נוסחאות.html" style="border-right:4px solid var(--accent)"><div class="num" style="color:var(--accent)">לכל הקורס</div><div class="t" style="color:var(--accent)">📐 דף נוסחאות מרוכז</div><div class="d">כל הנוסחאות במקום אחד: מתי משתמשים, איך מציבים, דוגמה קצרה וכלל זכירה.</div></a>
+    <a class="tile" href="פתרונות_מבחנים.html" style="border-right:4px solid var(--ok)"><div class="num" style="color:var(--ok)">5 מבחנים</div><div class="t" style="color:var(--ok)">✅ פתרונות מבחנים</div><div class="d">פתרון מלא ומנומק לכל שאלות המבחנים 2015, 2018, 2019, 2023 ומבחן הדוגמה.</div></a>
+    <a class="tile" href="פתרונות_תרגילים.html" style="border-right:4px solid var(--ok)"><div class="num" style="color:var(--ok)">3 תרגילים</div><div class="t" style="color:var(--ok)">✅ פתרונות תרגילים</div><div class="d">פתרון מלא לתרגילי החיפוש, החיפוש היריבי ועץ ההחלטה, צעד-אחר-צעד.</div></a>
+  </div>
+
+  <div class="card" style="margin-top:24px;text-align:center;color:var(--muted);font-size:14px">
+    נבנה כחבילת למידה אישית · בהצלחה במבחן! 🎓
+  </div>
+
+</div>
+</body>
+</html>

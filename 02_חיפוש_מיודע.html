@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>חיפוש מיודע (A*) | חבילת למידה</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="topbar"><div class="inner">
+  <a class="home" href="index.html">🏠 דף הבית</a>
+  <span class="sep">|</span>
+  <a href="01_חיפוש_לא_מיודע.html">▶ חיפוש לא-מיודע</a>
+  <span class="sep">·</span>
+  <a href="03_חיפוש_יריבי.html">חיפוש יריבי ◀</a>
+</div></div>
+
+<div class="wrap">
+
+  <div class="page-head">
+    <p class="eyebrow">שיעור 3 · נושא 02</p>
+    <h1>חיפוש מיודע (Informed / Heuristic Search)</h1>
+    <span class="ref">AIMA 3.5–3.6 · Greedy · A* · קבילות ועקביות · Hill Climbing · Weighted A*</span>
+  </div>
+
+  <div class="card">
+    <p>חיפוש <strong>מיודע</strong> משתמש בפונקציית <strong>היוריסטיקה</strong> <span class="math">h(n)</span> — הערכה של העלות מהצומת <span class="math">n</span> אל היעד — כדי "לכוון" את החיפוש. זה מאפשר להגיע ליעד תוך פיתוח פחות צמתים. הכוכב של הנושא (ושל המבחן) הוא <strong>A*</strong>.</p>
+  </div>
+
+  <!-- ============ היוריסטיקה ============ -->
+  <h2>1. פונקציות הערכה</h2>
+  <div class="kv">
+    <dt><span class="math">g(n)</span></dt><dd>עלות המסלול <strong>מ-S עד n</strong> (מה שכבר "שולם"). מחושב תוך כדי החיפוש.</dd>
+    <dt><span class="math">h(n)</span></dt><dd>הערכה <strong>היוריסטית</strong> לעלות מ-n אל היעד (תמיד <span class="math">h(goal)=0</span>).</dd>
+    <dt><span class="math">f(n)=g(n)+h(n)</span></dt><dd>הערכה לעלות הכוללת של המסלול הזול ביותר <strong>שעובר דרך n</strong>. זו פונקציית ההערכה של A*.</dd>
+  </div>
+  <table>
+    <caption>שלוש האסטרטגיות המיודעות — מה ממיינות לפיו</caption>
+    <thead><tr><th>אלגוריתם</th><th>ממיין את התור לפי</th><th>אופטימלי?</th></tr></thead>
+    <tbody>
+      <tr><td>Greedy Best-First</td><td><span class="math">h(n)</span> בלבד</td><td class="bad">לא</td></tr>
+      <tr><td><strong>A*</strong></td><td><span class="math">f(n)=g(n)+h(n)</span></td><td class="good">כן (אם h קבילה)</td></tr>
+      <tr><td>UCS (לשם השוואה)</td><td><span class="math">g(n)</span> בלבד</td><td class="good">כן</td></tr>
+    </tbody>
+  </table>
+
+  <!-- ============ הגרף עם היוריסטיקה ============ -->
+  <h2>2. הגרף לדוגמה — עכשיו עם ערכי <span class="math">h</span></h2>
+  <p>אותו גרף מהנושא הקודם, ועכשיו לכל צומת יש ערך היוריסטי <span class="badge" style="background:var(--accent-soft);color:var(--accent)">h</span> (בכתום). עלויות הקשתות בכתום על הקשת.</p>
+  <div class="fig">
+    <svg viewBox="0 0 560 380" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="גרף עם ערכי היוריסטיקה">
+      <g stroke="#9aa6c0" stroke-width="2.5">
+        <line x1="280" y1="50" x2="150" y2="145"/>
+        <line x1="280" y1="50" x2="410" y2="145"/>
+        <line x1="150" y1="145" x2="90" y2="250"/>
+        <line x1="150" y1="145" x2="280" y2="250"/>
+        <line x1="410" y1="145" x2="280" y2="250"/>
+        <line x1="90" y1="250" x2="235" y2="335"/>
+        <line x1="280" y1="250" x2="235" y2="335"/>
+      </g>
+      <g font-family="Consolas,monospace" font-size="14" font-weight="700" fill="#b8860b">
+        <rect x="206" y="85" width="18" height="18" rx="4" fill="#fff7e0"/><text x="215" y="99" text-anchor="middle">1</text>
+        <rect x="337" y="85" width="18" height="18" rx="4" fill="#fff7e0"/><text x="346" y="99" text-anchor="middle">4</text>
+        <rect x="103" y="190" width="18" height="18" rx="4" fill="#fff7e0"/><text x="112" y="204" text-anchor="middle">2</text>
+        <rect x="210" y="190" width="18" height="18" rx="4" fill="#fff7e0"/><text x="219" y="204" text-anchor="middle">5</text>
+        <rect x="340" y="190" width="18" height="18" rx="4" fill="#fff7e0"/><text x="349" y="204" text-anchor="middle">1</text>
+        <rect x="150" y="287" width="18" height="18" rx="4" fill="#fff7e0"/><text x="159" y="301" text-anchor="middle">3</text>
+        <rect x="260" y="287" width="18" height="18" rx="4" fill="#fff7e0"/><text x="269" y="301" text-anchor="middle">1</text>
+      </g>
+      <!-- nodes with name + h -->
+      <g font-family="Segoe UI,Arial" text-anchor="middle">
+        <circle cx="280" cy="50" r="24" fill="#27408b" stroke="#1b2a5e" stroke-width="2"/><text x="280" y="57" fill="#fff" font-size="19" font-weight="700">S</text><text x="280" y="20" fill="#b8860b" font-size="14" font-weight="700">h=5</text>
+        <circle cx="150" cy="145" r="24" fill="#eef2ff" stroke="#27408b" stroke-width="2"/><text x="150" y="152" fill="#27408b" font-size="19" font-weight="700">A</text><text x="108" y="140" fill="#b8860b" font-size="14" font-weight="700">h=4</text>
+        <circle cx="410" cy="145" r="24" fill="#eef2ff" stroke="#27408b" stroke-width="2"/><text x="410" y="152" fill="#27408b" font-size="19" font-weight="700">B</text><text x="452" y="140" fill="#b8860b" font-size="14" font-weight="700">h=2</text>
+        <circle cx="90" cy="250" r="24" fill="#eef2ff" stroke="#27408b" stroke-width="2"/><text x="90" y="257" fill="#27408b" font-size="19" font-weight="700">C</text><text x="48" y="245" fill="#b8860b" font-size="14" font-weight="700">h=2</text>
+        <circle cx="280" cy="250" r="24" fill="#eef2ff" stroke="#27408b" stroke-width="2"/><text x="280" y="257" fill="#27408b" font-size="19" font-weight="700">D</text><text x="322" y="245" fill="#b8860b" font-size="14" font-weight="700">h=1</text>
+        <circle cx="235" cy="335" r="24" fill="#1b7f5a" stroke="#0f5a3e" stroke-width="2"/><text x="235" y="342" fill="#fff" font-size="19" font-weight="700">G</text><text x="287" y="345" fill="#b8860b" font-size="14" font-weight="700">h=0</text>
+      </g>
+    </svg>
+    <div class="cap">איור: ערכי היוריסטיקה (כתום ליד הצומת) ועלויות קשת (כתום על הקשת).</div>
+  </div>
+
+  <!-- ============ Greedy ============ -->
+  <h2>3. Greedy Best-First — חמדן</h2>
+  <p>מפתח תמיד את הצומת עם <span class="math">h(n)</span> הקטן ביותר — "מי שנראה הכי קרוב ליעד". מתעלם לגמרי מ-<span class="math">g</span>.</p>
+  <table>
+    <caption>מעקב Greedy (ממיין לפי h)</caption>
+    <thead><tr><th>צעד</th><th>מוּצָא (h)</th><th>נוספים (h)</th><th>תור אחרי (לפי h)</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>S (5)</td><td>A(4), B(2)</td><td><code>{B:2, A:4}</code></td></tr>
+      <tr><td>2</td><td>B (2)</td><td>D(1)</td><td><code>{D:1, A:4}</code></td></tr>
+      <tr><td>3</td><td>D (1)</td><td>G(0)</td><td><code>{G:0, A:4}</code></td></tr>
+      <tr><td>4</td><td class="good">G (0) ✓</td><td>—</td><td>—</td></tr>
+    </tbody>
+  </table>
+  <p><strong>סדר:</strong> <code>S → B → D → G</code> · מסלול <code>S→B→D→G</code> בעלות <span class="math">4+1+1=6</span>.</p>
+  <div class="box mistake"><p class="box-title"><span class="ico">⚠️</span> אזהרה</p><p style="margin:0">כאן Greedy "התמזל" והגיע למסלול אופטימלי, אבל הוא <strong>לא מובטח אופטימלי</strong> — הוא מתעלם מ-<span class="math">g</span>. אילו הקשת <span class="math">S–B</span> היתה יקרה מאוד, Greedy עדיין היה צולל ל-B בגלל <span class="math">h</span> הנמוך, ומקבל מסלול יקר.</p></div>
+
+  <!-- ============ A* ============ -->
+  <h2>4. A* — הכוכב של המבחן</h2>
+  <p>ממיין לפי <span class="math">f(n)=g(n)+h(n)</span>. משלב את "כמה כבר שילמתי" (g) עם "כמה צפוי עוד" (h). <strong>אם h קבילה — A* אופטימלי.</strong></p>
+  <div class="pseudo"><span class="cm"># A*</span>
+frontier ← priority queue ordered by f = g + h
+<span class="kw">while</span> frontier:
+    n ← pop-min-f(frontier)
+    <span class="kw">if</span> GOAL(n): <span class="kw">return</span> path        <span class="cm"># מבחן יעד בהוצאה</span>
+    <span class="kw">for</span> child of n:
+        g(child) = g(n) + cost(n,child)
+        <span class="kw">if</span> better than known g(child): update &amp; insert</div>
+  <table>
+    <caption>מעקב A* — לכל צומת רושמים <span class="math">g+h=f</span></caption>
+    <thead><tr><th>צעד</th><th>מוּצָא <span class="math">(g+h=f)</span></th><th>עדכוני שכנים</th><th>תור אחרי (לפי f)</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>S (0+5=5)</td><td>A: 1+4=<strong>5</strong> · B: 4+2=<strong>6</strong></td><td><code>{A:5, B:6}</code></td></tr>
+      <tr><td>2</td><td>A (1+4=5)</td><td>C: 3+2=<strong>5</strong> · D: 6+1=<strong>7</strong></td><td><code>{C:5, B:6, D:7}</code></td></tr>
+      <tr><td>3</td><td>C (3+2=5)</td><td>G: 6+0=<strong>6</strong></td><td><code>{B:6, G:6, D:7}</code></td></tr>
+      <tr><td>4</td><td>B (4+2=6)</td><td>D: 5+1=<strong>6</strong> &lt; 7 → <span class="hl">עדכון D=6</span></td><td><code>{D:6, G:6}</code></td></tr>
+      <tr><td>5</td><td>D (5+1=6)</td><td>G: 6+0=6 (לא משתפר)</td><td><code>{G:6}</code></td></tr>
+      <tr><td>6</td><td class="good">G (6+0=6) ✓</td><td>—</td><td>—</td></tr>
+    </tbody>
+  </table>
+  <p><strong>סדר פיתוח:</strong> <code>S → A → C → B → D → G</code> · <strong>עלות אופטימלית:</strong> <span class="math">6</span> (מסלול <code>S→A→C→G</code>). שימו לב ש-A* "ויתר" על פיתוח מוקדם של G עד שווידא שאין מסלול זול יותר.</p>
+
+  <!-- ============ קבילות ============ -->
+  <h2>5. קבילות (Admissibility) ועקביות (Consistency)</h2>
+  <div class="box def">
+    <p class="box-title"><span class="ico">📘</span> קבילה (Admissible)</p>
+    <p style="margin:0">היוריסטיקה <strong>לעולם אינה מעריכה ביתר</strong>: <span class="math">h(n) ≤ h*(n)</span> לכל צומת, כאשר <span class="math">h*(n)</span> = העלות האמיתית מ-n ליעד. היא "אופטימית". <strong>זהו התנאי לאופטימליות של A*</strong> (ב-tree-search).</p>
+  </div>
+  <div class="box def">
+    <p class="box-title"><span class="ico">📘</span> עקבית / מונוטונית (Consistent)</p>
+    <p style="margin:0"><span class="math">h(n) ≤ cost(n,n') + h(n')</span> לכל קשת (אי-שוויון המשולש). עקביות ⇐ קבילות (תנאי חזק יותר), ומבטיחה אופטימליות גם ב-graph-search.</p>
+  </div>
+  <div class="box tip">
+    <p class="box-title"><span class="ico">🎯</span> שיטת פתרון — "האם h קבילה?"</p>
+    <ol class="steps" style="margin:8px 0 0">
+      <li><span class="st">חשב את <span class="math">h*(n)</span> לכל צומת</span> — העלות האמיתית הזולה ביותר ליעד.</li>
+      <li><span class="st">השווה <span class="math">h(n) ≤ h*(n)</span></span> בכל צומת. די ב<strong>צומת אחד</strong> שמפר כדי לפסול קבילות.</li>
+      <li><span class="st">כתוב מסקנה מנומקת</span> — "קבילה כי בכל צומת h≤h*", או "לא קבילה כי h(X)=.. &gt; h*(X)=..".</li>
+    </ol>
+  </div>
+  <table>
+    <caption>בדיקת הקבילות של ההיוריסטיקה שלנו</caption>
+    <thead><tr><th>צומת</th><th>S</th><th>A</th><th>B</th><th>C</th><th>D</th><th>G</th></tr></thead>
+    <tbody>
+      <tr><td><span class="math">h(n)</span></td><td>5</td><td>4</td><td>2</td><td>2</td><td>1</td><td>0</td></tr>
+      <tr><td><span class="math">h*(n)</span></td><td>6</td><td>5</td><td>2</td><td>3</td><td>1</td><td>0</td></tr>
+      <tr><td>קבילה?</td><td class="good">✓</td><td class="good">✓</td><td class="good">✓</td><td class="good">✓</td><td class="good">✓</td><td class="good">✓</td></tr>
+    </tbody>
+  </table>
+
+  <h3>דוגמאות קבילות מהמבחן (וריאציות על h)</h3>
+  <table>
+    <thead><tr><th>היוריסטיקה חדשה</th><th>קבילה?</th><th>נימוק</th></tr></thead>
+    <tbody>
+      <tr><td><span class="math">h₂(n)=min(2, h(n))</span></td><td class="good">כן</td><td>הקטנת ערך קביל שומרת על קבילות: <span class="math">min(2,h)≤h≤h*</span>.</td></tr>
+      <tr><td><span class="math">h₂(n)=max(2, h(n))</span></td><td class="bad">לא בהכרח</td><td>מגדיל ערכים: בצומת שכן ליעד שבו <span class="math">h*=1</span> נקבל <span class="math">max(2,h)=2 &gt; 1</span> → הערכת יתר → לא קבילה.</td></tr>
+    </tbody>
+  </table>
+
+  <!-- ============ Hill Climbing ============ -->
+  <h2>6. טיפוס גבעה (Hill Climbing)</h2>
+  <p>חיפוש מקומי "חמדן" שעובר תמיד <strong>לשכן עם ה-<span class="math">h</span> הטוב ביותר</strong> (הקרוב ביותר ליעד), בלי תור ובלי זיכרון מסלול. מהיר וחסכוני, אך <strong>נתקע</strong> במקסימום/מינימום מקומי ואינו שלם.</p>
+  <div class="box mistake"><p class="box-title"><span class="ico">⚠️</span> חולשות (לזכור)</p><p style="margin:0">מינימום מקומי · רמות (plateau) · רכסים (ridges). פתרונות: התחלות אקראיות (random restarts), Simulated Annealing.</p></div>
+
+  <!-- ============ Weighted A* ============ -->
+  <h2>7. A* משוקלל (Weighted A*) — שאלת 2023</h2>
+  <p>וריאנט עם פרמטר <span class="math">w</span>: &nbsp; <span class="math-block">f(n) = w·g(n) + (100−w)·h(n), &nbsp; 0 ≤ w ≤ 100</span></p>
+  <table>
+    <thead><tr><th>ערך <span class="math">w</span></th><th>הנוסחה הופכת ל-</th><th>איזה אלגוריתם?</th></tr></thead>
+    <tbody>
+      <tr><td><span class="math">w=0</span></td><td><span class="math">f=100·h</span></td><td>Greedy (לפי h בלבד)</td></tr>
+      <tr><td><span class="math">w=50</span></td><td><span class="math">f=50(g+h)</span> ∝ <span class="math">g+h</span></td><td><strong>A* רגיל</strong></td></tr>
+      <tr><td><span class="math">w=100</span></td><td><span class="math">f=100·g</span></td><td>UCS (לפי g בלבד)</td></tr>
+    </tbody>
+  </table>
+  <div class="box tip"><p class="box-title"><span class="ico">🎯</span> לאילו <span class="math">w</span> אופטימלי?</p><p style="margin:0">מחלקים ב-<span class="math">w</span>: <span class="math">f/w = g + ((100−w)/w)·h</span>. המשקל האפקטיבי על h הוא <span class="math">(100−w)/w</span>, ו-A* אופטימלי כשהוא <span class="math">≤1</span> (לא מנפחים את ההיוריסטיקה הקבילה): <span class="math">(100−w)/w ≤ 1 ⇔ w ≥ 50</span>. כלומר <strong>אופטימלי עבור <span class="math">50 ≤ w ≤ 100</span></strong>.</p></div>
+
+  <!-- ============ שיטת פתרון A* ============ -->
+  <h2>8. שיטת פתרון — "עקוב אחר A*"</h2>
+  <ol class="steps">
+    <li><span class="st">רשום טבלת <span class="math">h</span></span> לכל צומת (נתון בשאלה).</li>
+    <li><span class="st">בכל צעד הוצא את הצומת עם <span class="math">f=g+h</span> מינימלי</span> — וכתוב את הפירוק <span class="math">g+h=f</span> במפורש.</li>
+    <li><span class="st">עדכן שכנים</span> — אם נמצא מסלול זול יותר לצומת, עדכן את <span class="math">g</span> שלו.</li>
+    <li><span class="st">שובר שוויון אלפביתי</span> כש-<span class="math">f</span> שווה.</li>
+    <li><span class="st">עצור כשהיעד יוצא מהתור</span> — דווח עלות ומסלול.</li>
+  </ol>
+
+  <div class="box mistake">
+    <p class="box-title"><span class="ico">⚠️</span> טעויות נפוצות</p>
+    <ul class="clean" style="margin:0">
+      <li>למיין את A* לפי <span class="math">h</span> בלבד (זה Greedy) או לפי <span class="math">g</span> בלבד (זה UCS) — A* זה <span class="math">g+h</span>.</li>
+      <li>לשכוח לעדכן <span class="math">g</span> כשמגיעים לצומת בזול יותר.</li>
+      <li>לבצע מבחן יעד בעת היצירה — פוגע באופטימליות. תמיד בהוצאה.</li>
+      <li>לבלבל קבילות (<span class="math">h≤h*</span>) עם עקביות (אי-שוויון המשולש) — עקביות חזקה יותר.</li>
+      <li>לטעון ש-A* תמיד מפתח פחות צמתים מ-UCS — נכון רק אם <span class="math">h</span> אינפורמטיבית; עם <span class="math">h=0</span> הם זהים.</li>
+    </ul>
+  </div>
+
+  <div class="box formula">
+    <p class="box-title"><span class="ico">📐</span> לסיכום הנושא</p>
+    <ul class="clean" style="margin:0">
+      <li><span class="math">f(n)=g(n)+h(n)</span> · Greedy=<span class="math">h</span> · UCS=<span class="math">g</span> · A*=<span class="math">g+h</span>.</li>
+      <li>קבילות: <span class="math">h(n)≤h*(n)</span> — תנאי לאופטימליות. עקביות: <span class="math">h(n)≤c(n,n')+h(n')</span>.</li>
+      <li>היוריסטיקה אינפורמטיבית יותר (<span class="math">h</span> גבוה יותר אך עדיין קביל) ⇐ פחות צמתים מפותחים.</li>
+    </ul>
+  </div>
+
+  <div class="card" style="text-align:center;margin-top:26px">
+    <a class="home" href="03_חיפוש_יריבי.html" style="display:inline-block">הנושא הבא ◀ חיפוש יריבי</a>
+  </div>
+
+</div>
+</body>
+</html>

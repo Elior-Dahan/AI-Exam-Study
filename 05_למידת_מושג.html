@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>למידת מושג (Version Space) | חבילת למידה</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="topbar"><div class="inner">
+  <a class="home" href="index.html">🏠 דף הבית</a>
+  <span class="sep">|</span>
+  <a href="04_תורת_משחקים.html">▶ תורת המשחקים</a>
+  <span class="sep">·</span>
+  <a href="06_רשתות_נוירונים.html">רשתות נוירונים ◀</a>
+</div></div>
+
+<div class="wrap">
+
+  <div class="page-head">
+    <p class="eyebrow">שיעור 8 · נושא 05</p>
+    <h1>למידת מושג — Version Space</h1>
+    <span class="ref">AIMA 19.1 + Mitchell · Candidate-Elimination · גבולות S ו-G · סימון ?/∅</span>
+  </div>
+
+  <div class="card">
+    <p>למידת מושג: בהינתן דוגמאות מתויגות (חיובי <span class="badge" style="background:var(--warn-soft);color:var(--warn)">+</span> / שלילי <span class="badge">−</span>), לומדים <strong>השערה (hypothesis)</strong> שמסבירה את כולן. במקום השערה אחת, אלגוריתם <strong>Candidate-Elimination</strong> מתחזק את <strong>כל</strong> ההשערות העקביות — מרחב הגרסאות (Version Space) — ע"י שני גבולות: <strong>S</strong> (הספציפי ביותר) ו-<strong>G</strong> (הכללי ביותר).</p>
+  </div>
+
+  <!-- ============ ייצוג ============ -->
+  <h2>1. ייצוג השערה והיררכיית הכללה</h2>
+  <p>השערה היא וקטור של אילוצים על התכונות. בדוגמת הקלפים: <span class="math">[ערך, צורה]</span>. כל תכונה יכולה לקבל ערך ספציפי, ערך-ביניים (קטגוריה), או <code>?</code> (כל ערך). <code>∅</code> (או <span class="math">⊥</span>) = "שום דבר לא מתאים" (ההשערה הריקה).</p>
+  <table>
+    <caption>היררכיית ההכללה (מהספציפי לכללי)</caption>
+    <thead><tr><th>תכונה</th><th>ספציפי</th><th>קטגוריה</th><th>כללי</th></tr></thead>
+    <tbody>
+      <tr><td>ערך</td><td>7, 8, 9, 10, J, Q, K, A</td><td><strong>N</strong> = קלף מספר (7–10)</td><td><code>?</code></td></tr>
+      <tr><td>צורה</td><td>♥ ♦ ♣ ♠</td><td><strong>R</strong> = אדום (♥,♦) · <strong>B</strong> = שחור (♣,♠)</td><td><code>?</code></td></tr>
+    </tbody>
+  </table>
+  <div class="fig">
+    <svg viewBox="0 0 520 250" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="היררכיית הכללה">
+      <g font-family="Segoe UI,Arial" font-size="14" text-anchor="middle">
+        <!-- value chain -->
+        <text x="120" y="24" font-weight="700" fill="#27408b">הכללת הערך</text>
+        <rect x="80" y="40" width="80" height="30" rx="6" fill="#eef2ff" stroke="#27408b"/><text x="120" y="60">7</text>
+        <rect x="80" y="100" width="80" height="30" rx="6" fill="#e8f7ef" stroke="#1b7f5a"/><text x="120" y="120">N (מספר)</text>
+        <rect x="80" y="160" width="80" height="30" rx="6" fill="#fff7e0" stroke="#b8860b"/><text x="120" y="180">?</text>
+        <line x1="120" y1="70" x2="120" y2="100" stroke="#9aa6c0" stroke-width="2"/>
+        <line x1="120" y1="130" x2="120" y2="160" stroke="#9aa6c0" stroke-width="2"/>
+        <!-- suit chain -->
+        <text x="380" y="24" font-weight="700" fill="#27408b">הכללת הצורה</text>
+        <rect x="340" y="40" width="80" height="30" rx="6" fill="#eef2ff" stroke="#27408b"/><text x="380" y="60">♦ (D)</text>
+        <rect x="340" y="100" width="80" height="30" rx="6" fill="#e8f7ef" stroke="#1b7f5a"/><text x="380" y="120">R (אדום)</text>
+        <rect x="340" y="160" width="80" height="30" rx="6" fill="#fff7e0" stroke="#b8860b"/><text x="380" y="180">?</text>
+        <line x1="380" y1="70" x2="380" y2="100" stroke="#9aa6c0" stroke-width="2"/>
+        <line x1="380" y1="130" x2="380" y2="160" stroke="#9aa6c0" stroke-width="2"/>
+        <text x="250" y="220" fill="#5b6478" font-size="13">ככל שעולים — ההשערה כללית יותר (מכסה יותר קלפים)</text>
+      </g>
+    </svg>
+    <div class="cap">איור: לכל תכונה יש סולם הכללה. השערה כללית יותר = מכסה יותר מקרים.</div>
+  </div>
+
+  <!-- ============ S ו-G ============ -->
+  <h2>2. הגבולות S ו-G ומרחב הגרסאות</h2>
+  <div class="kv">
+    <dt>היחס "כללי-יותר-מ-"</dt><dd>השערה <span class="math">h₁</span> כללית יותר מ-<span class="math">h₂</span> אם כל מה ש-<span class="math">h₂</span> מכסה — גם <span class="math">h₁</span> מכסה (ועוד). למשל <span class="math">[N,?]</span> כללית יותר מ-<span class="math">[N,R]</span>.</dd>
+    <dt>גבול S</dt><dd>קבוצת ההשערות ה<strong>ספציפיות ביותר</strong> שעדיין עקביות עם הדוגמאות. מתחיל מ-<span class="math">∅</span> (לא מכסה כלום).</dd>
+    <dt>גבול G</dt><dd>קבוצת ההשערות ה<strong>כלליות ביותר</strong> שעדיין עקביות. מתחיל מ-<span class="math">[?,?]</span> (מכסה הכול).</dd>
+    <dt>מרחב הגרסאות</dt><dd>כל ההשערות ש"בין" S ל-G. ככל שמגיעות דוגמאות — S עולה ו-G יורד, עד <strong>התכנסות</strong> (S=G).</dd>
+  </div>
+
+  <!-- ============ האלגוריתם ============ -->
+  <h2>3. אלגוריתם Candidate-Elimination — הכללים</h2>
+  <div class="box def">
+    <p class="box-title"><span class="ico">📘</span> דוגמה <span style="color:var(--warn)">חיובית +</span></p>
+    <ul class="clean" style="margin:0">
+      <li><strong>הרחב את S</strong> מינימלית כדי שתכסה את הדוגמה החדשה.</li>
+      <li><strong>זרוק מ-G</strong> כל השערה שאינה מכסה את הדוגמה החיובית (חייבים לכסות חיוביות).</li>
+    </ul>
+  </div>
+  <div class="box def">
+    <p class="box-title"><span class="ico">📘</span> דוגמה <span style="color:var(--ok)">שלילית −</span></p>
+    <ul class="clean" style="margin:0">
+      <li><strong>צמצם (specialize) את G</strong> מינימלית כדי שלא תכסה את הדוגמה השלילית.</li>
+      <li><strong>זרוק מ-S</strong> כל השערה שכן מכסה את הדוגמה השלילית.</li>
+    </ul>
+  </div>
+  <div class="box tip"><p class="box-title"><span class="ico">🎯</span> שני כללי ניקוי חשובים</p>
+    <ul class="clean" style="margin:0">
+      <li><strong>הסר השערות מיותרות (Redundant):</strong> ב-G, אם השערה ספציפית יותר מהשערה אחרת שכבר ב-G — זרוק אותה (G צריך להיות הכי כללי).</li>
+      <li><strong>התכנסות:</strong> כשמתקבל <span class="math">S = G</span> — זו ההשערה הסופית שנלמדה.</li>
+    </ul>
+  </div>
+
+  <!-- ============ דוגמה מלאה ============ -->
+  <h2>4. דוגמה מלאה — קלפים (כמו במבחן הדוגמה)</h2>
+  <p>הדוגמאות (לפי הסדר): <span class="badge" style="background:var(--warn-soft);color:var(--warn)">[7,♦] +</span> <span class="badge">[A,♣] −</span> <span class="badge">[Q,♥] −</span> <span class="badge" style="background:var(--warn-soft);color:var(--warn)">[9,♥] +</span> <span class="badge">[8,♣] −</span></p>
+
+  <table>
+    <caption>אבולוציית הגבולות S ו-G אחרי כל דוגמה</caption>
+    <thead><tr><th>#</th><th>דוגמה</th><th>פעולה</th><th>גבול G</th><th>גבול S</th></tr></thead>
+    <tbody>
+      <tr><td>0</td><td>אתחול</td><td>—</td><td><code>{ [?,?] }</code></td><td><code>{ ∅ }</code></td></tr>
+      <tr><td>1</td><td><span style="color:var(--warn)">[7,♦] +</span></td><td>S עולה לכסות את החיובי</td><td><code>{ [?,?] }</code></td><td class="hl"><code>{ [7,D] }</code></td></tr>
+      <tr><td>2</td><td>[A,♣] −</td><td>G מצומצם (A אינו N, ♣ אינו R)</td><td class="hl"><code>{ [N,?], [?,R] }</code></td><td><code>{ [7,D] }</code></td></tr>
+      <tr><td>3</td><td>[Q,♥] −</td><td>[?,R] מכסה את ♥ → מצמצמים ל-[?,D]; [N,?] תקין</td><td class="hl"><code>{ [N,?], [?,D] }</code></td><td><code>{ [7,D] }</code></td></tr>
+      <tr><td>4</td><td><span style="color:var(--warn)">[9,♥] +</span></td><td>S עולה ל-[N,R]; [?,D] לא מכסה ♥ → נזרק מ-G</td><td class="hl"><code>{ [N,?] }</code></td><td class="hl"><code>{ [N,R] }</code></td></tr>
+      <tr><td>5</td><td>[8,♣] −</td><td>[N,?] מכסה את 8 → מצמצמים ל-[N,R]</td><td class="good"><code>{ [N,R] }</code></td><td class="good"><code>{ [N,R] }</code></td></tr>
+    </tbody>
+  </table>
+
+  <div class="box example">
+    <p class="box-title"><span class="ico">🧩</span> הסבר הצעדים הקריטיים</p>
+    <ul class="clean" style="margin:0">
+      <li><strong>צעד 2 ([A,♣]−):</strong> מ-[?,?] מצמצמים בכל תכונה בנפרד כדי לא לכסות את A♣: בערך → <code>[N,?]</code> (7 הוא N, A לא), בצורה → <code>[?,R]</code> (♦ אדום, ♣ לא). שתיהן עדיין מכסות את [7,♦].</li>
+      <li><strong>צעד 3 ([Q,♥]−):</strong> <code>[N,?]</code> כבר לא מכסה את Q (Q אינו N) — נשאר. <code>[?,R]</code> כן מכסה את ♥ — נצמצם ל-<code>[?,D]</code>. (האפשרות <code>[N,R]</code> מיותרת כי היא ספציפית מ-<code>[N,?]</code> שכבר ב-G).</li>
+      <li><strong>צעד 4 ([9,♥]+):</strong> S=[7,D] לא מכסה את [9,♥] → מכלילים ל-<code>[N,R]</code> (7,9 הם N; ♦,♥ הם R). <code>[?,D]</code> ב-G לא מכסה ♥ → נזרק.</li>
+      <li><strong>צעד 5 ([8,♣]−):</strong> <code>[N,?]</code> מכסה את 8 (8 הוא N) → נצמצם ל-<code>[N,R]</code> (♣ אינו אדום). עכשיו G=S=<code>[N,R]</code>.</li>
+    </ul>
+  </div>
+
+  <div class="fig">
+    <svg viewBox="0 0 360 220" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="התכנסות">
+      <g font-family="Consolas,monospace" font-size="15" text-anchor="middle" font-weight="700">
+        <rect x="130" y="20" width="100" height="32" rx="6" fill="#e8f7ef" stroke="#1b7f5a" stroke-width="2"/><text x="180" y="41" fill="#1b7f5a">[?,?]</text>
+        <rect x="130" y="78" width="100" height="32" rx="6" fill="#e8f7ef" stroke="#1b7f5a" stroke-width="2"/><text x="180" y="99" fill="#1b7f5a">[N,?]</text>
+        <rect x="130" y="136" width="100" height="32" rx="6" fill="#fff7e0" stroke="#b8860b" stroke-width="3"/><text x="180" y="157" fill="#b8860b">[N,R]</text>
+        <line x1="180" y1="52" x2="180" y2="78" stroke="#1b7f5a" stroke-width="2"/>
+        <line x1="180" y1="110" x2="180" y2="136" stroke="#9aa6c0" stroke-width="2"/>
+        <text x="300" y="157" fill="#b8860b" font-size="13" font-family="Segoe UI,Arial">S = G ✓</text>
+        <text x="180" y="200" fill="#5b6478" font-size="13" font-family="Segoe UI,Arial">המושג שנלמד: "קלף מספר בצבע אדום"</text>
+      </g>
+    </svg>
+    <div class="cap">התכנסות: G יורד מ-[?,?] ל-[N,?], ו-S עולה ל-[N,R]; הם נפגשים ב-<strong>[N,R]</strong>.</div>
+  </div>
+  <p><strong>המושג שנלמד: <span class="math">[N, R]</span></strong> — "קלף <strong>מספר</strong> (7–10) בצבע <strong>אדום</strong> (♥/♦)". בדיקה: [7♦]+✓ [9♥]+✓ [A♣]−✓ [Q♥]−✓ [8♣]−✓.</p>
+
+  <!-- ============ שיטת פתרון ============ -->
+  <h2>5. שיטת פתרון — Candidate-Elimination</h2>
+  <ol class="steps">
+    <li><span class="st">אתחל</span> — <span class="math">G={[?,?...]}</span> ו-<span class="math">S={∅}</span>. צייר/רשום את שני הגבולות.</li>
+    <li><span class="st">לכל דוגמה לפי הסדר</span> — קבע אם חיובית או שלילית.</li>
+    <li><span class="st">חיובית → הכלל את S</span> מינימלית; זרוק מ-G מי שלא מכסה אותה.</li>
+    <li><span class="st">שלילית → צמצם את G</span> מינימלית (בכל תכונה בנפרד); זרוק מ-S מי שכן מכסה אותה.</li>
+    <li><span class="st">נקה</span> — הסר מ-G השערות מיותרות (ספציפיות מאחרות ב-G).</li>
+    <li><span class="st">בדוק התכנסות</span> — אם <span class="math">S=G</span> זו ההשערה הסופית; אחרת מרחב הגרסאות הוא כל מה שביניהן.</li>
+  </ol>
+
+  <div class="box mistake">
+    <p class="box-title"><span class="ico">⚠️</span> טעויות נפוצות</p>
+    <ul class="clean" style="margin:0">
+      <li>להחליף את הכיוונים: <strong>חיובי מרחיב את S</strong>, <strong>שלילי מצמצם את G</strong> (לא הפוך!).</li>
+      <li>לצמצם את G "יותר מדי" — מצמצמים <strong>מינימלית</strong>, ובכל תכונה בנפרד.</li>
+      <li>לשכוח לזרוק מ-G השערה שלא מכסה דוגמה חיובית חדשה (כמו [?,D] בצעד 4).</li>
+      <li>להשאיר השערות מיותרות ב-G (ספציפיות מאחרות).</li>
+      <li>לשכוח שההכללה היא לפי ההיררכיה (7,9 → N; ♦,♥ → R) ולא ישר ל-<code>?</code>.</li>
+    </ul>
+  </div>
+
+  <div class="box formula">
+    <p class="box-title"><span class="ico">📐</span> לסיכום הנושא</p>
+    <ul class="clean" style="margin:0">
+      <li>S = ספציפי ביותר (מתחיל ∅, עולה על חיוביות). G = כללי ביותר (מתחיל [?,?], יורד על שליליות).</li>
+      <li>מרחב הגרסאות = כל ההשערות בין S ל-G; התכנסות כש-S=G.</li>
+      <li>חיובי → הרחב S + נקה G · שלילי → צמצם G + נקה S · הסר מיותרים.</li>
+    </ul>
+  </div>
+
+  <div class="card" style="text-align:center;margin-top:26px">
+    <a class="home" href="06_רשתות_נוירונים.html" style="display:inline-block">הנושא הבא ◀ רשתות נוירונים</a>
+  </div>
+
+</div>
+</body>
+</html>

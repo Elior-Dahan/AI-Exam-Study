@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>דף נוסחאות מרוכז | חבילת למידה</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="topbar"><div class="inner">
+  <a class="home" href="index.html">🏠 דף הבית</a>
+  <span class="sep">|</span>
+  <a href="#search">חיפוש</a><span class="sep">·</span>
+  <a href="#adv">יריבי</a><span class="sep">·</span>
+  <a href="#game">משחקים</a><span class="sep">·</span>
+  <a href="#dt">עצי החלטה</a><span class="sep">·</span>
+  <a href="#nn">נוירונים</a><span class="sep">·</span>
+  <a href="#ga">גנטי</a>
+</div></div>
+
+<div class="wrap">
+
+  <div class="page-head">
+    <p class="eyebrow">לכל הקורס</p>
+    <h1>📐 דף נוסחאות מרוכז</h1>
+    <span class="ref">לכל נוסחה: מתי משתמשים · איך מציבים · דוגמה קצרה · כלל זכירה</span>
+  </div>
+
+  <div class="card"><p>זהו דף "סיכום-על" לרגע האחרון לפני המבחן. ההסברים המלאים נמצאים בקובץ הנושא המתאים — כאן רק התמצית למילוי מהיר.</p></div>
+
+  <!-- ================= חיפוש ================= -->
+  <h2 id="search">🔍 חיפוש (לא-מיודע ומיודע)</h2>
+
+  <div class="box formula">
+    <p class="box-title"><span class="ico">📐</span> עלות מסלול ופונקציית ההערכה של A*</p>
+    <div class="math-block">g(n) = סכום עלויות הקשתות מ-S עד n &nbsp;|&nbsp; f(n) = g(n) + h(n)</div>
+    <dl class="kv">
+      <dt>מתי</dt><dd>בכל מעקב חיפוש: UCS ממיין לפי <span class="math">g</span>, Greedy לפי <span class="math">h</span>, A* לפי <span class="math">f=g+h</span>.</dd>
+      <dt>הצבה</dt><dd>צובר את <span class="math">g</span> תוך כדי הליכה; <span class="math">h</span> נתון בשאלה; מחבר.</dd>
+      <dt>דוגמה</dt><dd>צומת עם <span class="math">g=3, h=2</span> ⟹ <span class="math">f=5</span>.</dd>
+      <dt>זכירה</dt><dd>"כמה שילמתי + כמה צפוי עוד".</dd>
+    </dl>
+  </div>
+
+  <div class="box formula">
+    <p class="box-title"><span class="ico">📐</span> קבילות ועקביות של היוריסטיקה</p>
+    <div class="math-block">קבילה: h(n) ≤ h*(n) &nbsp;&nbsp;|&nbsp;&nbsp; עקבית: h(n) ≤ c(n,n') + h(n')</div>
+    <dl class="kv">
+      <dt>מתי</dt><dd>בשאלת "האם h קבילה?" ובשאלה אם A* אופטימלי.</dd>
+      <dt>הצבה</dt><dd>חשב <span class="math">h*</span> (העלות האמיתית ליעד) בכל צומת והשווה ל-<span class="math">h</span>.</dd>
+      <dt>דוגמה</dt><dd><span class="math">h(C)=2, h*(C)=3</span> → קביל. אילו <span class="math">h(C)=4&gt;3</span> → לא קביל.</dd>
+      <dt>זכירה</dt><dd>קבילה = "אופטימית, לא מגזימה". עקבית = אי-שוויון המשולש (חזק יותר).</dd>
+    </dl>
+  </div>
+
+  <table>
+    <caption>סיבוכיות ותכונות (b=הסתעפות, d=עומק פתרון, m=עומק מקס', C*=עלות אופטימלית, ε=קשת מינ')</caption>
+    <thead><tr><th>אלגוריתם</th><th>שלם</th><th>אופטימלי</th><th>זמן</th><th>מקום</th></tr></thead>
+    <tbody>
+      <tr><td>BFS</td><td>כן*</td><td>כן (עלויות שוות)</td><td><span class="math">O(b<sup>d</sup>)</span></td><td><span class="math">O(b<sup>d</sup>)</span></td></tr>
+      <tr><td>DFS</td><td>לא</td><td>לא</td><td><span class="math">O(b<sup>m</sup>)</span></td><td><span class="math">O(b·m)</span></td></tr>
+      <tr><td>IDS</td><td>כן</td><td>כן (עלויות שוות)</td><td><span class="math">O(b<sup>d</sup>)</span></td><td><span class="math">O(b·d)</span></td></tr>
+      <tr><td>UCS</td><td>כן</td><td>כן</td><td colspan="2"><span class="math">O(b<sup>1+⌊C*/ε⌋</sup>)</span></td></tr>
+      <tr><td>A*</td><td>כן</td><td>כן (h קבילה)</td><td colspan="2">תלוי באיכות <span class="math">h</span></td></tr>
+    </tbody>
+  </table>
+
+  <!-- ================= יריבי ================= -->
+  <h2 id="adv">⚔️ חיפוש יריבי</h2>
+
+  <div class="box formula">
+    <p class="box-title"><span class="ico">📐</span> כלל Minimax</p>
+    <div class="math-block">צומת MAX → max(ילדים) &nbsp;&nbsp;|&nbsp;&nbsp; צומת MIN → min(ילדים)</div>
+    <dl class="kv">
+      <dt>מתי</dt><dd>למילוי ערכי עץ משחק (שני שחקנים, תורות, אופטימליים).</dd>
+      <dt>הצבה</dt><dd>מתחילים מהעלים, מטפסים שכבה-שכבה כלפי השורש.</dd>
+      <dt>דוגמה</dt><dd>MIN של (3,7,8)=3; MAX של (3,4,2)=4.</dd>
+      <dt>זכירה</dt><dd>"MAX אנחנו (גבוה), MIN היריב (נמוך)".</dd>
+    </dl>
+  </div>
+
+  <div class="box formula">
+    <p class="box-title"><span class="ico">📐</span> תנאי גיזום Alpha-Beta</p>
+    <div class="math-block">בצומת MIN: גזום אם v ≤ α &nbsp;&nbsp;|&nbsp;&nbsp; בצומת MAX: גזום אם v ≥ β &nbsp;&nbsp;(כלומר α ≥ β)</div>
+    <dl class="kv">
+      <dt>מתי</dt><dd>בכל שאלת "סמן את הגיזום". <span class="math">α</span>=הכי טוב ל-MAX עד כה, <span class="math">β</span>=הכי טוב ל-MIN.</dd>
+      <dt>הצבה</dt><dd>עוברים שמאל→ימין, מתחזקים α (עולה ב-MAX) ו-β (יורד ב-MIN).</dd>
+      <dt>דוגמה</dt><dd>α=4 בשורש, צומת MIN רואה עלה=2 → 2≤4 → גוזם את שאר הילדים.</dd>
+      <dt>זכירה</dt><dd>סדר אופטימלי ⟹ <span class="math">O(b<sup>d/2</sup>)</span> (עומק כפול). הערך זהה ל-Minimax!</dd>
+    </dl>
+  </div>
+
+  <!-- ================= משחקים ================= -->
+  <h2 id="game">🎲 תורת המשחקים</h2>
+
+  <div class="box formula">
+    <p class="box-title"><span class="ico">📐</span> שיווי משקל נאש (טהור)</p>
+    <div class="math-block">∀i: &nbsp; u_i(s_i*, s_{-i}*) ≥ u_i(s_i, s_{-i}*)</div>
+    <dl class="kv">
+      <dt>מתי</dt><dd>"מצא נאש". משמעות: אף שחקן לא משתפר מסטייה חד-צדדית.</dd>
+      <dt>הצבה</dt><dd>שיטת הסימון: סמן best-response לכל שחקן; תא עם שני סימונים = נאש.</dd>
+      <dt>דוגמה</dt><dd>דילמת האסיר: <span class="math">(D,D)</span> — לאף אחד לא כדאי לסטות ל-C.</dd>
+      <dt>זכירה</dt><dd>"יציב לסטייה של אחד".</dd>
+    </dl>
+  </div>
+
+  <div class="box formula">
+    <p class="box-title"><span class="ico">📐</span> נאש מעורב (2×2) — שיטת האדישות</p>
+    <div class="math-block">בחר את ההסתברות שלך כך ש-E[יריב על אסטרטגיה a] = E[יריב על אסטרטגיה b]</div>
+    <dl class="kv">
+      <dt>מתי</dt><dd>אין נאש טהור יחיד / מבקשים מעורב.</dd>
+      <dt>הצבה</dt><dd>נניח יריב משחק <span class="math">q, 1−q</span>; כתוב תוחלות שלך לכל אסטרטגיה; השווה ופתור ל-<span class="math">q</span>.</dd>
+      <dt>דוגמה</dt><dd>תרנגול: <span class="math">q−1 = 11q−10 ⟹ q=0.9</span>.</dd>
+      <dt>זכירה</dt><dd><strong>ההסתברות שלי הופכת את היריב לאדיש</strong> (לא אותי!).</dd>
+    </dl>
+  </div>
+
+  <div class="box formula">
+    <p class="box-title"><span class="ico">📐</span> אסטרטגיה נשלטת ממש</p>
+    <div class="math-block">s נשלטת ע"י s' אם u(s') > u(s) בכל בחירה של היריב → מוחקים את s</div>
+    <dl class="kv">
+      <dt>מתי</dt><dd>"מחיקת אסטרטגיות נשלטות" (IESDS).</dd>
+      <dt>הצבה</dt><dd>השווה שורות (לשחקן 1) או עמודות (לשחקן 2); מחק נשלטת; חזור.</dd>
+      <dt>זכירה</dt><dd>רק שליטה <strong>ממש</strong> (חזק בכל מצב), אחרת לא מוחקים.</dd>
+    </dl>
+  </div>
+
+  <!-- ================= עצי החלטה ================= -->
+  <h2 id="dt">🌳 עצי החלטה</h2>
+
+  <div class="box formula">
+    <p class="box-title"><span class="ico">📐</span> אנטרופיה</p>
+    <div class="math-block">H(S) = − Σ p_i · log₂(p_i) &nbsp;&nbsp;|&nbsp;&nbsp; בינארי: H = −p₊·log₂p₊ − p₋·log₂p₋</div>
+    <dl class="kv">
+      <dt>מתי</dt><dd>למדידת "אי-סדר" בקבוצה לפני/אחרי פיצול.</dd>
+      <dt>הצבה</dt><dd><span class="math">p_i</span> = שבר הדוגמאות במחלקה i. <strong>log בבסיס 2</strong>.</dd>
+      <dt>דוגמה</dt><dd>4 חיובי, 4 שלילי: <span class="math">H = −0.5log₂0.5 − 0.5log₂0.5 = 1</span> (מקסימום).</dd>
+      <dt>זכירה</dt><dd>חצי-חצי → 1 (הכי לא ודאי); הכול אותו דבר → 0 (טהור). <span class="math">log₂(1/2)=−1, log₂(1/4)=−2</span>.</dd>
+    </dl>
+  </div>
+
+  <div class="box formula">
+    <p class="box-title"><span class="ico">📐</span> רווח אינפורמציה (Information Gain)</p>
+    <div class="math-block">IG(S, A) = H(S) − Σ_v (|S_v| / |S|) · H(S_v)</div>
+    <dl class="kv">
+      <dt>מתי</dt><dd>בחירת התכונה לפיצול ב-ID3 — בוחרים את בעלת ה-IG המקסימלי.</dd>
+      <dt>הצבה</dt><dd>פצל לפי ערכי התכונה A; חשב אנטרופיה משוקללת של תתי-הקבוצות; חסר מ-<span class="math">H(S)</span>.</dd>
+      <dt>דוגמה</dt><dd><span class="math">H(S)=1</span>, פיצול לשתי קבוצות טהורות (H=0) ⟹ <span class="math">IG=1</span> (מושלם).</dd>
+      <dt>זכירה</dt><dd>"כמה אי-ודאות הורדנו". IG גבוה = תכונה מפצלת טוב.</dd>
+    </dl>
+  </div>
+
+  <!-- ================= נוירונים ================= -->
+  <h2 id="nn">🧠 רשתות נוירונים</h2>
+
+  <div class="box formula">
+    <p class="box-title"><span class="ico">📐</span> מעבר קדימה (Forward) + סיגמואיד</p>
+    <div class="math-block">net_j = Σ_i w_ij · x_i (+ bias) &nbsp;&nbsp;|&nbsp;&nbsp; o_j = σ(net_j) = 1 / (1 + e^{−net_j})</div>
+    <dl class="kv">
+      <dt>מתי</dt><dd>חישוב פלט של נוירון/רשת בהינתן קלט ומשקולות.</dd>
+      <dt>הצבה</dt><dd>סכום משוקלל של הקלטים, ואז מעבירים דרך הסיגמואיד.</dd>
+      <dt>דוגמה</dt><dd><span class="math">net=0 ⟹ σ(0)=0.5</span>; <span class="math">net=2 ⟹ σ(2)≈0.88</span>.</dd>
+      <dt>זכירה</dt><dd>סיגמואיד "מועך" לטווח (0,1). <span class="math">σ(0)=0.5</span>.</dd>
+    </dl>
+  </div>
+
+  <div class="box formula">
+    <p class="box-title"><span class="ico">📐</span> Backpropagation — דלתא ועדכון משקל</p>
+    <div class="math-block">פלט: δ_k = (t_k − o_k) · o_k · (1 − o_k)<br>נסתר: δ_j = o_j · (1 − o_j) · Σ_k (δ_k · w_jk)<br>עדכון: w_ij ← w_ij + η · δ_j · x_i</div>
+    <dl class="kv">
+      <dt>מתי</dt><dd>בשאלת "עדכן את המשקולות" (במבחנים <span class="math">η=0.3</span>).</dd>
+      <dt>הצבה</dt><dd>(1) forward לחישוב כל ה-<span class="math">o</span>. (2) δ בשכבת הפלט. (3) δ בשכבה הנסתרת. (4) עדכן כל משקל.</dd>
+      <dt>דוגמה</dt><dd><span class="math">t=1, o=0.7 ⟹ δ=(1−0.7)(0.7)(0.3)=0.063</span>.</dd>
+      <dt>זכירה</dt><dd>נגזרת הסיגמואיד: <span class="math">σ' = o(1−o)</span> — תמיד מופיעה ב-δ.</dd>
+    </dl>
+  </div>
+
+  <!-- ================= גנטי ================= -->
+  <h2 id="ga">🧬 אלגוריתמים גנטיים</h2>
+
+  <div class="box formula">
+    <p class="box-title"><span class="ico">📐</span> מספר ביטים לדיוק נתון</p>
+    <div class="math-block">n = ⌈ log₂( (b − a) / precision + 1 ) ⌉</div>
+    <dl class="kv">
+      <dt>מתי</dt><dd>"כמה ביטים צריך כדי לייצג x בתחום [a,b] בדיוק נתון?"</dd>
+      <dt>הצבה</dt><dd>מספר הערכים האפשריים = טווח/דיוק + 1; לוקחים <span class="math">log₂</span> ומעגלים כלפי מעלה.</dd>
+      <dt>דוגמה</dt><dd>[−2,2], דיוק 0.01: <span class="math">(4/0.01)+1=401</span>, <span class="math">log₂401≈8.65 ⟹ 9</span> ביטים.</dd>
+      <dt>זכירה</dt><dd>תמיד מעגלים כלפי <strong>מעלה</strong> (צריך לכסות את כל הערכים).</dd>
+    </dl>
+  </div>
+
+  <div class="box formula">
+    <p class="box-title"><span class="ico">📐</span> בחירה פרופורציונלית (רולטה)</p>
+    <div class="math-block">P(בחירת פרט i) = fitness(i) / Σ_j fitness(j)</div>
+    <dl class="kv">
+      <dt>מתי</dt><dd>שלב הבחירה (Selection) של ההורים לדור הבא.</dd>
+      <dt>הצבה</dt><dd>חשב fitness לכל פרט; חלק בסכום כדי לקבל הסתברות.</dd>
+      <dt>דוגמה</dt><dd>fitness=(10,30,40,20), סכום=100 ⟹ הסתברויות (0.1,0.3,0.4,0.2).</dd>
+      <dt>זכירה</dt><dd>"כושר גבוה = פרוסת רולטה גדולה". בחירה → הכלאה → מוטציה.</dd>
+    </dl>
+  </div>
+
+  <div class="box formula">
+    <p class="box-title"><span class="ico">📐</span> הכלאה (Crossover) ומוטציה</p>
+    <div class="math-block">1-point: חותכים בנקודה אחת ומחליפים זנבות &nbsp;|&nbsp; 2-point: מחליפים את הקטע האמצעי</div>
+    <dl class="kv">
+      <dt>מתי</dt><dd>יצירת צאצאים משני הורים; מוטציה = היפוך ביט בהסתברות נמוכה.</dd>
+      <dt>הצבה</dt><dd>הורים <code>1111|0000</code> + <code>0000|1111</code> בנק' 4 → <code>11111111</code>, <code>00000000</code>.</dd>
+      <dt>זכירה</dt><dd>בבעיות תמורה (TSP) הכלאה רגילה <strong>שוברת</strong> את החוקיות (ערים כפולות) → צריך PMX/Order crossover.</dd>
+    </dl>
+  </div>
+
+  <div class="box mistake">
+    <p class="box-title"><span class="ico">⚠️</span> כללי זהב אחרונים</p>
+    <ul class="clean" style="margin:0">
+      <li><strong>log₂:</strong> <span class="math">log₂(1)=0, log₂(2)=1, log₂(4)=2, log₂(1/2)=−1</span>. (במחשבון: <span class="math">log₂x = ln x / ln 2</span>).</li>
+      <li><strong>אנטרופיה</strong> תמיד בין 0 (טהור) ל-1 (חצי-חצי, בינארי).</li>
+      <li><strong>Alpha-Beta</strong> לא משנה ערך — רק יעילות.</li>
+      <li><strong>נאש מעורב</strong> — ההסתברות שלי מאדישה את היריב.</li>
+      <li><strong>אלגוריתם גנטי</strong> — אין הבטחה לאופטימום גלובלי.</li>
+      <li><strong>A*</strong> אופטימלי רק עם היוריסטיקה <strong>קבילה</strong>.</li>
+    </ul>
+  </div>
+
+  <div class="card" style="text-align:center;margin-top:26px">
+    <a class="home" href="index.html" style="display:inline-block">🏠 חזרה לדף הבית</a>
+  </div>
+
+</div>
+</body>
+</html>

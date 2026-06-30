@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>עצי החלטה | חבילת למידה</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="topbar"><div class="inner">
+  <a class="home" href="index.html">🏠 דף הבית</a>
+  <span class="sep">|</span>
+  <a href="06_רשתות_נוירונים.html">▶ רשתות נוירונים</a>
+  <span class="sep">·</span>
+  <a href="08_אלגוריתמים_גנטיים.html">אלגוריתמים גנטיים ◀</a>
+</div></div>
+
+<div class="wrap">
+
+  <div class="page-head">
+    <p class="eyebrow">שיעור 10 · נושא 07</p>
+    <h1>עצי החלטה (Decision Trees)</h1>
+    <span class="ref">AIMA 18.3 · אנטרופיה · Information Gain · אלגוריתם ID3</span>
+  </div>
+
+  <div class="card">
+    <p>עץ החלטה מסווג דוגמאות ע"י שאלות על התכונות. אלגוריתם <strong>ID3</strong> בונה אותו "חמדנית": בכל צומת בוחרים את התכונה שמספקת את <strong>רווח האינפורמציה (Information Gain)</strong> הגבוה ביותר — זו שהכי "מסדרת" את הנתונים. נדגים על תרגיל הפטריות של הקורס מתחילתו ועד הסוף.</p>
+  </div>
+
+  <!-- ============ אנטרופיה ============ -->
+  <h2>1. אנטרופיה — מדד אי-הסדר</h2>
+  <div class="box formula">
+    <p class="box-title"><span class="ico">📐</span> הנוסחה</p>
+    <div class="math-block">H(S) = − Σ p_i · log₂(p_i) &nbsp;&nbsp;|&nbsp;&nbsp; בינארי: H = − p₊·log₂p₊ − p₋·log₂p₋</div>
+  </div>
+  <ul class="clean">
+    <li>קבוצה <strong>טהורה</strong> (כולם אותו תיוג) → <span class="math">H=0</span>.</li>
+    <li>קבוצה <strong>חצי-חצי</strong> → <span class="math">H=1</span> (אי-ודאות מקסימלית).</li>
+    <li>ערכים שימושיים: <span class="math">log₂(1/2)=−1, log₂(1/4)=−2, log₂(3/4)≈−0.415, log₂(1/3)≈−1.585, log₂(2/3)≈−0.585</span>.</li>
+  </ul>
+
+  <div class="box formula">
+    <p class="box-title"><span class="ico">📐</span> רווח אינפורמציה</p>
+    <div class="math-block">IG(S, A) = H(S) − Σ_v (|S_v| / |S|) · H(S_v)</div>
+    <p style="margin:6px 0 0">"כמה אי-ודאות הורידה התכונה A". בוחרים את התכונה עם ה-IG הגבוה ביותר.</p>
+  </div>
+
+  <!-- ============ דאטה ============ -->
+  <h2>2. הנתונים — סיווג פטריות (אכיל / רעיל)</h2>
+  <table>
+    <caption>8 דוגמאות אימון (A–H) + 3 לחיזוי (U,V,W). Edible=1 אכיל, 0 רעיל</caption>
+    <thead><tr><th>Example</th><th>NotHeavy</th><th>Smelly</th><th>Spotted</th><th>Smooth</th><th>Edible</th></tr></thead>
+    <tbody>
+      <tr><td>A</td><td>1</td><td>0</td><td>0</td><td>0</td><td class="good">1</td></tr>
+      <tr><td>B</td><td>1</td><td>0</td><td>1</td><td>0</td><td class="good">1</td></tr>
+      <tr><td>C</td><td>0</td><td>1</td><td>0</td><td>1</td><td class="good">1</td></tr>
+      <tr><td>D</td><td>0</td><td>0</td><td>0</td><td>1</td><td class="bad">0</td></tr>
+      <tr><td>E</td><td>1</td><td>1</td><td>1</td><td>0</td><td class="bad">0</td></tr>
+      <tr><td>F</td><td>1</td><td>0</td><td>1</td><td>1</td><td class="bad">0</td></tr>
+      <tr><td>G</td><td>1</td><td>0</td><td>0</td><td>1</td><td class="bad">0</td></tr>
+      <tr><td>H</td><td>0</td><td>1</td><td>0</td><td>0</td><td class="bad">0</td></tr>
+      <tr><td>U</td><td>0</td><td>1</td><td>1</td><td>1</td><td>?</td></tr>
+      <tr><td>V</td><td>1</td><td>1</td><td>0</td><td>1</td><td>?</td></tr>
+      <tr><td>W</td><td>1</td><td>1</td><td>0</td><td>0</td><td>?</td></tr>
+    </tbody>
+  </table>
+
+  <!-- ============ שורש ============ -->
+  <h2>3. שלב 1 — בחירת השורש</h2>
+  <p>מתוך 8 הדוגמאות: <strong>3 אכילות</strong> (A,B,C) ו-<strong>5 רעילות</strong> (D,E,F,G,H).</p>
+  <div class="math-block">H(S) = −(3/8)log₂(3/8) − (5/8)log₂(5/8) = 0.531 + 0.424 = <strong>0.954</strong></div>
+  <p>כעת מחשבים IG לכל תכונה (פיצול ל-=1 / =0 וחישוב אנטרופיה משוקללת):</p>
+  <table>
+    <caption>רווח אינפורמציה לכל תכונה (שורש)</caption>
+    <thead><tr><th>תכונה</th><th>פיצול (אכיל:רעיל)</th><th>אנטרופיה משוקללת</th><th>IG</th></tr></thead>
+    <tbody>
+      <tr><td>NotHeavy</td><td>=1: 2:3 &nbsp;|&nbsp; =0: 1:2</td><td>0.951</td><td>0.003</td></tr>
+      <tr><td>Smelly</td><td>=1: 1:2 &nbsp;|&nbsp; =0: 2:3</td><td>0.951</td><td>0.003</td></tr>
+      <tr><td>Spotted</td><td>=1: 1:2 &nbsp;|&nbsp; =0: 2:3</td><td>0.951</td><td>0.003</td></tr>
+      <tr><td class="hl">Smooth</td><td>=1: 1:3 &nbsp;|&nbsp; =0: 2:2</td><td>0.906</td><td class="hl">0.049 ✓</td></tr>
+    </tbody>
+  </table>
+  <p><strong>השורש = Smooth</strong> (ה-IG הגבוה ביותר). חישוב מפורט ל-Smooth: <span class="math">H(=1)=H(1/4,3/4)=0.811</span>, <span class="math">H(=0)=H(2/4,2/4)=1.0</span>, משוקלל <span class="math">= 0.5·0.811+0.5·1.0 = 0.906</span>, ולכן <span class="math">IG=0.954−0.906=0.049</span>.</p>
+
+  <!-- ============ רקורסיה ============ -->
+  <h2>4. שלב 2 — פיצול כל ענף</h2>
+  <div class="box example">
+    <p class="box-title"><span class="ico">🧩</span> ענף Smooth=0 (דוגמאות A,B,E,H)</p>
+    <p style="margin:0 0 6px">תיוגים: A=1,B=1,E=0,H=0 (2:2, <span class="math">H=1</span>). בודקים את התכונות הנותרות — <strong>Smelly מפצל מושלם</strong>:</p>
+    <ul class="clean" style="margin:0">
+      <li>Smelly=0 → A,B → שניהם <span style="color:var(--ok);font-weight:700">אכיל (1)</span> · Smelly=1 → E,H → שניהם <span style="color:var(--warn);font-weight:700">רעיל (0)</span>.</li>
+      <li><span class="math">IG(Smelly)=1.0</span> (אנטרופיה אחרי = 0). זוכה.</li>
+    </ul>
+  </div>
+  <div class="box example">
+    <p class="box-title"><span class="ico">🧩</span> ענף Smooth=1 (דוגמאות C,D,F,G)</p>
+    <p style="margin:0 0 6px">תיוגים: C=1,D=0,F=0,G=0 (1:3, <span class="math">H=0.811</span>). שוב <strong>Smelly מפצל מושלם</strong>:</p>
+    <ul class="clean" style="margin:0">
+      <li>Smelly=1 → C → <span style="color:var(--ok);font-weight:700">אכיל (1)</span> · Smelly=0 → D,F,G → כולם <span style="color:var(--warn);font-weight:700">רעיל (0)</span>.</li>
+      <li><span class="math">IG(Smelly)=0.811</span> (הגבוה ביותר). זוכה.</li>
+    </ul>
+  </div>
+
+  <!-- ============ העץ ============ -->
+  <h2>5. העץ הסופי</h2>
+  <div class="fig">
+    <svg viewBox="0 0 520 280" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="עץ ההחלטה הסופי">
+      <!-- edges -->
+      <g stroke="#9aa6c0" stroke-width="2">
+        <line x1="260" y1="58" x2="140" y2="118"/><line x1="260" y1="58" x2="380" y2="118"/>
+        <line x1="140" y1="142" x2="70" y2="210"/><line x1="140" y1="142" x2="210" y2="210"/>
+        <line x1="380" y1="142" x2="320" y2="210"/><line x1="380" y1="142" x2="450" y2="210"/>
+      </g>
+      <!-- edge labels -->
+      <g font-family="Consolas,monospace" font-size="13" font-weight="700" fill="#27408b">
+        <text x="185" y="92">=0</text><text x="328" y="92">=1</text>
+        <text x="92" y="182">=0</text><text x="182" y="182">=1</text>
+        <text x="338" y="182">=1</text><text x="428" y="182">=0</text>
+      </g>
+      <!-- nodes -->
+      <g font-family="Segoe UI,Arial" font-size="15" font-weight="700" text-anchor="middle">
+        <rect x="210" y="28" width="100" height="32" rx="8" fill="#27408b"/><text x="260" y="49" fill="#fff">Smooth?</text>
+        <rect x="92" y="116" width="96" height="30" rx="8" fill="#eef2ff" stroke="#27408b" stroke-width="2"/><text x="140" y="136" fill="#27408b">Smelly?</text>
+        <rect x="332" y="116" width="96" height="30" rx="8" fill="#eef2ff" stroke="#27408b" stroke-width="2"/><text x="380" y="136" fill="#27408b">Smelly?</text>
+        <!-- leaves -->
+        <rect x="28" y="208" width="84" height="34" rx="8" fill="#e8f7ef" stroke="#1b7f5a" stroke-width="2"/><text x="70" y="230" fill="#1b7f5a" font-size="14">אכיל ✓</text>
+        <rect x="168" y="208" width="84" height="34" rx="8" fill="#fdecec" stroke="#b23b3b" stroke-width="2"/><text x="210" y="230" fill="#b23b3b" font-size="14">רעיל ✗</text>
+        <rect x="278" y="208" width="84" height="34" rx="8" fill="#e8f7ef" stroke="#1b7f5a" stroke-width="2"/><text x="320" y="230" fill="#1b7f5a" font-size="14">אכיל ✓</text>
+        <rect x="408" y="208" width="84" height="34" rx="8" fill="#fdecec" stroke="#b23b3b" stroke-width="2"/><text x="450" y="230" fill="#b23b3b" font-size="14">רעיל ✗</text>
+      </g>
+    </svg>
+    <div class="cap">העץ הסופי — משתמש רק ב-Smooth ו-Smelly, ומסווג נכון את כל 8 דוגמאות האימון.</div>
+  </div>
+  <div class="box mistake" style="background:var(--ok-soft);border-color:#bce3d0"><p class="box-title" style="color:var(--ok)"><span class="ico">⚠️</span> שימו לב לעדינות</p><p style="margin:0">בשני הענפים מפצלים לפי Smelly, אבל ה<strong>תוצאה הפוכה</strong>: כש-Smooth=0, Smelly=0→אכיל; כש-Smooth=1, Smelly=1→אכיל. תמיד גוזרים את התשובה מ<strong>רוב/טוהר הדוגמאות בעלה</strong>, לא מכלל קבוע.</p></div>
+
+  <!-- ============ חיזוי ============ -->
+  <h2>6. שלב 3 — חיזוי U, V, W</h2>
+  <table>
+    <thead><tr><th>פטרייה</th><th>מסלול בעץ</th><th>Edible</th></tr></thead>
+    <tbody>
+      <tr><td>U (Smooth=1, Smelly=1)</td><td>Smooth=1 → Smelly=1</td><td class="good">1 — אכיל</td></tr>
+      <tr><td>V (Smooth=1, Smelly=1)</td><td>Smooth=1 → Smelly=1</td><td class="good">1 — אכיל</td></tr>
+      <tr><td>W (Smooth=0, Smelly=1)</td><td>Smooth=0 → Smelly=1</td><td class="bad">0 — רעיל</td></tr>
+    </tbody>
+  </table>
+
+  <!-- ============ Occam ============ -->
+  <div class="box tip"><p class="box-title"><span class="ico">🎯</span> הקשר לתער אוקאם</p><p style="margin:0">ID3 מעדיף עצים <strong>קטנים</strong> (בוחר קודם את התכונות החזקות). עץ קטן = השערה פשוטה = הכללה טובה יותר לדוגמאות חדשות. כן — <strong>שני עצים שונים</strong> יכולים לסווג נכון את אותו אימון אך להבדל על דוגמאות חדשות.</p></div>
+
+  <!-- ============ שיטת פתרון ============ -->
+  <h2>7. שיטת פתרון — "בנה עץ ID3"</h2>
+  <ol class="steps">
+    <li><span class="st">חשב <span class="math">H(S)</span></span> של כל קבוצת האימון (לפי יחס התיוגים).</li>
+    <li><span class="st">לכל תכונה: פצל וחשב אנטרופיה משוקללת ו-IG</span>. רשום טבלת IG.</li>
+    <li><span class="st">בחר את התכונה עם IG מקסימלי</span> כצומת.</li>
+    <li><span class="st">חזור רקורסיבית</span> בכל ענף, עד שהעלה טהור (עוצרים) או שנגמרו תכונות.</li>
+    <li><span class="st">סווג דוגמאות חדשות</span> ע"י הליכה במסלול המתאים בעץ.</li>
+  </ol>
+
+  <div class="box mistake">
+    <p class="box-title"><span class="ico">⚠️</span> טעויות נפוצות</p>
+    <ul class="clean" style="margin:0">
+      <li>להשתמש ב-log בבסיס 10 או טבעי — חייבים <strong>log₂</strong>.</li>
+      <li>לשכוח לשקלל את האנטרופיה לפי <strong>גודל</strong> תת-הקבוצה <span class="math">|S_v|/|S|</span>.</li>
+      <li>לבחור את התכונה עם האנטרופיה הנמוכה במקום ה-IG הגבוה (לרוב זה אותו דבר, אך לא תמיד אם הגדלים שונים).</li>
+      <li>להמשיך לפצל קבוצה שכבר טהורה (<span class="math">H=0</span>) — עוצרים שם.</li>
+      <li>לקבע "Smelly=1 תמיד אכיל" — התשובה בעלה תלויה ב<strong>ענף</strong>.</li>
+    </ul>
+  </div>
+
+  <div class="box formula">
+    <p class="box-title"><span class="ico">📐</span> לסיכום הנושא</p>
+    <ul class="clean" style="margin:0">
+      <li><span class="math">H(S)=−Σp·log₂p</span> · <span class="math">IG=H(S)−Σ(|S_v|/|S|)H(S_v)</span>.</li>
+      <li>ID3: בכל צומת בוחרים IG מקסימלי; עוצרים בעלה טהור.</li>
+      <li>IG גבוה = תכונה ש"מסדרת" הכי טוב. עץ קטן = אוקאם.</li>
+    </ul>
+  </div>
+
+  <div class="card" style="text-align:center;margin-top:26px">
+    <a class="home" href="08_אלגוריתמים_גנטיים.html" style="display:inline-block">הנושא הבא ◀ אלגוריתמים גנטיים</a>
+  </div>
+
+</div>
+</body>
+</html>

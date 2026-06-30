@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>מבוא ל-AI | חבילת למידה</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="topbar"><div class="inner">
+  <a class="home" href="index.html">🏠 דף הבית</a>
+  <span class="sep">|</span>
+  <a href="01_חיפוש_לא_מיודע.html">הנושא הבא ◀ חיפוש לא-מיודע</a>
+</div></div>
+
+<div class="wrap">
+
+  <div class="page-head">
+    <p class="eyebrow">שיעור 1 · נושא 00</p>
+    <h1>מבוא לבינה מלאכותית</h1>
+    <span class="ref">AIMA פרקים 1–2 · מבחן טיורינג, החדר הסיני, תכונות סביבה, Occam, שלמות</span>
+  </div>
+
+  <div class="card">
+    <p>נושא המבוא הוא "מתנת נקודות" במבחן: השאלות המושגיות (כמו "מיהו טיורינג ומהו המבחן שפיתח?", "הסבר את החדר הסיני", "הגדר שלמות / תער אוקאם") חוזרות כמעט בכל מבחן ושוות 15–20 נקודות. כאן נסדר את כל ההגדרות בצורה שתאפשר לכתוב תשובה מלאה וקצרה.</p>
+  </div>
+
+  <!-- ===================== מהי AI ===================== -->
+  <h2>1. מהי בינה מלאכותית? — ארבע הגדרות</h2>
+  <p>הספר (AIMA) מסדר את ההגדרות של AI לפי שני צירים: <strong>חשיבה מול פעולה</strong>, ו-<strong>דמיון לאדם מול רציונליות</strong> (התנהגות "נכונה" אידיאלית). מתקבלות <strong>ארבע גישות</strong>:</p>
+
+  <table>
+    <caption>ארבע הגישות להגדרת AI (AIMA, פרק 1)</caption>
+    <thead><tr><th></th><th>דמיון לאדם (Human)</th><th>רציונליות (Rational)</th></tr></thead>
+    <tbody>
+      <tr><td><strong>חשיבה<br>(Thinking)</strong></td>
+          <td>לחשוב כמו אדם<br><span style="color:var(--muted);font-size:14px">מידול תהליכי חשיבה, מדעי הקוגניציה</span></td>
+          <td>לחשוב באופן רציונלי<br><span style="color:var(--muted);font-size:14px">"חוקי המחשבה" — לוגיקה</span></td></tr>
+      <tr><td><strong>פעולה<br>(Acting)</strong></td>
+          <td class="hl">לפעול כמו אדם<br><span style="color:var(--muted);font-size:14px">מבחן טיורינג</span></td>
+          <td class="hl">לפעול באופן רציונלי<br><span style="color:var(--muted);font-size:14px">סוכן רציונלי — גישת הספר</span></td></tr>
+    </tbody>
+  </table>
+
+  <div class="box def">
+    <p class="box-title"><span class="ico">📘</span> סוכן רציונלי (Rational Agent)</p>
+    <p style="margin:0">ישות שתופסת את הסביבה דרך <strong>חיישנים (sensors)</strong> ופועלת עליה דרך <strong>אפקטורים (actuators)</strong>. סוכן <strong>רציונלי</strong> בוחר, בכל רגע, את הפעולה ש<strong>ממקסמת את תוחלת מדד ההצלחה שלו</strong> בהינתן מה שהוא תפס עד כה והידע שברשותו. זוהי הגישה שהספר מאמץ — "לפעול באופן רציונלי".</p>
+  </div>
+
+  <div class="fig">
+    <svg viewBox="0 0 620 240" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="לולאת סוכן-סביבה">
+      <rect x="40" y="60" width="200" height="120" rx="14" fill="#eef2ff" stroke="#27408b" stroke-width="2"/>
+      <text x="140" y="95" text-anchor="middle" font-family="Segoe UI,Arial" font-size="20" font-weight="700" fill="#27408b">סוכן</text>
+      <text x="140" y="125" text-anchor="middle" font-family="Segoe UI,Arial" font-size="14" fill="#5b6478">פונקציית סוכן:</text>
+      <text x="140" y="146" text-anchor="middle" font-family="Consolas,monospace" font-size="13" fill="#1f2533" direction="ltr">תפיסות → פעולה</text>
+      <rect x="380" y="60" width="200" height="120" rx="14" fill="#e8f7ef" stroke="#1b7f5a" stroke-width="2"/>
+      <text x="480" y="128" text-anchor="middle" font-family="Segoe UI,Arial" font-size="20" font-weight="700" fill="#1b7f5a">סביבה</text>
+      <!-- percepts arrow: environment -> agent (top) -->
+      <path d="M380 90 H250" fill="none" stroke="#3a5bd9" stroke-width="2.5" marker-end="url(#ar)"/>
+      <text x="315" y="80" text-anchor="middle" font-family="Segoe UI,Arial" font-size="13.5" fill="#3a5bd9">תפיסות (חיישנים)</text>
+      <!-- actions arrow: agent -> environment (bottom) -->
+      <path d="M240 150 H372" fill="none" stroke="#b8860b" stroke-width="2.5" marker-end="url(#ar2)"/>
+      <text x="310" y="172" text-anchor="middle" font-family="Segoe UI,Arial" font-size="13.5" fill="#b8860b">פעולות (אפקטורים)</text>
+      <defs>
+        <marker id="ar" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L9,3 L0,6 Z" fill="#3a5bd9"/></marker>
+        <marker id="ar2" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L9,3 L0,6 Z" fill="#b8860b"/></marker>
+      </defs>
+    </svg>
+    <div class="cap">איור 1: לולאת האינטראקציה — הסוכן תופס את הסביבה ופועל עליה שוב ושוב.</div>
+  </div>
+
+  <!-- ===================== מבחן טיורינג ===================== -->
+  <h2>2. מבחן טיורינג (Turing Test)</h2>
+  <div class="kv">
+    <dt>מיהו טיורינג?</dt><dd>אלן טיורינג (Alan Turing), מתמטיקאי בריטי (1912–1954), אבי מדעי המחשב התיאורטי (מכונת טיורינג) ופורץ דרך ב-AI. במאמרו מ-1950 ("Computing Machinery and Intelligence") שאל "האם מכונות יכולות לחשוב?".</dd>
+    <dt>מהו המבחן?</dt><dd>"משחק החיקוי": חוקר אנושי מתכתב (בטקסט בלבד) עם שני בני-שיח נסתרים — אדם ומכונה. אם החוקר אינו מצליח להבחין באופן עקבי מי המכונה — המכונה "עברה" את המבחן. המבחן בוחן <strong>התנהגות</strong> ("לפעול כמו אדם"), לא חשיבה פנימית.</dd>
+  </div>
+  <div class="box example">
+    <p class="box-title"><span class="ico">🧩</span> מה צריך כדי "לעבור"?</p>
+    <p style="margin:0">המכונה זקוקה ל: <span class="badge">עיבוד שפה טבעית</span> <span class="badge">ייצוג ידע</span> <span class="badge">הסקה אוטומטית</span> <span class="badge">למידת מכונה</span>. ב-<strong>מבחן טיורינג מלא (Total)</strong> מתווספים גם ראייה ממוחשבת ורובוטיקה (אינטראקציה פיזית).</p>
+  </div>
+
+  <!-- ===================== החדר הסיני ===================== -->
+  <h2>3. החדר הסיני (Searle's Chinese Room)</h2>
+  <p>ניסוי מחשבתי של הפילוסוף ג'ון סרל (Searle), טיעון <strong>נגד "AI חזקה"</strong> (הטענה שמכונה שמריצה את התוכנית הנכונה באמת "מבינה").</p>
+  <div class="box def">
+    <p class="box-title"><span class="ico">📘</span> הניסוי</p>
+    <p style="margin:0">אדם שאינו דובר סינית יושב בחדר עם ספר חוקים מפורט. דרך חריץ מגיעים סמלים בסינית; הוא עוקב אחר החוקים (תחביר בלבד) ומחזיר סמלים אחרים — ומבחוץ נראה כאילו החדר "מבין" סינית. בפועל האדם בחדר <strong>לא מבין מילה</strong>.</p>
+  </div>
+  <div class="box tip">
+    <p class="box-title"><span class="ico">🎯</span> המסקנה (כך לכתוב במבחן)</p>
+    <p style="margin:0">מניפולציה תחבירית של סמלים (מה שמחשב עושה) <strong>אינה מספיקה</strong> ליצירת הבנה/סמנטיקה אמיתית או "תודעה". כלומר: התנהגות נכונה (מעבר מבחן טיורינג) אינה מוכיחה הבנה אמיתית. "<strong>Syntax is not sufficient for semantics</strong>".</p>
+  </div>
+
+  <!-- ===================== תכונות סביבה ===================== -->
+  <h2>4. תכונות סביבת המשימה (Task Environment)</h2>
+  <p>לפני בחירת אלגוריתם מסווגים את הסביבה. זה עוזר גם בשאלות תורת-המשחקים/חיפוש ("האם המשחק דטרמיניסטי? מידע מלא?").</p>
+  <table>
+    <caption>צירי הסיווג של סביבה (AIMA, פרק 2)</caption>
+    <thead><tr><th>ציר</th><th>קצה א'</th><th>קצה ב'</th><th>השאלה שמבדילה</th></tr></thead>
+    <tbody>
+      <tr><td>נצפות</td><td>נצפית במלואה<br>(Fully observable)</td><td>נצפית חלקית<br>(Partially)</td><td>האם החיישנים נותנים את כל המצב הרלוונטי?</td></tr>
+      <tr><td>סוכנים</td><td>סוכן יחיד</td><td>רב-סוכני</td><td>האם יש סוכנים נוספים שמשפיעים על מדד ההצלחה?</td></tr>
+      <tr><td>קביעוּת</td><td>דטרמיניסטית</td><td>סטוכסטית</td><td>האם המצב הבא נקבע ביחידוּת ע"י המצב והפעולה?</td></tr>
+      <tr><td>אפיזודיות</td><td>אפיזודית</td><td>סדרתית</td><td>האם פעולה משפיעה רק על הצעד הנוכחי או גם על העתיד?</td></tr>
+      <tr><td>שינוי בזמן</td><td>סטטית</td><td>דינמית</td><td>האם הסביבה משתנה בזמן ש"הסוכן חושב"?</td></tr>
+      <tr><td>ערכים</td><td>בדידה</td><td>רציפה</td><td>האם מספר המצבים/הפעולות סופי-בדיד?</td></tr>
+      <tr><td>ידיעת חוקים</td><td>ידועה</td><td>לא-ידועה</td><td>האם תוצאות הפעולות ידועות לסוכן מראש?</td></tr>
+    </tbody>
+  </table>
+
+  <!-- ===================== Occam ===================== -->
+  <h2>5. תער אוקאם (Occam's Razor)</h2>
+  <div class="box def">
+    <p class="box-title"><span class="ico">📘</span> העיקרון</p>
+    <p style="margin:0">מבין כל ההשערות (hypotheses) שמסבירות את הנתונים באותה מידה — <strong>יש להעדיף את הפשוטה ביותר</strong>. בלמידת מכונה: השערה פשוטה צפויה להכליל טוב יותר לדוגמאות חדשות ולהימנע מ-overfitting. (משמש למשל ב-ID3 כדי להעדיף עץ קטן).</p>
+  </div>
+
+  <!-- ===================== שלמות ואופטימליות ===================== -->
+  <h2>6. תכונות הערכה של אלגוריתם (חוזרות בכל הקורס)</h2>
+  <div class="kv">
+    <dt>שלמות (Completeness)</dt><dd>האם האלגוריתם <strong>מובטח למצוא פתרון אם קיים כזה</strong> (ולהכריז שאין פתרון אם אין). אלגוריתם לא-שלם עלול "לפספס" פתרון קיים.</dd>
+    <dt>אופטימליות (Optimality)</dt><dd>האם האלגוריתם מובטח למצוא את הפתרון ה<strong>זול ביותר</strong> (מינימום עלות מסלול).</dd>
+    <dt>סיבוכיות זמן</dt><dd>כמה צמתים מפותחים — בד"כ <span class="math">O(b<sup>d</sup>)</span> כאשר <span class="math">b</span> = גורם הסתעפות, <span class="math">d</span> = עומק.</dd>
+    <dt>סיבוכיות מקום</dt><dd>כמה צמתים מוחזקים בזיכרון בו-זמנית — לרוב צוואר הבקבוק האמיתי.</dd>
+  </div>
+
+  <!-- ===================== שיטת פתרון ===================== -->
+  <h2>7. שיטת פתרון — שאלות מושגיות במבחן</h2>
+  <h3>סוג א': "הגדר / הסבר מושג X" (3 שורות)</h3>
+  <ol class="steps">
+    <li><span class="st">משפט הגדרה אחד</span> — מהו המושג בליבה (מי הגה, אם רלוונטי).</li>
+    <li><span class="st">איך זה עובד</span> — מנגנון/רעיון מרכזי במשפט.</li>
+    <li><span class="st">המסקנה/החשיבות</span> — מה זה בא להראות או מתי משתמשים בזה.</li>
+  </ol>
+
+  <h3>סוג ב': שאלות נכון/לא-נכון עם הצדקה</h3>
+  <div class="box tip">
+    <p class="box-title"><span class="ico">🎯</span> כלל הזהב</p>
+    <p style="margin:0">לעולם <strong>אל תכתבו רק "נכון/לא נכון"</strong> — תמיד נמקו במשפט. הניקוד ניתן על ההצדקה. אם הטענה נכונה רק בתנאי מסוים — ציינו את התנאי.</p>
+  </div>
+  <table>
+    <caption>דוגמאות לטענות נפוצות (מופיעות במבחנים) + ההכרעה הנכונה</caption>
+    <thead><tr><th>טענה</th><th>הכרעה + הצדקה</th></tr></thead>
+    <tbody>
+      <tr><td>"IDS צורך פחות זיכרון מ-DFS"</td><td class="bad">לא נכון. שניהם <span class="math">O(b·d)</span>; היתרון של IDS על DFS הוא <strong>שלמות ואופטימליות</strong>, לא זיכרון. (היתרון על BFS הוא הזיכרון).</td></tr>
+      <tr><td>"Alpha-Beta מחזיר ערך שונה מ-Minimax"</td><td class="bad">לא נכון. הגיזום <strong>לא משנה את הערך</strong> — רק את היעילות (פחות צמתים).</td></tr>
+      <tr><td>"אלגוריתם גנטי מבטיח את האופטימום הגלובלי"</td><td class="bad">לא נכון. הוא חיפוש סטוכסטי <strong>ללא הבטחה</strong> למציאת המקסימום הגלובלי.</td></tr>
+      <tr><td>"מעבר מבחן טיורינג ⇐ הבנה אמיתית"</td><td class="bad">לא נכון — זו בדיוק טענת החדר הסיני: תחביר ≠ סמנטיקה.</td></tr>
+    </tbody>
+  </table>
+
+  <div class="box mistake">
+    <p class="box-title"><span class="ico">⚠️</span> טעויות נפוצות</p>
+    <ul class="clean" style="margin:0">
+      <li>לבלבל בין מבחן טיורינג (בוחן <em>התנהגות</em>) לבין טענת ה-AI החזקה (טוענת ל<em>הבנה</em>) — החדר הסיני תוקף את השנייה.</li>
+      <li>לכתוב "נכון/לא נכון" בלי נימוק — מאבדים את כל הניקוד.</li>
+      <li>לבלבל בין שלמות (יימצא פתרון אם קיים) לבין אופטימליות (יימצא הפתרון הזול) — אלו תכונות נפרדות.</li>
+      <li>לכתוב תשובה ארוכה מדי בשאלת "3 שורות" — מנמקים קצר וקולעים.</li>
+    </ul>
+  </div>
+
+  <div class="card" style="text-align:center;margin-top:26px">
+    <a class="home" href="01_חיפוש_לא_מיודע.html" style="display:inline-block">הנושא הבא ◀ חיפוש לא-מיודע</a>
+  </div>
+
+</div>
+</body>
+</html>
