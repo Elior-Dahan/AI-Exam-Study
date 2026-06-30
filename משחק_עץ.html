@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>איזו תכונה מפצלת? 🍄 | משחקי למידה</title>
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="games.css">
+</head>
+<body>
+
+<div class="topbar"><div class="inner">
+  <a class="home" href="index.html">🏠 דף הבית</a>
+  <span class="sep">|</span>
+  <a href="משחקים.html">🎮 כל המשחקים</a>
+  <span class="sep">·</span>
+  <a href="07_עצי_החלטה.html">📖 הנושא</a>
+</div></div>
+
+<div class="wrap">
+  <div class="page-head">
+    <p class="eyebrow">משחק · נושא 07</p>
+    <h1>🍄 איזו תכונה מפצלת?</h1>
+    <span class="ref">בחר את התכונה עם ה-IG הגבוה — ואז סווג פטריות</span>
+  </div>
+
+  <div class="card">
+    <p>8 דוגמאות: 3 אכילות (A,B,C) ו-5 רעילות. <code>H(S)=0.954</code>. בחר את התכונה שמפצלת הכי טוב (IG מקסימלי), ואז סווג את U/V/W.</p>
+  </div>
+
+  <div id="score"></div>
+  <div class="gx-board"><div id="data"></div></div>
+  <div class="gx-prompt" id="prompt"></div>
+  <div class="gx-row" id="choices"></div>
+  <div id="extra" style="text-align:center;margin-top:10px"></div>
+
+  <div class="gx-row" style="margin-top:14px">
+    <button class="gx-btn" id="restart">↻ התחל מחדש</button>
+    <a class="gx-btn gx-btn-ghost" href="07_עצי_החלטה.html">📖 חזרה להסבר</a>
+  </div>
+</div>
+
+<script type="module">
+import { MUSHROOM } from './games-data.js';
+import { Scoreboard, toast, winModal, el, shake } from './games-core.js';
+
+const IG = { NotHeavy: 0.003, Smelly: 0.003, Spotted: 0.003, Smooth: 0.049 };
+const score = new Scoreboard('dtree');
+document.getElementById('score').appendChild(score.el);
+let misses = 0, phase = 0, ti = 0;
+
+function drawData() {
+  const d = document.getElementById('data'); d.innerHTML = '';
+  const t = el('table', { style: { margin: '0 auto', fontSize: '14px' } });
+  t.appendChild(el('tr', {}, [el('th', { text: '#' }), ...MUSHROOM.attrs.map(a => el('th', { text: a })), el('th', { text: 'Edible' })]));
+  MUSHROOM.rows.forEach(r => {
+    t.appendChild(el('tr', {}, [
+      el('td', { text: r.id, style: { fontWeight: 700 } }),
+      ...MUSHROOM.attrs.map(a => el('td', { text: r[a] })),
+      el('td', { class: r.Edible ? 'good' : 'bad', text: r.Edible ? '1' : '0' })
+    ]));
+  });
+  d.appendChild(t);
+}
+
+function igBars(highlight) {
+  const wrap = el('div', { style: { maxWidth: '420px', margin: '10px auto' } });
+  MUSHROOM.attrs.forEach(a => {
+    const pct = Math.round(IG[a] / 0.049 * 100);
+    wrap.appendChild(el('div', { style: { display: 'flex', alignItems: 'center', gap: '8px', margin: '4px 0' } }, [
+      el('span', { text: a, style: { minWidth: '90px', fontWeight: a === highlight ? 700 : 400, color: a === highlight ? 'var(--ok)' : 'var(--ink)' } }),
+      el('div', { style: { flex: '1', background: '#eef2ff', borderRadius: '6px', height: '16px', overflow: 'hidden' } }, [
+        el('div', { style: { width: pct + '%', height: '100%', background: a === highlight ? 'var(--ok)' : 'var(--primary-2)' } })
+      ]),
+      el('b', { text: 'IG=' + IG[a].toFixed(3), style: { minWidth: '74px', fontSize: '13px' } })
+    ]));
+  });
+  return wrap;
+}
+
+// ---------- שלב 1: שורש ----------
+function phaseRoot() {
+  phase = 0;
+  document.getElementById('prompt').innerHTML = '🌳 איזו תכונה לבחור ל<b>שורש</b> העץ? (IG מקסימלי)';
+  const ch = document.getElementById('choices'); ch.innerHTML = '';
+  document.getElementById('extra').innerHTML = '';
+  MUSHROOM.attrs.forEach(a => ch.appendChild(el('button', { class: 'gx-btn', text: a, onclick: () => pickRoot(a) })));
+}
+function pickRoot(a) {
+  if (a === 'Smooth') {
+    score.add(15); toast('✓ Smooth! ה-IG הכי גבוה', 'good');
+    document.getElementById('choices').innerHTML = '';
+    document.getElementById('extra').appendChild(igBars('Smooth'));
+    setTimeout(phaseSplit, 1300);
+  } else {
+    misses++; score.miss(); shake(document.getElementById('choices'));
+    toast('✗ ל-' + a + ' יש IG נמוך (≈0.003) — נסה אחר', 'bad');
+  }
+}
+
+// ---------- שלב 2: הפיצול בכל ענף ----------
+function phaseSplit() {
+  phase = 1;
+  document.getElementById('extra').innerHTML = '';
+  document.getElementById('prompt').innerHTML = '✂️ בשני הענפים (Smooth=0 ו-Smooth=1) — איזו תכונה מפצלת <b>מושלם</b> את הנותרים?';
+  const ch = document.getElementById('choices'); ch.innerHTML = '';
+  ['NotHeavy', 'Smelly', 'Spotted'].forEach(a => ch.appendChild(el('button', { class: 'gx-btn', text: a, onclick: () => pickSplit(a) })));
+}
+function pickSplit(a) {
+  if (a === 'Smelly') {
+    score.add(15); toast('✓ Smelly מפריד מושלם!', 'good');
+    document.getElementById('choices').innerHTML = '';
+    document.getElementById('extra').innerHTML =
+      '<div class="box example" style="max-width:460px;margin:0 auto"><b>העץ:</b> Smooth=0 → (Smelly=0→אכיל, Smelly=1→רעיל) · Smooth=1 → (Smelly=1→אכיל, Smelly=0→רעיל)</div>';
+    setTimeout(phaseClassify, 1600);
+  } else {
+    misses++; score.miss(); shake(document.getElementById('choices'));
+    toast('✗ נסה שוב — חפש הפרדה מושלמת', 'bad');
+  }
+}
+
+// ---------- שלב 3: סיווג U/V/W ----------
+function treeSays(m) { return m.Smooth === 0 ? (m.Smelly === 0 ? 1 : 0) : (m.Smelly === 1 ? 1 : 0); }
+function phaseClassify() {
+  phase = 2; ti = 0; nextClassify();
+}
+function nextClassify() {
+  if (ti >= MUSHROOM.test.length) return finish();
+  const m = MUSHROOM.test[ti];
+  document.getElementById('prompt').innerHTML = '🍄 פטרייה <b>' + m.id + '</b>: Smooth=' + m.Smooth + ', Smelly=' + m.Smelly + ' — אכיל או רעיל?';
+  const ch = document.getElementById('choices'); ch.innerHTML = '';
+  ch.append(
+    el('button', { class: 'gx-btn gx-btn-ok', text: '🍽️ אכיל', onclick: () => classify(1) }),
+    el('button', { class: 'gx-btn', style: { background: 'var(--warn)', color: '#fff', borderColor: 'var(--warn)' }, text: '☠️ רעיל', onclick: () => classify(0) })
+  );
+}
+function classify(guess) {
+  const m = MUSHROOM.test[ti];
+  if (guess === treeSays(m)) {
+    score.add(12); toast('✓ נכון! ' + m.id + ' = ' + (guess ? 'אכיל' : 'רעיל'), 'good');
+    ti++; setTimeout(nextClassify, 700);
+  } else {
+    misses++; score.miss(); shake(document.getElementById('choices'));
+    toast('✗ עקוב בעץ: Smooth ואז Smelly', 'bad');
+  }
+}
+function finish() {
+  const stars = misses === 0 ? 3 : misses <= 3 ? 2 : 1;
+  document.getElementById('prompt').innerHTML = '🎉 סיווגת את כולן!';
+  document.getElementById('choices').innerHTML = '';
+  winModal({ title: 'מומחה לפטריות! 🍄', stars, gameId: 'dtree',
+    html: '<p>חיזוי: <b>U=אכיל, V=אכיל, W=רעיל</b>. העץ משתמש רק ב-Smooth ו-Smelly.</p><p>ניקוד: <b>' + score.score + '</b></p>' });
+}
+
+function restart() { misses = 0; score.reset(); drawData(); phaseRoot(); }
+document.getElementById('restart').addEventListener('click', restart);
+drawData(); phaseRoot();
+</script>
+</body>
+</html>

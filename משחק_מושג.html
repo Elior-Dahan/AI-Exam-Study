@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>גבולות S ו-G 🃏 | משחקי למידה</title>
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="games.css">
+</head>
+<body>
+
+<div class="topbar"><div class="inner">
+  <a class="home" href="index.html">🏠 דף הבית</a>
+  <span class="sep">|</span>
+  <a href="משחקים.html">🎮 כל המשחקים</a>
+  <span class="sep">·</span>
+  <a href="05_למידת_מושג.html">📖 הנושא</a>
+</div></div>
+
+<div class="wrap">
+  <div class="page-head">
+    <p class="eyebrow">משחק · נושא 05</p>
+    <h1>🃏 גבולות S ו-G</h1>
+    <span class="ref">עדכן את מרחב הגרסאות לכל דוגמה — עד התכנסות</span>
+  </div>
+
+  <div class="card">
+    <p>לכל קלף (דוגמה) — בחר כיצד מתעדכן הגבול. תזכורת: ערך <code>7–10=N</code>, <code>J/Q/K/A</code>=לא-מספר · צורה <code>♥♦=R</code>, <code>♣♠=B</code>. חיובי מרחיב את <b>S</b>, שלילי מצמצם את <b>G</b>.</p>
+  </div>
+
+  <div id="score"></div>
+
+  <div class="gx-board" style="text-align:center">
+    <div id="card" style="font-size:46px;line-height:1.1;margin:6px 0"></div>
+    <div id="boundaries" class="gx-row" style="gap:30px;margin-top:8px"></div>
+  </div>
+
+  <div class="gx-prompt" id="prompt"></div>
+  <div class="gx-row" id="choices"></div>
+
+  <div class="gx-row" style="margin-top:14px">
+    <button class="gx-btn" id="restart">↻ התחל מחדש</button>
+    <a class="gx-btn gx-btn-ghost" href="05_למידת_מושג.html">📖 חזרה להסבר</a>
+  </div>
+</div>
+
+<script type="module">
+import { Scoreboard, toast, winModal, el, shake } from './games-core.js';
+
+const STEPS = [
+  { ex: '7♦', lab: '+', q: 'דוגמה <b>חיובית</b> — איך מתעדכן <b>S</b>?', opts: ['{ [7,D] }', '{ ∅ }', '{ [N,R] }'], correct: 0, S: ['[7,D]'], G: ['[?,?]'] },
+  { ex: 'A♣', lab: '-', q: 'דוגמה <b>שלילית</b> — איך מצטמצם <b>G</b>? (A אינו N, ♣ אינו R)', opts: ['{ [N,?] , [?,R] }', '{ [7,D] }', '{ [?,?] }'], correct: 0, S: ['[7,D]'], G: ['[N,?]', '[?,R]'] },
+  { ex: 'Q♥', lab: '-', q: '<b>שלילית</b> — [?,R] מכסה ♥, אז מצטמצם. מה נכון?', opts: ['{ [N,?] , [?,D] }', '{ [N,?] , [?,R] }', '{ [N,R] }'], correct: 0, S: ['[7,D]'], G: ['[N,?]', '[?,D]'] },
+  { ex: '9♥', lab: '+', q: '<b>חיובית</b> — S מתכלל ל-? (וגם [?,D] ייפול מ-G כי אינו מכסה ♥)', opts: ['{ [N,R] }', '{ [7,D] }', '{ [N,?] }'], correct: 0, S: ['[N,R]'], G: ['[N,?]'] },
+  { ex: '8♣', lab: '-', q: '<b>שלילית</b> אחרונה — [N,?] מכסה את 8, אז G מצטמצם ל-?', opts: ['{ [N,R] }', '{ [N,?] }', '{ [?,R] }'], correct: 0, S: ['[N,R]'], G: ['[N,R]'] }
+];
+
+const score = new Scoreboard('vspace');
+document.getElementById('score').appendChild(score.el);
+let idx = 0, curS = ['∅'], curG = ['[?,?]'], misses = 0;
+
+function chips(arr, color) {
+  return arr.map(h => el('span', { class: 'gx-chip', text: h, style: { background: color + '22', borderColor: color, color } }));
+}
+function renderBoundaries() {
+  const b = document.getElementById('boundaries'); b.innerHTML = '';
+  b.append(
+    el('div', {}, [el('div', { text: 'S (ספציפי)', style: { fontWeight: 700, color: '#b23b3b', marginBottom: '4px' } }), el('div', { class: 'gx-row' }, chips(curS, '#b23b3b'))]),
+    el('div', {}, [el('div', { text: 'G (כללי)', style: { fontWeight: 700, color: '#1b7f5a', marginBottom: '4px' } }), el('div', { class: 'gx-row' }, chips(curG, '#1b7f5a'))])
+  );
+}
+function renderStep() {
+  const st = STEPS[idx];
+  const isPos = st.lab === '+';
+  document.getElementById('card').innerHTML = st.ex + ' <span style="font-size:26px;color:' + (isPos ? 'var(--ok)' : 'var(--warn)') + '">(' + st.lab + ')</span>';
+  document.getElementById('prompt').innerHTML = '🤔 ' + st.q;
+  renderBoundaries();
+  const ch = document.getElementById('choices'); ch.innerHTML = '';
+  st.opts.forEach((opt, i) => ch.appendChild(el('button', { class: 'gx-btn', html: opt, onclick: () => pick(i) })));
+}
+function pick(i) {
+  const st = STEPS[idx];
+  if (i === st.correct) {
+    curS = st.S.slice(); curG = st.G.slice(); score.add(12);
+    renderBoundaries(); toast('✓ נכון!', 'good');
+    idx++;
+    if (idx >= STEPS.length) finish();
+    else setTimeout(renderStep, 700);
+  } else {
+    misses++; score.miss(); shake(document.getElementById('choices'));
+    toast('✗ זכור: חיובי→S, שלילי→G; מצמצמים מינימלית', 'bad');
+  }
+}
+function finish() {
+  const stars = misses === 0 ? 3 : misses <= 2 ? 2 : 1;
+  document.getElementById('choices').innerHTML = '';
+  document.getElementById('prompt').innerHTML = '🎉 התכנסות! <b>S = G = [N,R]</b>';
+  winModal({ title: 'התכנסת למושג! 🃏', stars, gameId: 'vspace',
+    html: '<p>המושג שנלמד: <code>[N,R]</code> — קלף מספר (7–10) בצבע אדום.</p><p>ניקוד: <b>' + score.score + '</b></p>' });
+}
+function restart() { idx = 0; curS = ['∅']; curG = ['[?,?]']; misses = 0; score.reset(); renderStep(); }
+document.getElementById('restart').addEventListener('click', restart);
+renderStep();
+</script>
+</body>
+</html>

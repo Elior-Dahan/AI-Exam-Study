@@ -43,10 +43,10 @@ const GAMES = [
   { id: 'search',  href: 'משחק_חיפוש.html',   icon: '🔍', t: 'מירוץ חיפוש',       d: 'נחש איזה צומת ייפתח הבא — BFS / DFS / UCS / Greedy / A*.', tag: 'אתגר',    topic: 'שיעורים 01–02', active: true },
   { id: 'minimax', href: 'משחק_מינימקס.html', icon: '🌳', t: 'בנה עץ מינימקס',     d: 'מלא ערכים מלמטה למעלה, ואז גזום ב-Alpha-Beta.',            tag: 'אתגר',    topic: 'שיעור 03',     active: true },
   { id: 'genetic', href: 'משחק_גנטי.html',    icon: '🧬', t: 'סימולטור אבולוציה',  d: 'צפה באוכלוסייה מתכנסת ל-max f(x)=x²; שחק עם המוטציה.',     tag: 'ארגז חול', topic: 'שיעור 08',     active: true },
-  { id: 'nash',    href: 'משחק_משחקים.html',  icon: '🎲', t: 'צייד הנאש',          d: 'שחק דילמת אסיר חוזרת נגד ה-AI, ומצא שיווי משקל נאש.',      tag: 'נגד AI',  topic: 'שיעור 04',     active: false },
-  { id: 'vspace',  href: 'משחק_מושג.html',    icon: '🃏', t: 'גבולות S ו-G',       d: 'עדכן את מרחב הגרסאות לכל דוגמה עד התכנסות.',               tag: 'אתגר',    topic: 'שיעור 05',     active: false },
-  { id: 'neuron',  href: 'משחק_נוירון.html',  icon: '🧠', t: 'אמן את הנוירון',     d: 'חשב forward ו-backprop צעד-אחר-צעד עם ולידציה.',           tag: 'אתגר',    topic: 'שיעור 06',     active: false },
-  { id: 'dtree',   href: 'משחק_עץ.html',      icon: '🍄', t: 'איזו תכונה מפצלת?',  d: 'בחר את התכונה עם ה-IG הגבוה וסווג פטריות.',               tag: 'אתגר',    topic: 'שיעור 07',     active: false }
+  { id: 'nash',    href: 'משחק_משחקים.html',  icon: '🎲', t: 'צייד הנאש',          d: 'שחק דילמת אסיר חוזרת נגד ה-AI, ומצא שיווי משקל נאש.',      tag: 'נגד AI',  topic: 'שיעור 04',     active: true},
+  { id: 'vspace',  href: 'משחק_מושג.html',    icon: '🃏', t: 'גבולות S ו-G',       d: 'עדכן את מרחב הגרסאות לכל דוגמה עד התכנסות.',               tag: 'אתגר',    topic: 'שיעור 05',     active: true},
+  { id: 'neuron',  href: 'משחק_נוירון.html',  icon: '🧠', t: 'אמן את הנוירון',     d: 'חשב forward ו-backprop צעד-אחר-צעד עם ולידציה.',           tag: 'אתגר',    topic: 'שיעור 06',     active: true},
+  { id: 'dtree',   href: 'משחק_עץ.html',      icon: '🍄', t: 'איזו תכונה מפצלת?',  d: 'בחר את התכונה עם ה-IG הגבוה וסווג פטריות.',               tag: 'אתגר',    topic: 'שיעור 07',     active: true}
 ];
 
 const starStr = n => '★'.repeat(n) + '☆'.repeat(3 - n);
