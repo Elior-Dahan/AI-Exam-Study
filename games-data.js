@@ -1,5 +1,5 @@
 // ============================================================
-// games-data.js — כל הנתונים של המשחקים (מתוך עמודי הנושאים)
+// games-data.js — כל הנתונים של המשחקים (מיושר לדוגמאות המרצה מהמצגות)
 // ============================================================
 
 // ---------- חיפוש: הגרף (זהה לעמודי 01/02) ----------
@@ -63,55 +63,73 @@ export const IESDS = {
   nash: [['A', 'X']]
 };
 
-// ---------- Version Space: דוגמת הקלפים (עמוד 05) ----------
-// ערך: 7..10 = N (מספר), A/J/Q/K = F (לא-מספר). צורה: ♥♦ = R, ♣♠ = B.
+// ---------- Version Space: דוגמת המרצה (Restaurant) ----------
+// תכונות: Restaurant / Meal / Day / Cost. השערה = רביעייה עם '?' (כל ערך) או '∅' (כלום).
+// דוגמה זו שונה מהדוגמה שבעמוד 05 (Eden,?,?,cheap) — כאן מתכנסים ל-[?, lunch, ?, cheap].
 export const VERSION_SPACE = {
+  attrs: ['Restaurant', 'Meal', 'Day', 'Cost'],
+  short: { Restaurant: 'מסעדה', Meal: 'ארוחה', Day: 'יום', Cost: 'מחיר' },
   examples: [
-    { card: '7♦', val: '7', suit: '♦', label: '+' },
-    { card: 'A♣', val: 'A', suit: '♣', label: '-' },
-    { card: 'Q♥', val: 'Q', suit: '♥', label: '-' },
-    { card: '9♥', val: '9', suit: '♥', label: '+' },
-    { card: '8♣', val: '8', suit: '♣', label: '-' }
+    { vals: ['Dupu',   'lunch',     'Mon', 'cheap'],     label: '+' },
+    { vals: ['Eden',   'lunch',     'Fri', 'expensive'], label: '-' },
+    { vals: ['Karnaf', 'lunch',     'Sun', 'cheap'],     label: '+' },
+    { vals: ['Eden',   'breakfast', 'Mon', 'cheap'],     label: '-' },
+    { vals: ['Dupu',   'dinner',    'Sun', 'expensive'], label: '-' }
   ],
-  // S ו-G אחרי כל דוגמה (לאימות)
+  // S ו-G אחרי כל דוגמה (לאימות והנפשה). אינדקס 0 = אתחול.
   evolution: [
-    { S: ['[7,D]'], G: ['[?,?]'] },
-    { S: ['[7,D]'], G: ['[N,?]', '[?,R]'] },
-    { S: ['[7,D]'], G: ['[N,?]', '[?,D]'] },
-    { S: ['[N,R]'], G: ['[N,?]'] },
-    { S: ['[N,R]'], G: ['[N,R]'] }
+    { S: [['∅', '∅', '∅', '∅']], G: [['?', '?', '?', '?']] },
+    { S: [['Dupu', 'lunch', 'Mon', 'cheap']], G: [['?', '?', '?', '?']] },
+    { S: [['Dupu', 'lunch', 'Mon', 'cheap']], G: [['Dupu', '?', '?', '?'], ['?', '?', 'Mon', '?'], ['?', '?', '?', 'cheap']] },
+    { S: [['?', 'lunch', '?', 'cheap']], G: [['?', '?', '?', 'cheap']] },
+    { S: [['?', 'lunch', '?', 'cheap']], G: [['?', 'lunch', '?', 'cheap']] },
+    { S: [['?', 'lunch', '?', 'cheap']], G: [['?', 'lunch', '?', 'cheap']] }
   ],
-  concept: '[N,R]'
+  concept: ['?', 'lunch', '?', 'cheap']  // "כל ארוחת צהריים זולה"
 };
 
-// ---------- רשת נוירונים (עמוד 06) ----------
+// ---------- רשת נוירונים: הדוגמה הקנונית של AIMA (עמוד 06) ----------
+// צמתים: קלט 1,2,3 → נסתר 4,5 → פלט 6. סיגמואיד. כולל הטיות (bias) ו-LR.
 export const NN_CONFIG = {
-  // קלט→נסתר
-  w: { w11: 0.5, w21: 0.1, w12: 0.3, w22: 0.8 },
-  // נסתר→פלט
-  v: { v1: 0.2, v2: 0.9 },
-  x: { x1: 1, x2: 0 },
-  t: 1,
-  eta: 0.3
+  x: { x1: 1, x2: 0, x3: 1 },
+  w: { w14: 0.2, w15: -0.3, w24: 0.4, w25: 0.1, w34: -0.5, w35: 0.2, w46: -0.3, w56: -0.2 },
+  bias: { b4: -0.4, b5: 0.2, b6: 0.1 },
+  target: 1,
+  lr: 0.9
+  // Forward: I4=-0.7→O4=0.332, I5=0.1→O5=0.525, I6=-0.105→O6=0.474
+  // Backprop: Err6=0.1311, Err4=-0.0087, Err5=-0.0065
 };
 
-// ---------- עצי החלטה: דאטה פטריות (עמוד 07) ----------
-export const MUSHROOM = {
-  attrs: ['NotHeavy', 'Smelly', 'Spotted', 'Smooth'],
+// ---------- עצי החלטה: דאטה PlayTennis הקנוני (עמוד 07) ----------
+export const PLAYTENNIS = {
+  attrs: ['Outlook', 'Temperature', 'Humidity', 'Wind'],
   rows: [
-    { id: 'A', NotHeavy: 1, Smelly: 0, Spotted: 0, Smooth: 0, Edible: 1 },
-    { id: 'B', NotHeavy: 1, Smelly: 0, Spotted: 1, Smooth: 0, Edible: 1 },
-    { id: 'C', NotHeavy: 0, Smelly: 1, Spotted: 0, Smooth: 1, Edible: 1 },
-    { id: 'D', NotHeavy: 0, Smelly: 0, Spotted: 0, Smooth: 1, Edible: 0 },
-    { id: 'E', NotHeavy: 1, Smelly: 1, Spotted: 1, Smooth: 0, Edible: 0 },
-    { id: 'F', NotHeavy: 1, Smelly: 0, Spotted: 1, Smooth: 1, Edible: 0 },
-    { id: 'G', NotHeavy: 1, Smelly: 0, Spotted: 0, Smooth: 1, Edible: 0 },
-    { id: 'H', NotHeavy: 0, Smelly: 1, Spotted: 0, Smooth: 0, Edible: 0 }
+    { id: 'D1',  Outlook: 'Sunny',    Temperature: 'Hot',  Humidity: 'High',   Wind: 'Weak',   Play: 0 },
+    { id: 'D2',  Outlook: 'Sunny',    Temperature: 'Hot',  Humidity: 'High',   Wind: 'Strong', Play: 0 },
+    { id: 'D3',  Outlook: 'Overcast', Temperature: 'Hot',  Humidity: 'High',   Wind: 'Weak',   Play: 1 },
+    { id: 'D4',  Outlook: 'Rain',     Temperature: 'Mild', Humidity: 'High',   Wind: 'Weak',   Play: 1 },
+    { id: 'D5',  Outlook: 'Rain',     Temperature: 'Cool', Humidity: 'Normal', Wind: 'Weak',   Play: 1 },
+    { id: 'D6',  Outlook: 'Rain',     Temperature: 'Cool', Humidity: 'Normal', Wind: 'Strong', Play: 0 },
+    { id: 'D7',  Outlook: 'Overcast', Temperature: 'Cool', Humidity: 'Normal', Wind: 'Strong', Play: 1 },
+    { id: 'D8',  Outlook: 'Sunny',    Temperature: 'Mild', Humidity: 'High',   Wind: 'Weak',   Play: 0 },
+    { id: 'D9',  Outlook: 'Sunny',    Temperature: 'Cool', Humidity: 'Normal', Wind: 'Weak',   Play: 1 },
+    { id: 'D10', Outlook: 'Rain',     Temperature: 'Mild', Humidity: 'Normal', Wind: 'Weak',   Play: 1 },
+    { id: 'D11', Outlook: 'Sunny',    Temperature: 'Mild', Humidity: 'Normal', Wind: 'Strong', Play: 1 },
+    { id: 'D12', Outlook: 'Overcast', Temperature: 'Mild', Humidity: 'High',   Wind: 'Strong', Play: 1 },
+    { id: 'D13', Outlook: 'Overcast', Temperature: 'Hot',  Humidity: 'Normal', Wind: 'Weak',   Play: 1 },
+    { id: 'D14', Outlook: 'Rain',     Temperature: 'Mild', Humidity: 'High',   Wind: 'Strong', Play: 0 }
   ],
+  entropyS: 0.94,            // E(S): 9 כן, 5 לא
+  rootGain: { Outlook: 0.247, Humidity: 0.151, Wind: 0.048, Temperature: 0.029 },
+  branchBest: { Sunny: 'Humidity', Rain: 'Wind' }, // overcast טהור (כולם כן)
+  // ערכי IG בתוך ענף Sunny (3 לא, 2 כן) ו-Rain (3 כן, 2 לא) — לחשיפה במשחק
+  sunnyGain: { Humidity: 0.971, Temperature: 0.571, Wind: 0.020 },
+  rainGain:  { Wind: 0.971, Temperature: 0.020, Humidity: 0.020 },
   test: [
-    { id: 'U', NotHeavy: 0, Smelly: 1, Spotted: 1, Smooth: 1, Edible: 1 },
-    { id: 'V', NotHeavy: 1, Smelly: 1, Spotted: 0, Smooth: 1, Edible: 1 },
-    { id: 'W', NotHeavy: 1, Smelly: 1, Spotted: 0, Smooth: 0, Edible: 0 }
+    { id: 'X1', Outlook: 'Sunny',    Humidity: 'High',   Wind: 'Weak',   Play: 0 },
+    { id: 'X2', Outlook: 'Overcast', Humidity: 'High',   Wind: 'Strong', Play: 1 },
+    { id: 'X3', Outlook: 'Rain',     Humidity: 'Normal', Wind: 'Strong', Play: 0 },
+    { id: 'X4', Outlook: 'Sunny',    Humidity: 'Normal', Wind: 'Strong', Play: 1 }
   ]
 };
 

@@ -21,18 +21,24 @@
   <div class="page-head">
     <p class="eyebrow">משחק · נושא 05</p>
     <h1>🃏 גבולות S ו-G</h1>
-    <span class="ref">עדכן את מרחב הגרסאות לכל דוגמה — עד התכנסות</span>
+    <span class="ref">צפה במרחב הגרסאות מצטמצם — S עולה, G יורד, עד התכנסות</span>
   </div>
 
   <div class="card">
-    <p>לכל קלף (דוגמה) — בחר כיצד מתעדכן הגבול. תזכורת: ערך <code>7–10=N</code>, <code>J/Q/K/A</code>=לא-מספר · צורה <code>♥♦=R</code>, <code>♣♠=B</code>. חיובי מרחיב את <b>S</b>, שלילי מצמצם את <b>G</b>.</p>
+    <p>דאטה חדש (שונה מהעמוד!): דומיין מסעדות — תכונות <code>[מסעדה, ארוחה, יום, מחיר]</code>. לכל דוגמה לפי הסדר, בחר את העדכון הנכון. <b style="color:#b23b3b">S</b> (אדום) עולה מלמטה על דוגמאות חיוביות, <b style="color:#1b7f5a">G</b> (ירוק) יורד מלמעלה על שליליות, והפס המוצלל = <b>מרחב הגרסאות</b>.</p>
   </div>
 
   <div id="score"></div>
 
-  <div class="gx-board" style="text-align:center">
-    <div id="card" style="font-size:46px;line-height:1.1;margin:6px 0;direction:ltr"></div>
-    <div id="boundaries" class="gx-row" style="gap:30px;margin-top:8px"></div>
+  <div class="gx-board">
+    <div id="exhost" style="text-align:center;margin-bottom:10px"></div>
+    <div class="gx-ladder-row" style="font-size:12px;color:var(--muted);min-height:auto;margin-bottom:2px">
+      <span>⬆ כללי יותר</span>
+    </div>
+    <div class="gx-ladder" id="ladder"></div>
+    <div class="gx-ladder-row" style="font-size:12px;color:var(--muted);min-height:auto;margin-top:2px">
+      <span>⬇ ספציפי יותר</span>
+    </div>
   </div>
 
   <div class="gx-prompt" id="prompt"></div>
@@ -45,60 +51,137 @@
 </div>
 
 <script type="module">
+import { VERSION_SPACE } from './games-data.js';
 import { Scoreboard, toast, winModal, el, shake } from './games-core.js';
 
-const STEPS = [
-  { ex: '7♦', lab: '+', q: 'דוגמה <b>חיובית</b> — איך מתעדכן <b>S</b>?', opts: ['{ [7,D] }', '{ ∅ }', '{ [N,R] }'], correct: 0, S: ['[7,D]'], G: ['[?,?]'] },
-  { ex: 'A♣', lab: '-', q: 'דוגמה <b>שלילית</b> — איך מצטמצם <b>G</b>? (A אינו N, ♣ אינו R)', opts: ['{ [N,?] , [?,R] }', '{ [7,D] }', '{ [?,?] }'], correct: 0, S: ['[7,D]'], G: ['[N,?]', '[?,R]'] },
-  { ex: 'Q♥', lab: '-', q: '<b>שלילית</b> — [?,R] מכסה ♥, אז מצטמצם. מה נכון?', opts: ['{ [N,?] , [?,D] }', '{ [N,?] , [?,R] }', '{ [N,R] }'], correct: 0, S: ['[7,D]'], G: ['[N,?]', '[?,D]'] },
-  { ex: '9♥', lab: '+', q: '<b>חיובית</b> — S מתכלל ל-? (וגם [?,D] ייפול מ-G כי אינו מכסה ♥)', opts: ['{ [N,R] }', '{ [7,D] }', '{ [N,?] }'], correct: 0, S: ['[N,R]'], G: ['[N,?]'] },
-  { ex: '8♣', lab: '-', q: '<b>שלילית</b> אחרונה — [N,?] מכסה את 8, אז G מצטמצם ל-?', opts: ['{ [N,R] }', '{ [N,?] }', '{ [?,R] }'], correct: 0, S: ['[N,R]'], G: ['[N,R]'] }
-];
-
+const VS = VERSION_SPACE;
+const ROWH = 54;
 const score = new Scoreboard('vspace');
 document.getElementById('score').appendChild(score.el);
-let idx = 0, curS = ['∅'], curG = ['[?,?]'], misses = 0;
 
-function chips(arr, color) {
-  return arr.map(h => el('span', { class: 'gx-chip', text: h, style: { background: color + '22', borderColor: color, color } }));
+// השאלות לכל דוגמה (האפשרות הנכונה ראשונה, ואז מערבבים)
+const QUESTIONS = [
+  { q: 'דוגמה <b>חיובית +</b>: איך מתעדכן <b>S</b>? (מ-∅ אל הדוגמה)',
+    opts: ['S = { [Dupu, lunch, Mon, cheap] }', 'S = { [?, ?, ?, ?] }', 'S = { ∅ }'], correct: 0 },
+  { q: 'דוגמה <b>שלילית −</b> (Eden,lunch,Fri,expensive): איך מצטמצם <b>G</b>? (לא דרך Meal — גם הדוגמה היא lunch!)',
+    opts: ['G = { [Dupu,?,?,?] , [?,?,Mon,?] , [?,?,?,cheap] }', 'G = { [?, lunch, ?, ?] }', 'G = { [Eden, ?, ?, ?] }'], correct: 0 },
+  { q: 'דוגמה <b>חיובית +</b> (Karnaf,lunch,Sun,cheap): הכלל את S, וזרוק מ-G מי שלא מכסה',
+    opts: ['S=[?,lunch,?,cheap] · G=[?,?,?,cheap]', 'S=[Karnaf,lunch,Sun,cheap] · G ללא שינוי', 'G נשאר עם 3 השערות'], correct: 0 },
+  { q: 'דוגמה <b>שלילית −</b> (Eden,breakfast,Mon,cheap): [?,?,?,cheap] מכסה אותה → צמצם ל-?',
+    opts: ['G = { [?, lunch, ?, cheap] }', 'G = { [?, ?, Mon, cheap] }', 'G = { [Eden, ?, ?, cheap] }'], correct: 0 },
+  { q: 'דוגמה <b>שלילית −</b> אחרונה (Dupu,dinner,Sun,expensive): מה קורה?',
+    opts: ['כלום — S=G כבר לא מכסים אותה ✓ התכנסות', 'G מצטמצם שוב', 'S גדל'], correct: 0 }
+];
+
+let idx = 0, misses = 0; // idx = כמה דוגמאות עובדו
+
+function hypText(h) {
+  if (h.every(a => a === '∅')) return '∅';
+  return '[' + h.join(', ') + ']';
 }
-function renderBoundaries() {
-  const b = document.getElementById('boundaries'); b.innerHTML = '';
-  b.append(
-    el('div', {}, [el('div', { text: 'S (ספציפי)', style: { fontWeight: 700, color: '#b23b3b', marginBottom: '4px' } }), el('div', { class: 'gx-row' }, chips(curS, '#b23b3b'))]),
-    el('div', {}, [el('div', { text: 'G (כללי)', style: { fontWeight: 700, color: '#1b7f5a', marginBottom: '4px' } }), el('div', { class: 'gx-row' }, chips(curG, '#1b7f5a'))])
-  );
+function level(h) {
+  if (h.every(a => a === '∅')) return 4;
+  return h.filter(a => a !== '?').length;
 }
-function renderStep() {
-  const st = STEPS[idx];
-  const isPos = st.lab === '+';
-  document.getElementById('card').innerHTML = st.ex + ' <span style="font-size:26px;color:' + (isPos ? 'var(--ok)' : 'var(--warn)') + '">(' + st.lab + ')</span>';
-  document.getElementById('prompt').innerHTML = '🤔 ' + st.q;
-  renderBoundaries();
-  const ch = document.getElementById('choices'); ch.innerHTML = '';
-  st.opts.forEach((opt, i) => ch.appendChild(el('button', { class: 'gx-btn', html: opt, style: { direction: 'ltr', unicodeBidi: 'isolate' }, onclick: () => pick(i) })));
-}
-function pick(i) {
-  const st = STEPS[idx];
-  if (i === st.correct) {
-    curS = st.S.slice(); curG = st.G.slice(); score.add(12);
-    renderBoundaries(); toast('✓ נכון!', 'good');
-    idx++;
-    if (idx >= STEPS.length) finish();
-    else setTimeout(renderStep, 700);
-  } else {
-    misses++; score.miss(); shake(document.getElementById('choices'));
-    toast('✗ זכור: חיובי→S, שלילי→G; מצמצמים מינימלית', 'bad');
+function eq(a, b) { return a.length === b.length && a.every((x, i) => x === b[i]); }
+
+function renderLadder() {
+  const st = VS.evolution[idx];
+  const host = document.getElementById('ladder');
+  host.innerHTML = '';
+  host.style.height = (5 * ROWH) + 'px';
+
+  const converged = st.S.length === 1 && st.G.length === 1 && eq(st.S[0], st.G[0]);
+
+  // פס מרחב הגרסאות
+  const gTop = Math.min(...st.G.map(level));
+  const sBottom = Math.max(...st.S.map(level));
+  const band = el('div', { class: 'gx-vs-band' });
+  band.style.top = (gTop * ROWH) + 'px';
+  band.style.height = (Math.max(1, sBottom - gTop + 1) * ROWH) + 'px';
+  host.appendChild(band);
+
+  // 5 שורות לפי רמת כלליות (0 כללי ביותר ... 4 ספציפי ביותר)
+  for (let lv = 0; lv <= 4; lv++) {
+    const row = el('div', { class: 'gx-ladder-row' });
+    row.style.height = ROWH + 'px';
+    if (converged && level(st.S[0]) === lv) {
+      row.appendChild(el('span', { class: 'gx-hyp goal', text: hypText(st.S[0]) + '  ✓ S=G' }));
+    } else {
+      st.G.filter(h => level(h) === lv).forEach(h => row.appendChild(el('span', { class: 'gx-hyp g', text: hypText(h) })));
+      st.S.filter(h => level(h) === lv).forEach(h => row.appendChild(el('span', { class: 'gx-hyp s', text: hypText(h) })));
+    }
+    host.appendChild(row);
   }
 }
-function finish() {
-  const stars = misses === 0 ? 3 : misses <= 2 ? 2 : 1;
-  document.getElementById('choices').innerHTML = '';
-  document.getElementById('prompt').innerHTML = '🎉 התכנסות! <b>S = G = [N,R]</b>';
-  winModal({ title: 'התכנסת למושג! 🃏', stars, gameId: 'vspace',
-    html: '<p>המושג שנלמד: <code>[N,R]</code> — קלף מספר (7–10) בצבע אדום.</p><p>ניקוד: <b>' + score.score + '</b></p>' });
+
+function renderExample() {
+  const host = document.getElementById('exhost');
+  host.innerHTML = '';
+  if (idx >= VS.examples.length) return;
+  const ex = VS.examples[idx];
+  const pos = ex.label === '+';
+  host.appendChild(el('div', { class: 'gx-ex-card ' + (pos ? 'pos' : 'neg') }, [
+    el('div', { class: 'gx-ex-badge', text: pos ? '＋' : '－' }),
+    el('b', { text: '[' + ex.vals.join(', ') + ']' }),
+    el('span', { style: { fontSize: '12px', color: 'var(--muted)' }, text: 'דוגמה ' + (idx + 1) + '/5 · ' + (pos ? 'חיובית' : 'שלילית') })
+  ]));
 }
-function restart() { idx = 0; curS = ['∅']; curG = ['[?,?]']; misses = 0; score.reset(); renderStep(); }
+
+function renderStep() {
+  renderExample();
+  renderLadder();
+  const Q = QUESTIONS[idx];
+  document.getElementById('prompt').innerHTML = '🤔 ' + Q.q;
+  const ch = document.getElementById('choices'); ch.innerHTML = '';
+  // ערבוב אפשרויות עם מעקב אחר הנכונה
+  const order = shuffle([0, 1, 2], idx);
+  order.forEach(oi => {
+    ch.appendChild(el('button', {
+      class: 'gx-btn', html: Q.opts[oi],
+      style: { direction: 'ltr', unicodeBidi: 'isolate' },
+      onclick: () => pick(oi === Q.correct)
+    }));
+  });
+}
+
+// ערבוב דטרמיניסטי לפי אינדקס (בלי Math.random)
+function shuffle(arr, seed) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = (seed * 7 + i * 13 + 5) % (i + 1);
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function pick(correct) {
+  if (correct) {
+    score.add(13);
+    idx++;
+    toast('✓ נכון!', 'good');
+    if (idx >= VS.examples.length) return finish();
+    setTimeout(renderStep, 700);
+  } else {
+    misses++; score.miss(); shake(document.getElementById('choices'));
+    toast('✗ זכור: חיובי→הרחב S, שלילי→צמצם G (מינימלית, בכל תכונה)', 'bad');
+  }
+}
+
+function finish() {
+  renderExample(); renderLadder();
+  const stars = misses === 0 ? 3 : misses <= 2 ? 2 : 1;
+  document.getElementById('prompt').innerHTML = '🎉 התכנסות! <b>S = G = [?, lunch, ?, cheap]</b>';
+  document.getElementById('choices').innerHTML = '';
+  winModal({
+    title: 'התכנסת למושג! 🃏', stars, gameId: 'vspace',
+    html: '<p>המושג שנלמד: <code>[?, lunch, ?, cheap]</code> — "כל <b>ארוחת צהריים</b> שהיא <b>זולה</b>".</p>' +
+          '<p style="font-size:14px;color:#5b6478">שים לב: התכונות "מסעדה" ו"יום" ירדו ל-<code>?</code> כי הן לא רלוונטיות למושג.</p>' +
+          '<p>ניקוד: <b>' + score.score + '</b></p>'
+  });
+}
+
+function restart() { idx = 0; misses = 0; score.reset(); renderStep(); }
 document.getElementById('restart').addEventListener('click', restart);
 renderStep();
 </script>

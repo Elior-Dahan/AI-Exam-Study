@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>אמן את הנוירון 🧠 | משחקי למידה</title>
+<title>אמן את הרשת 🧠 | משחקי למידה</title>
 <link rel="stylesheet" href="style.css">
 <link rel="stylesheet" href="games.css">
 </head>
@@ -20,102 +20,185 @@
 <div class="wrap">
   <div class="page-head">
     <p class="eyebrow">משחק · נושא 06</p>
-    <h1>🧠 אמן את הנוירון</h1>
-    <span class="ref">חשב את ה-Forward ו-Backprop צעד-אחר-צעד</span>
+    <h1>🧠 אמן את הרשת</h1>
+    <span class="ref">רשת 3→2→1 · עבור צומת-אחר-צומת ב-Forward, ואז אחורה ב-Backprop</span>
   </div>
 
   <div class="card">
-    <p>רשת 2-2-1: <code>x₁=1, x₂=0</code>, מטרה <code>t=1</code>, <code>η=0.3</code>, סיגמואיד. משקולות: <code>w₁₁=0.5, w₂₁=0.1, w₁₂=0.3, w₂₂=0.8, v₁=0.2, v₂=0.9</code>. חשב כל שלב (עגל ל-4 ספרות), הקלד ובדוק. תקוע? לחץ "רמז". 💡</p>
+    <p>הרשת הקנונית של AIMA: קלטים <code>x₁=1, x₂=0, x₃=1</code>, מטרה <code>T=1</code>, קצב למידה <code>LR=0.9</code>, סיגמואיד. כל צומת מואר כשתורו מגיע — חשב את הערך, הקלד ובדוק, והצומת נדלק בירוק. תקוע? לחץ "רמז". 💡</p>
+    <p class="cap" style="margin:6px 0 0;color:var(--muted)">σ(−0.7)=0.332 · σ(0.1)=0.525 · σ(−0.105)=0.474 &nbsp;|&nbsp; עגל ל-4 ספרות.</p>
   </div>
 
   <div id="score"></div>
-  <div class="gx-board"><div id="steps"></div></div>
 
-  <div class="card">
-    <h3 style="margin-top:6px">🎚️ סנדבוקס: הזז את משקולות הפלט וראה את o</h3>
-    <div class="gx-row" style="gap:24px;align-items:flex-end">
-      <div class="gx-ctrl"><label>v₁: <b id="lv1">0.20</b></label><input type="range" id="sv1" min="-1" max="1" step="0.05" value="0.2"></div>
-      <div class="gx-ctrl"><label>v₂: <b id="lv2">0.90</b></label><input type="range" id="sv2" min="-1" max="1" step="0.05" value="0.9"></div>
-      <div style="text-align:center"><div style="font-size:13px;color:var(--muted)">פלט o</div><div id="oout" style="font-size:26px;font-weight:800;color:var(--primary)">—</div></div>
-    </div>
-    <p class="cap" style="text-align:center;color:var(--muted)">‏(h₁=0.6225, h₂=0.5744 קבועים · o = σ(v₁·h₁ + v₂·h₂))</p>
+  <div class="gx-board">
+    <svg id="net" class="gx-nn" viewBox="0 0 600 330" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="רשת נוירונים אינטראקטיבית"></svg>
   </div>
 
-  <div class="gx-row" style="margin-top:8px">
+  <div class="gx-calc" id="calc"></div>
+
+  <div class="gx-row" style="margin-top:14px">
+    <button class="gx-btn" id="restart">↻ התחל מחדש</button>
     <a class="gx-btn gx-btn-ghost" href="06_רשתות_נוירונים.html">📖 חזרה להסבר</a>
   </div>
 </div>
 
 <script type="module">
-import { Scoreboard, toast, winModal, el } from './games-core.js';
+import { NN_CONFIG } from './games-data.js';
+import { Scoreboard, toast, winModal, el, svg, shake } from './games-core.js';
 
 const sig = x => 1 / (1 + Math.exp(-x));
-const STEPS = [
-  { label: 'net(h₁) = w₁₁·x₁ + w₂₁·x₂', hint: '0.5·1 + 0.1·0', ans: 0.5, tol: 0.002 },
-  { label: 'h₁ = σ(net h₁)', hint: 'σ(0.5) = 1 / (1 + e^−0.5)', ans: 0.6225, tol: 0.002 },
-  { label: 'net(h₂) = w₁₂·x₁ + w₂₂·x₂', hint: '0.3·1 + 0.8·0', ans: 0.3, tol: 0.002 },
-  { label: 'h₂ = σ(net h₂)', hint: 'σ(0.3)', ans: 0.5744, tol: 0.002 },
-  { label: 'net(o) = v₁·h₁ + v₂·h₂', hint: '0.2·0.6225 + 0.9·0.5744', ans: 0.6415, tol: 0.003 },
-  { label: 'o = σ(net o)', hint: 'σ(0.6415)', ans: 0.6551, tol: 0.002 },
-  { label: 'δₒ = (t − o)·o·(1 − o)', hint: '(1−0.6551)·0.6551·0.3449', ans: 0.0779, tol: 0.002 },
-  { label: 'v₁(חדש) = v₁ + η·δₒ·h₁', hint: '0.2 + 0.3·0.0779·0.6225', ans: 0.2146, tol: 0.002 }
-];
-
 const score = new Scoreboard('neuron');
 document.getElementById('score').appendChild(score.el);
-const box = document.getElementById('steps');
+
+// ---------- מיקומי הצמתים ----------
+const POS = {
+  1: { x: 70, y: 60 }, 2: { x: 70, y: 165 }, 3: { x: 70, y: 270 },
+  4: { x: 300, y: 105 }, 5: { x: 300, y: 225 },
+  6: { x: 520, y: 165 }
+};
+const INLABEL = { 1: 'x₁=1', 2: 'x₂=0', 3: 'x₃=1' };
+// קשתות: [from, to, weightLabel]
+const EDGES = [
+  [1, 4, '0.2'], [2, 4, '0.4'], [3, 4, '−0.5'],
+  [1, 5, '−0.3'], [2, 5, '0.1'], [3, 5, '0.2'],
+  [4, 6, '−0.3'], [5, 6, '−0.2']
+];
+const BIAS = { 4: '−0.4', 5: '0.2', 6: '0.1' };
+
+// ---------- רצף הצעדים ----------
+function makeSteps() {
+  return [
+    { kind: 'fwd', node: 4, tmpl: 'I₄ = w₁₄·x₁ + w₂₄·x₂ + w₃₄·x₃ + θ₄', hint: '0.2·1 + 0.4·0 + (−0.5)·1 + (−0.4)', ans: -0.7, tol: 0.02, O: 0.332, edges: ['1-4', '2-4', '3-4'] },
+    { kind: 'fwd', node: 5, tmpl: 'I₅ = w₁₅·x₁ + w₂₅·x₂ + w₃₅·x₃ + θ₅', hint: '(−0.3)·1 + 0.1·0 + 0.2·1 + 0.2', ans: 0.1, tol: 0.02, O: 0.525, edges: ['1-5', '2-5', '3-5'] },
+    { kind: 'fwd', node: 6, tmpl: 'I₆ = w₄₆·O₄ + w₅₆·O₅ + θ₆', hint: '(−0.3)·0.332 + (−0.2)·0.525 + 0.1', ans: -0.105, tol: 0.02, O: 0.474, edges: ['4-6', '5-6'] },
+    { kind: 'delta', node: 6, tmpl: 'Err₆ = O₆·(1−O₆)·(T−O₆)', hint: '0.474·(1−0.474)·(1−0.474)', ans: 0.1311, tol: 0.0020, edges: ['4-6', '5-6'] },
+    { kind: 'delta', node: 4, tmpl: 'Err₄ = O₄·(1−O₄)·Err₆·w₄₆', hint: '0.332·0.668·0.1311·(−0.3)', ans: -0.0087, tol: 0.0012, edges: ['4-6'] },
+    { kind: 'delta', node: 5, tmpl: 'Err₅ = O₅·(1−O₅)·Err₆·w₅₆', hint: '0.525·0.475·0.1311·(−0.2)', ans: -0.0065, tol: 0.0012, edges: ['5-6'] },
+    { kind: 'upd', tmpl: 'w₄₆(חדש) = w₄₆ + LR·Err₆·O₄', hint: '−0.3 + 0.9·0.1311·0.332', ans: -0.261, tol: 0.003, edges: ['4-6'] },
+    { kind: 'upd', tmpl: 'w₁₄(חדש) = w₁₄ + LR·Err₄·x₁', hint: '0.2 + 0.9·(−0.0087)·1', ans: 0.192, tol: 0.003, edges: ['1-4'] },
+    { kind: 'upd', tmpl: 'θ₆(חדש) = θ₆ + LR·Err₆', hint: '0.1 + 0.9·0.1311', ans: 0.218, tol: 0.003, edges: [] }
+  ];
+}
+
+let STEPS = makeSteps();
 let cur = 0, misses = 0;
-const rows = [];
+const nodeEls = {}, edgeEls = {}, ovalEls = {};
 
-STEPS.forEach((st, i) => {
-  const input = el('input', { class: 'gx-num-in', type: 'text', inputmode: 'decimal', placeholder: '?', disabled: i !== 0 ? '' : null });
-  if (i !== 0) input.disabled = true;
-  const check = el('button', { class: 'gx-btn', text: 'בדוק', disabled: i !== 0 ? '' : null, onclick: () => doCheck(i) });
-  if (i !== 0) check.disabled = true;
-  const hint = el('button', { class: 'gx-btn gx-btn-ghost', text: '💡 רמז', onclick: () => toast('רמז: <span style="direction:ltr;unicode-bidi:isolate;display:inline-block">' + st.hint + '</span>', 'info') });
-  input.addEventListener('keydown', e => { if (e.key === 'Enter' && !input.disabled) doCheck(i); });
-  const row = el('div', {
-    style: { display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap', padding: '10px 0', borderBottom: '1px solid var(--line)', opacity: i === 0 ? '1' : '.5' }
-  }, [
-    el('span', { html: '<b>' + (i + 1) + '.</b> ' + st.label, style: { flex: '1', minWidth: '220px', direction: 'ltr', unicodeBidi: 'isolate' } }),
-    input, check, hint
-  ]);
-  rows.push({ row, input, check, hint });
-  box.appendChild(row);
-});
+// ---------- ציור הרשת ----------
+function drawNet() {
+  const root = document.getElementById('net');
+  root.innerHTML = '';
+  // קשתות + תוויות משקל
+  for (const [u, v, wl] of EDGES) {
+    const a = POS[u], b = POS[v];
+    const line = svg('line', { x1: a.x, y1: a.y, x2: b.x, y2: b.y, class: 'nn-edge' });
+    edgeEls[u + '-' + v] = line;
+    root.appendChild(line);
+    const f = 0.34; // קרוב למקור כדי שתוויות הקשתות החוצות לא יתנגשו
+    const mx = a.x + (b.x - a.x) * f, my = a.y + (b.y - a.y) * f - 5;
+    root.appendChild(svg('text', { x: mx, y: my, 'text-anchor': 'middle', class: 'gx-elabel' }, wl));
+  }
+  // צמתים
+  for (const id in POS) {
+    const p = POS[id];
+    const isIn = id <= 3;
+    const c = svg('circle', { cx: p.x, cy: p.y, r: isIn ? 24 : 26, class: 'nn-node ' + (isIn ? 'nn-in' : 'pending') });
+    nodeEls[id] = c;
+    root.appendChild(c);
+    root.appendChild(svg('text', { x: p.x, y: p.y + (isIn ? -1 : -2), 'text-anchor': 'middle', 'font-size': isIn ? 12 : 15, fill: isIn ? '#27408b' : '#5b6478' }, isIn ? INLABEL[id] : id));
+    if (!isIn) {
+      // הטיה
+      root.appendChild(svg('text', { x: p.x, y: p.y - 34, 'text-anchor': 'middle', class: 'gx-elabel' }, 'θ=' + BIAS[id]));
+      // תווית פלט (תתעדכן)
+      const ov = svg('text', { x: p.x, y: p.y + 14, 'text-anchor': 'middle', 'font-size': 11, fill: '#1b7f5a' }, '');
+      ovalEls[id] = ov;
+      root.appendChild(ov);
+    }
+  }
+  // כותרות שכבה
+  root.appendChild(svg('text', { x: 70, y: 318, 'text-anchor': 'middle', 'font-size': 12, fill: '#5b6478', 'font-family': 'Segoe UI,Arial' }, 'קלט'));
+  root.appendChild(svg('text', { x: 300, y: 300, 'text-anchor': 'middle', 'font-size': 12, fill: '#5b6478', 'font-family': 'Segoe UI,Arial' }, 'שכבה נסתרת'));
+  root.appendChild(svg('text', { x: 520, y: 215, 'text-anchor': 'middle', 'font-size': 12, fill: '#5b6478', 'font-family': 'Segoe UI,Arial' }, 'פלט'));
+}
 
-function doCheck(i) {
-  if (i !== cur) return;
-  const { input } = rows[i];
-  const val = parseFloat(String(input.value).replace(',', '.'));
-  if (isNaN(val)) { toast('הקלד מספר', 'info'); return; }
-  if (Math.abs(val - STEPS[i].ans) <= STEPS[i].tol) {
-    input.classList.remove('bad'); input.classList.add('ok'); input.disabled = true; rows[i].check.disabled = true;
-    score.add(12); toast('✓ נכון!', 'good');
-    cur++;
-    if (cur >= STEPS.length) return finish();
-    const nx = rows[cur]; nx.row.style.opacity = '1'; nx.input.disabled = false; nx.check.disabled = false; nx.input.focus();
-  } else {
-    misses++; score.miss(); input.classList.add('bad'); toast('✗ לא מדויק — נסה שוב או לחץ רמז', 'bad');
+function setNodeClass(id, cls) {
+  const isIn = id <= 3;
+  nodeEls[id].setAttribute('class', 'nn-node ' + (isIn ? 'nn-in ' : '') + cls);
+}
+function clearHot() {
+  for (const k in edgeEls) edgeEls[k].setAttribute('class', 'nn-edge');
+}
+function highlight(step) {
+  clearHot();
+  const back = step.kind !== 'fwd';
+  (step.edges || []).forEach(k => edgeEls[k] && edgeEls[k].setAttribute('class', 'nn-edge ' + (back ? 'back' : 'hot')));
+  if (step.node) setNodeClass(step.node, 'active');
+}
+
+// ---------- פאנל החישוב ----------
+function renderStep() {
+  const step = STEPS[cur];
+  highlight(step);
+  const calc = document.getElementById('calc');
+  calc.innerHTML = '';
+  const phase = step.kind === 'fwd' ? 'מעבר קדימה' : step.kind === 'delta' ? 'Backprop — שגיאות' : 'Backprop — עדכון משקל';
+  calc.append(
+    el('div', { class: 'lead', text: '🔹 צעד ' + (cur + 1) + '/' + STEPS.length + ' · ' + phase }),
+    el('div', { class: 'expr', html: step.tmpl })
+  );
+  const input = el('input', { class: 'gx-num-in', type: 'text', inputmode: 'decimal', placeholder: '?' });
+  input.addEventListener('keydown', e => { if (e.key === 'Enter') check(); });
+  const checkBtn = el('button', { class: 'gx-btn gx-btn-primary', text: 'בדוק ✓', onclick: () => check() });
+  const hintBtn = el('button', {
+    class: 'gx-btn gx-btn-ghost', text: '💡 רמז',
+    onclick: () => toast('הצב: <span style="direction:ltr;unicode-bidi:isolate;display:inline-block">' + step.hint + '</span>', 'info')
+  });
+  calc.append(el('div', { class: 'gx-row' }, [input, checkBtn, hintBtn]));
+  input.focus();
+  calc._input = input;
+
+  function check() {
+    const val = parseFloat(String(input.value).replace(',', '.'));
+    if (isNaN(val)) { toast('הקלד מספר', 'info'); return; }
+    if (Math.abs(val - step.ans) <= step.tol) {
+      input.classList.add('ok'); input.disabled = true;
+      score.add(12);
+      if (step.kind === 'fwd') {
+        setNodeClass(step.node, 'done');
+        ovalEls[step.node].textContent = 'O=' + step.O;
+        toast('✓ I' + sub(step.node) + '=' + step.ans + ' → O=σ(' + step.ans + ')=' + step.O, 'good');
+      } else if (step.kind === 'delta') {
+        toast('✓ Err' + sub(step.node) + ' = ' + step.ans, 'good');
+      } else {
+        toast('✓ נכון! ' + step.ans, 'good');
+      }
+      cur++;
+      if (cur >= STEPS.length) return finish();
+      setTimeout(renderStep, 650);
+    } else {
+      misses++; score.miss(); input.classList.add('bad'); shake(calc);
+      toast('✗ לא מדויק — נסה שוב או לחץ 💡', 'bad');
+    }
   }
 }
+function sub(n) { return { 4: '₄', 5: '₅', 6: '₆' }[n] || n; }
+
 function finish() {
+  clearHot();
   const stars = misses === 0 ? 3 : misses <= 3 ? 2 : 1;
-  winModal({ title: 'אימנת את הרשת! 🧠', stars, gameId: 'neuron',
-    html: '<p>השלמת Forward + Backprop. הפלט היה <code>0.6551</code> ו-<code>v₁</code> עודכן ל-<code>0.2146</code>.</p><p>ניקוד: <b>' + score.score + '</b></p>' });
+  document.getElementById('calc').innerHTML = '<div class="lead">🎉 סיימת מחזור אימון מלא!</div>';
+  winModal({
+    title: 'אימנת את הרשת! 🧠', stars, gameId: 'neuron',
+    html: '<p>הפלט היה <code>O₆=0.474</code> (מטרה 1). העדכונים: <code>w₄₆=−0.261</code>, <code>w₁₄=0.192</code>, <code>θ₆=0.218</code>.</p>' +
+          '<p style="font-size:14px;color:#5b6478">שאר המשקולות: w₅₆=−0.138, w₃₄=−0.508, w₃₅=0.194, w₁₅=−0.306 · w₂₄,w₂₅ ללא שינוי (x₂=0).</p>' +
+          '<p>ניקוד: <b>' + score.score + '</b></p>'
+  });
 }
 
-// ---------- סנדבוקס ----------
-const H1 = 0.6225, H2 = 0.5744;
-function updateSandbox() {
-  const v1 = +document.getElementById('sv1').value, v2 = +document.getElementById('sv2').value;
-  document.getElementById('lv1').textContent = v1.toFixed(2);
-  document.getElementById('lv2').textContent = v2.toFixed(2);
-  document.getElementById('oout').textContent = sig(v1 * H1 + v2 * H2).toFixed(4);
-}
-document.getElementById('sv1').addEventListener('input', updateSandbox);
-document.getElementById('sv2').addEventListener('input', updateSandbox);
-updateSandbox();
+function restart() { STEPS = makeSteps(); cur = 0; misses = 0; score.reset(); drawNet(); renderStep(); }
+document.getElementById('restart').addEventListener('click', restart);
+drawNet(); renderStep();
 </script>
 </body>
 </html>

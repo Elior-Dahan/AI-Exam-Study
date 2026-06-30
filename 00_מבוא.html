@@ -110,6 +110,32 @@
     </tbody>
   </table>
 
+  <!-- ===================== סוכנים ו-PEAS ===================== -->
+  <h2>🤖 סוגי סוכנים ו-PEAS</h2>
+  <div class="box def"><p class="box-title"><span class="ico">📘</span> PEAS — איך מגדירים בעיית סוכן</p>
+    <p style="margin:0 0 6px">לפני שמתכננים סוכן, מאפיינים אותו ב-4 רכיבים:</p>
+    <ul class="clean" style="margin:0">
+      <li><strong>P — Performance</strong> (מדד הצלחה): מה נחשב "טוב"? (ניקיון, זמן, בטיחות…).</li>
+      <li><strong>E — Environment</strong> (סביבה): היכן הסוכן פועל.</li>
+      <li><strong>A — Actuators</strong> (אפקטורים): כיצד הוא פועל על הסביבה.</li>
+      <li><strong>S — Sensors</strong> (חיישנים): כיצד הוא תופס את הסביבה.</li>
+    </ul>
+  </div>
+  <div class="box example"><p class="box-title"><span class="ico">🧹</span> דוגמה: עולם השואב (Vacuum World)</p>
+    <p style="margin:0">שתי משבצות A ו-B. <strong>תפיסה</strong>: <span style="direction:ltr;unicode-bidi:isolate;display:inline-block"><code>[location, status]</code></span> למשל <span style="direction:ltr;unicode-bidi:isolate;display:inline-block"><code>[A, Dirty]</code></span>. <strong>פעולות</strong>: <span style="direction:ltr;unicode-bidi:isolate;display:inline-block"><code>Left, Right, Suck, NoOp</code></span>. סוכן רפלקס פשוט: אם המשבצת מלוכלכת → Suck, אחרת → עבור למשבצת השנייה.</p>
+  </div>
+  <table>
+    <caption>ארבעה סוגי סוכנים (מהפשוט למתוחכם)</caption>
+    <thead><tr><th>סוג</th><th>על מה מתבסס</th><th>מתי מתאים</th></tr></thead>
+    <tbody>
+      <tr><td>רפלקס פשוט<br>(Simple Reflex)</td><td>חוקי "תנאי→פעולה" על התפיסה הנוכחית בלבד</td><td>סביבה נצפית במלואה; ללא צורך בזיכרון</td></tr>
+      <tr><td>רפלקס עם מצב<br>(Model-based)</td><td>מתחזק מצב פנימי של העולם (זיכרון) + מודל איך הוא משתנה</td><td>סביבה נצפית חלקית</td></tr>
+      <tr><td>מבוסס-מטרה<br>(Goal-based)</td><td>שוקל אילו פעולות יקרבו ל<strong>מטרה</strong> (חיפוש/תכנון)</td><td>כשצריך לתכנן קדימה</td></tr>
+      <tr><td>מבוסס-תועלת<br>(Utility-based)</td><td>ממקסם פונקציית <strong>תועלת</strong> — "כמה טוב" מצב, לא רק אם הושגה מטרה</td><td>כשיש פשרות בין מטרות או אי-ודאות</td></tr>
+    </tbody>
+  </table>
+  <div class="box tip"><p class="box-title"><span class="ico">🎯</span> במבחן</p><p style="margin:0">"סוכן רציונלי" = בוחר פעולה שממקסמת את <strong>תוחלת מדד ההצלחה</strong>. ככל שעולים בסולם (רפלקס→תועלת) — הסוכן מתמודד עם סביבות מורכבות יותר (נצפות חלקית, אי-ודאות).</p></div>
+
   <!-- ===================== Occam ===================== -->
   <h2>5. תער אוקאם (Occam's Razor)</h2>
   <div class="box def">

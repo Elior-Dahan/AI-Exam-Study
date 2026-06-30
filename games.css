@@ -113,7 +113,78 @@
 .gx-tag{display:inline-block;background:var(--accent-soft);color:var(--accent);border-radius:999px;
   padding:1px 9px;font-size:12px;font-weight:700;margin-bottom:4px}
 
+/* ============================================================
+   רכיבים ויזואליים חדשים (רשת נוירונים · סולם הכללה · עץ החלטה)
+   ============================================================ */
+
+/* ---------- רשת נוירונים אינטראקטיבית ---------- */
+.gx-nn{max-width:660px;margin:0 auto;display:block}
+.gx-nn .nn-edge{stroke:#c2c9da;stroke-width:2;transition:stroke .25s,stroke-width .25s}
+.gx-nn .nn-edge.hot{stroke:var(--accent);stroke-width:3.5}
+.gx-nn .nn-edge.back{stroke:var(--warn);stroke-width:3.5;stroke-dasharray:5 4}
+.gx-nn .nn-node{stroke-width:2.5;transition:fill .3s,stroke .3s}
+.gx-nn .nn-node.pending{fill:#fff;stroke:#9aa6c0}
+.gx-nn .nn-node.active{fill:var(--accent-soft);stroke:var(--accent);stroke-width:4}
+.gx-nn .nn-node.done{fill:var(--ok-soft);stroke:var(--ok)}
+.gx-nn .nn-in{fill:#eef2ff;stroke:#27408b}
+.gx-nn text{font-family:Consolas,monospace;font-weight:700}
+.gx-elabel{font-family:Consolas,monospace;font-size:12px;fill:#5b6478}
+.gx-elabel.pos{fill:#1b7f5a}.gx-elabel.neg{fill:#b23b3b}
+
+/* פאנל החישוב של הצעד הנוכחי */
+.gx-calc{max-width:580px;margin:14px auto;background:var(--primary-soft);border:1px solid #d6deff;
+  border-radius:14px;padding:16px 18px;text-align:center}
+.gx-calc .lead{font-size:16px;font-weight:700;color:var(--primary);margin-bottom:6px}
+.gx-calc .expr{font-family:Consolas,monospace;font-size:15px;color:#1f2533;direction:ltr;margin:6px 0}
+.gx-calc .gx-row{margin-top:8px}
+
+/* ---------- סולם הכללה (Version Space) ---------- */
+.gx-ladder{position:relative;max-width:580px;margin:6px auto;padding:6px 0}
+.gx-ladder-row{display:flex;align-items:center;gap:8px;min-height:44px;justify-content:center;
+  flex-wrap:wrap;position:relative;z-index:1}
+.gx-ladder-tag{font-weight:800;font-size:12.5px;min-width:120px;text-align:center;color:var(--muted)}
+.gx-vs-band{position:absolute;left:6px;right:6px;border-radius:14px;
+  background:repeating-linear-gradient(45deg,#fff7e0aa,#fff7e0aa 9px,#fbeec199 9px,#fbeec199 18px);
+  border:1px dashed #d9c27a;transition:top .5s ease,height .5s ease;z-index:0}
+.gx-hyp{font-family:Consolas,monospace;font-weight:700;border-radius:10px;padding:5px 11px;
+  font-size:14px;direction:ltr;display:inline-block;transition:transform .3s;border:2px solid;background:#fff}
+.gx-hyp.s{background:#fdecec;border-color:#b23b3b;color:#b23b3b}
+.gx-hyp.g{background:#e8f7ef;border-color:#1b7f5a;color:#1b7f5a}
+.gx-hyp.goal{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+
+/* כרטיס דוגמה ל-Version Space */
+.gx-ex-card{display:inline-flex;flex-direction:column;gap:3px;align-items:center;background:#fff;
+  border:2px solid var(--line);border-radius:14px;padding:10px 18px;box-shadow:var(--shadow);direction:ltr}
+.gx-ex-card.pos{border-color:var(--ok)}
+.gx-ex-card.neg{border-color:var(--warn)}
+.gx-ex-card b{font-family:Consolas,monospace;font-size:15px}
+.gx-ex-badge{font-size:22px;font-weight:800;line-height:1}
+.gx-ex-card.pos .gx-ex-badge{color:var(--ok)}
+.gx-ex-card.neg .gx-ex-badge{color:var(--warn)}
+
+/* ---------- עץ החלטה גדל ---------- */
+.gx-tree{max-width:660px;margin:0 auto;display:block}
+.gx-tree .t-edge{stroke:#9aa6c0;stroke-width:2}
+.gx-tree .t-node{transition:opacity .4s}
+.gx-tree text{font-family:Segoe UI,Arial;font-weight:700}
+.gx-tree .t-leaf-yes{fill:var(--ok-soft);stroke:var(--ok);stroke-width:2}
+.gx-tree .t-leaf-no{fill:var(--warn-soft);stroke:var(--warn);stroke-width:2}
+.gx-tree .t-attr{fill:#eef2ff;stroke:#27408b;stroke-width:2.5}
+.gx-tree .t-pending{fill:#f4f6fb;stroke:#c2c9da;stroke-width:2;stroke-dasharray:4 3}
+.gx-tree .t-branch{fill:#5b6478;font-family:Segoe UI,Arial;font-weight:600;font-size:12.5px}
+
+/* עמודות Information Gain */
+.gx-ig-bar{display:flex;align-items:center;gap:8px;margin:5px 0;max-width:440px}
+.gx-ig-bar .name{min-width:104px;font-weight:600;font-size:14px;text-align:left;direction:ltr}
+.gx-ig-bar .track{flex:1;background:#eef2ff;border-radius:6px;height:16px;overflow:hidden}
+.gx-ig-bar .fill{height:100%;background:var(--primary-2);transition:width .5s}
+.gx-ig-bar.win .name{color:var(--ok);font-weight:800}
+.gx-ig-bar.win .fill{background:var(--ok)}
+.gx-ig-bar .val{min-width:78px;font-size:13px;font-weight:700;direction:ltr}
+
 @media(max-width:560px){
   .gx-num{font-size:20px}
   .gx-matrix td,.gx-matrix th{padding:10px 12px;font-size:15px}
+  .gx-ladder-tag{min-width:90px}
+  .gx-hyp{font-size:12.5px;padding:4px 8px}
 }

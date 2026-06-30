@@ -14,6 +14,7 @@
   <a href="#search">חיפוש</a><span class="sep">·</span>
   <a href="#adv">יריבי</a><span class="sep">·</span>
   <a href="#game">משחקים</a><span class="sep">·</span>
+  <a href="#vs">מושג</a><span class="sep">·</span>
   <a href="#dt">עצי החלטה</a><span class="sep">·</span>
   <a href="#nn">נוירונים</a><span class="sep">·</span>
   <a href="#ga">גנטי</a>
@@ -151,12 +152,26 @@
     </dl>
   </div>
 
+  <!-- ================= למידת מושג ================= -->
+  <h2 id="vs">🃏 למידת מושג (Version Space)</h2>
+
+  <div class="box formula">
+    <p class="box-title"><span class="ico">📐</span> Candidate-Elimination — שני הגבולות</p>
+    <div class="math-block">חיובי + → הרחב S (מינימלית) + זרוק מ-G מי שלא מכסה<br>שלילי − → צמצם G (מינימלית, בכל תכונה) + זרוק מ-S מי שמכסה</div>
+    <dl class="kv">
+      <dt>מתי</dt><dd>"חשב את S ו-G" / "מהו המושג הנלמד". S מתחיל <span class="math">∅</span>, G מתחיל <span style="direction:ltr;unicode-bidi:isolate;display:inline-block">[?,…]</span>.</dd>
+      <dt>הצבה</dt><dd>עבור דוגמה-דוגמה לפי הסדר; נקה מ-G השערות מיותרות (ספציפיות מאחרות); עצור כש-<span class="math">S=G</span>.</dd>
+      <dt>דוגמה</dt><dd>מסעדות → <span style="direction:ltr;unicode-bidi:isolate;display:inline-block">[Eden, ?, ?, cheap]</span> ("ארוחה זולה ב-Eden").</dd>
+      <dt>זכירה</dt><dd><strong>חיובי מרחיב S, שלילי מצמצם G</strong> (ההיפוך = הטעות הנפוצה).</dd>
+    </dl>
+  </div>
+
   <!-- ================= נוירונים ================= -->
   <h2 id="nn">🧠 רשתות נוירונים</h2>
 
   <div class="box formula">
     <p class="box-title"><span class="ico">📐</span> מעבר קדימה (Forward) + סיגמואיד</p>
-    <div class="math-block">net_j = Σ_i w_ij · x_i (+ bias) &nbsp;&nbsp;|&nbsp;&nbsp; o_j = σ(net_j) = 1 / (1 + e^{−net_j})</div>
+    <div class="math-block">I_j = Σ_i w_ij · o_i + θ_j (הטיה) &nbsp;&nbsp;|&nbsp;&nbsp; o_j = σ(I_j) = 1 / (1 + e^{−I_j})</div>
     <dl class="kv">
       <dt>מתי</dt><dd>חישוב פלט של נוירון/רשת בהינתן קלט ומשקולות.</dd>
       <dt>הצבה</dt><dd>סכום משוקלל של הקלטים, ואז מעבירים דרך הסיגמואיד.</dd>
@@ -167,12 +182,12 @@
 
   <div class="box formula">
     <p class="box-title"><span class="ico">📐</span> Backpropagation — דלתא ועדכון משקל</p>
-    <div class="math-block">פלט: δ_k = (t_k − o_k) · o_k · (1 − o_k)<br>נסתר: δ_j = o_j · (1 − o_j) · Σ_k (δ_k · w_jk)<br>עדכון: w_ij ← w_ij + η · δ_j · x_i</div>
+    <div class="math-block">פלט: Err_k = o_k·(1 − o_k)·(t_k − o_k)<br>נסתר: Err_j = o_j·(1 − o_j)·Σ_k (Err_k · w_jk)<br>עדכון: w_ij ← w_ij + LR·Err_j·o_i &nbsp;·&nbsp; θ_j ← θ_j + LR·Err_j</div>
     <dl class="kv">
-      <dt>מתי</dt><dd>בשאלת "עדכן את המשקולות" (במבחנים <span class="math">η=0.3</span>).</dd>
-      <dt>הצבה</dt><dd>(1) forward לחישוב כל ה-<span class="math">o</span>. (2) δ בשכבת הפלט. (3) δ בשכבה הנסתרת. (4) עדכן כל משקל.</dd>
-      <dt>דוגמה</dt><dd><span class="math">t=1, o=0.7 ⟹ δ=(1−0.7)(0.7)(0.3)=0.063</span>.</dd>
-      <dt>זכירה</dt><dd>נגזרת הסיגמואיד: <span class="math">σ' = o(1−o)</span> — תמיד מופיעה ב-δ.</dd>
+      <dt>מתי</dt><dd>בשאלת "עדכן את המשקולות". בדוגמת המרצה <span class="math">LR=0.9</span> והרשת כוללת <strong>הטיות</strong> <span class="math">θ</span>.</dd>
+      <dt>הצבה</dt><dd>(1) forward לחישוב כל ה-<span class="math">o</span>. (2) Err בשכבת הפלט. (3) Err בשכבה הנסתרת (עם המשקולות ה<strong>ישנים</strong>). (4) עדכן כל משקל והטיה.</dd>
+      <dt>דוגמה</dt><dd><span class="math">t=1, o=0.474 ⟹ Err=0.474·0.526·0.526=0.1311</span>.</dd>
+      <dt>זכירה</dt><dd>נגזרת הסיגמואיד: <span class="math">σ' = o(1−o)</span> — תמיד מופיעה ב-Err. קלט 0 → המשקל לא משתנה (אבל ההטיה כן).</dd>
     </dl>
   </div>
 

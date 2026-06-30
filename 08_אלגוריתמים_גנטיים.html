@@ -112,6 +112,26 @@
     <p style="margin:6px 0 0"><strong>פתרון:</strong> אופרטורים ייעודיים כמו <strong>Order Crossover (OX)</strong> או <strong>PMX</strong> — לוקחים קטע מהורה אחד וממלאים את השאר לפי סדר ההופעה בהורה השני, תוך שמירה על תמורה חוקית.</p>
   </div>
 
+  <h3>Order Crossover (OX) — איך זה עובד</h3>
+  <ol class="steps">
+    <li><span class="st">בחר קטע</span> מההורה הראשון (בין שתי נקודות) והעתק אותו כמו-שהוא לאותם מקומות בצאצא.</li>
+    <li><span class="st">מלא את השאר</span> לפי <strong>סדר ההופעה בהורה השני</strong>, מדלגים על ערים שכבר נמצאות בצאצא.</li>
+    <li><span class="st">התוצאה</span> — תמיד תמורה חוקית (כל עיר בדיוק פעם אחת).</li>
+  </ol>
+  <div class="box example"><p class="box-title"><span class="ico">🧩</span> מוטציית החלפה (Swap) לתמורות</p><p style="margin:0">בתמורות לא הופכים ביט (זה יקלקל את החוקיות) אלא בוחרים שני מקומות ו<strong>מחליפים</strong> ביניהם: <span style="direction:ltr;unicode-bidi:isolate;display:inline-block"><code>1 2 5 7 3 4 6 8 → 1 2 6 7 3 4 5 8</code></span> (החלפת 5↔6). כך המסלול נשאר חוקי.</p></div>
+
+  <!-- ============ Grid-World ============ -->
+  <h2>🤖 דוגמה: רובוט ב-Grid-World (מהשקפים)</h2>
+  <p>רובוט מחפש מסלול מ-Start ל-Finish בלוח <span class="math">4×4</span>. כל <strong>מהלך</strong> מקודד ב-2 ביטים: <span style="direction:ltr;unicode-bidi:isolate;display:inline-block"><code>N=00 · E=10 · S=11 · W=01</code></span>. כרומוזום של 8 מהלכים = <strong>16 ביט</strong>.</p>
+  <div class="box def"><p class="box-title"><span class="ico">📘</span> הייצוג והכושר</p>
+    <ul class="clean" style="margin:0">
+      <li><strong>כרומוזום:</strong> רצף 16 ביטים = מסלול של עד 8 צעדים (למשל <span style="direction:ltr;unicode-bidi:isolate;display:inline-block"><code>00 01 10 01 11 00 00 10</code></span>).</li>
+      <li><strong>Fitness <span class="math">F(p)</span>:</strong> מתגמל קרבה/הגעה ל-Finish ומעניש מסלול ארוך (במצגת מודדים לפי מספר הצעדים ליעד). מהלך אל מחוץ ללוח — נחשב כעמידה במקום.</li>
+      <li>בכל דור: בחירה, הכלאה ומוטציה על מחרוזות ה-16-ביט, ושמירת המסלולים בעלי ה-fitness הטוב ביותר.</li>
+    </ul>
+  </div>
+  <div class="box tip"><p class="box-title"><span class="ico">🎯</span> תבנית לשאלת "הצע ייצוג + fitness"</p><p style="margin:0">זהה את <strong>הפעולות האפשריות</strong> (כאן 4 כיוונים → 2 ביט), קבע <strong>אורך כרומוזום</strong> (מספר צעדים מקסימלי), ובנה <strong>fitness</strong> שמתגמל את המטרה ומעניש הפרות. אותה תבנית עובדת ל-TSP, לשיבוץ משאבים (resource allocation), ועוד.</p></div>
+
   <!-- ============ מושגים ============ -->
   <h2>5. נקודות מושגיות חשובות</h2>
   <ul class="clean">

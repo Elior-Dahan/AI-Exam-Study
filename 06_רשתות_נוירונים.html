@@ -22,115 +22,117 @@
   <div class="page-head">
     <p class="eyebrow">שיעור 9 · נושא 06</p>
     <h1>רשתות נוירונים</h1>
-    <span class="ref">AIMA 18.7 · פרספטרון · סיגמואיד · Forward Pass · Backpropagation · η=0.3</span>
+    <span class="ref">AIMA 18.7 · פרספטרון · סיגמואיד · Forward Pass · Backpropagation · LR=0.9</span>
   </div>
 
   <div class="card">
-    <p>השאלה במבחן (2019, 2023) תמיד באותו פורמט: נתונה רשת קטנה עם משקולות, קלט ומטרה. צריך (1) לחשב את הפלט במעבר קדימה (Forward), ואז (2) לעדכן את המשקולות לפי Backpropagation עם קצב למידה <span class="math">η=0.3</span>. נעבור על דוגמה מספרית מלאה.</p>
+    <p>שאלת הרשת במבחן תמיד באותו פורמט: נתונה רשת קטנה עם משקולות, <strong>הטיות (bias)</strong>, קלט ומטרה. צריך (1) לחשב את הפלט במעבר קדימה (Forward), ואז (2) לעדכן את המשקולות לפי Backpropagation עם קצב למידה <span class="math">LR</span>. נעבור על <strong>הדוגמה הקנונית של AIMA</strong> (רשת 3→2→1) מתחילתה ועד סופה — בדיוק כפי שמופיעה בשקפים.</p>
   </div>
 
   <!-- ============ נוירון ============ -->
   <h2>1. מודל הנוירון</h2>
   <div class="kv">
-    <dt>קלט נטו</dt><dd><span class="math">net = Σ wᵢ·xᵢ</span> (+ הטיה bias אם יש) — סכום משוקלל של הקלטים.</dd>
-    <dt>פונקציית הפעלה</dt><dd>סיגמואיד: <span class="math">σ(net) = 1 / (1 + e<sup>−net</sup>)</span> — מועכת לטווח (0,1).</dd>
-    <dt>נגזרת הסיגמואיד</dt><dd><span class="math">σ'(net) = σ(net)·(1 − σ(net)) = o·(1−o)</span> — קריטית ל-Backprop.</dd>
+    <dt>קלט נטו</dt><dd><span class="math">I_j = Σ wᵢⱼ·Oᵢ + θⱼ</span> — סכום משוקלל של הקלטים <strong>פלוס ההטיה</strong> <span class="math">θⱼ</span> של הנוירון.</dd>
+    <dt>פונקציית הפעלה</dt><dd>סיגמואיד: <span class="math">O_j = σ(I_j) = 1 / (1 + e<sup>−I_j</sup>)</span> — מועכת לטווח (0,1).</dd>
+    <dt>נגזרת הסיגמואיד</dt><dd><span class="math">σ'(I) = O·(1 − O)</span> — קריטית ל-Backprop.</dd>
   </div>
-  <div class="box formula"><p class="box-title"><span class="ico">📐</span> ערכי סיגמואיד שימושיים</p><p style="margin:0"><span class="math">σ(0)=0.5</span> · <span class="math">σ(0.5)≈0.6225</span> · <span class="math">σ(0.3)≈0.5744</span> · <span class="math">σ(1)≈0.731</span> · <span class="math">σ(2)≈0.881</span>. (במחשבון: חשב <span class="math">e<sup>−net</sup></span> ואז <span class="math">1/(1+...)</span>).</p></div>
+  <div class="box formula"><p class="box-title"><span class="ico">📐</span> ערכי סיגמואיד שימושיים</p><p style="margin:0"><span class="math">σ(0)=0.5</span> · <span class="math">σ(−0.7)≈0.332</span> · <span class="math">σ(0.1)≈0.525</span> · <span class="math">σ(−0.105)≈0.474</span> · <span class="math">σ(1)≈0.731</span>. (במחשבון: חשב <span class="math">e<sup>−I</sup></span> ואז <span class="math">1/(1+...)</span>).</p></div>
 
   <!-- ============ הרשת לדוגמה ============ -->
-  <h2>2. הרשת שנעבוד עליה</h2>
-  <p>רשת 2-2-1: שני קלטים, שני נוירונים נסתרים, פלט אחד. קלט <span class="math">x₁=1, x₂=0</span>, מטרה <span class="math">t=1</span>, <span class="math">η=0.3</span>, סיגמואיד.</p>
+  <h2>2. הרשת שנעבוד עליה (3→2→1)</h2>
+  <p>שלושה קלטים (צמתים 1,2,3), שתי יחידות נסתרות (4,5), ויחידת פלט (6). קלט <span class="math">x₁=1, x₂=0, x₃=1</span>, מטרה <span class="math">T=1</span>, <span class="math">LR=0.9</span>, סיגמואיד.</p>
   <div class="fig">
-    <svg viewBox="0 0 520 250" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="רשת נוירונים 2-2-1">
-      <!-- edges with weight labels -->
+    <svg viewBox="0 0 560 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="רשת נוירונים 3-2-1">
+      <!-- edges -->
       <g stroke="#9aa6c0" stroke-width="2" fill="none">
-        <line x1="80" y1="70" x2="240" y2="70"/><line x1="80" y1="70" x2="240" y2="175"/>
-        <line x1="80" y1="175" x2="240" y2="70"/><line x1="80" y1="175" x2="240" y2="175"/>
-        <line x1="280" y1="70" x2="430" y2="122"/><line x1="280" y1="175" x2="430" y2="122"/>
+        <line x1="94" y1="55" x2="256" y2="95"/><line x1="94" y1="150" x2="256" y2="95"/><line x1="94" y1="245" x2="256" y2="95"/>
+        <line x1="94" y1="55" x2="256" y2="205"/><line x1="94" y1="150" x2="256" y2="205"/><line x1="94" y1="245" x2="256" y2="205"/>
+        <line x1="304" y1="95" x2="456" y2="150"/><line x1="304" y1="205" x2="456" y2="150"/>
       </g>
-      <g font-family="Consolas,monospace" font-size="12.5" font-weight="700" fill="#27408b">
-        <text x="150" y="58">w₁₁=0.5</text>
-        <text x="120" y="135">w₁₂=0.3</text>
-        <text x="120" y="120">w₂₁=0.1</text>
-        <text x="150" y="200">w₂₂=0.8</text>
-        <text x="350" y="80">v₁=0.2</text>
-        <text x="350" y="170">v₂=0.9</text>
+      <g font-family="Consolas,monospace" font-size="12" font-weight="700" fill="#27408b" text-anchor="middle">
+        <text x="150" y="64">0.2</text><text x="150" y="128">0.4</text><text x="150" y="188">−0.5</text>
+        <text x="150" y="104">−0.3</text><text x="150" y="166">0.1</text><text x="150" y="226">0.2</text>
+        <text x="372" y="112">−0.3</text><text x="372" y="186">−0.2</text>
+      </g>
+      <!-- bias labels -->
+      <g font-family="Consolas,monospace" font-size="11.5" font-weight="700" fill="#b23b3b" text-anchor="middle">
+        <text x="280" y="60">θ₄=−0.4</text><text x="280" y="245">θ₅=0.2</text><text x="480" y="116">θ₆=0.1</text>
       </g>
       <!-- nodes -->
-      <g font-family="Segoe UI,Arial" font-size="15" font-weight="700" text-anchor="middle">
-        <circle cx="60" cy="70" r="22" fill="#fff7e0" stroke="#b8860b" stroke-width="2"/><text x="60" y="76" fill="#b8860b">x₁=1</text>
-        <circle cx="60" cy="175" r="22" fill="#fff7e0" stroke="#b8860b" stroke-width="2"/><text x="60" y="181" fill="#b8860b">x₂=0</text>
-        <circle cx="260" cy="70" r="24" fill="#eef2ff" stroke="#27408b" stroke-width="2"/><text x="260" y="76" fill="#27408b">h₁</text>
-        <circle cx="260" cy="175" r="24" fill="#eef2ff" stroke="#27408b" stroke-width="2"/><text x="260" y="181" fill="#27408b">h₂</text>
-        <circle cx="452" cy="122" r="24" fill="#e8f7ef" stroke="#1b7f5a" stroke-width="2"/><text x="452" y="128" fill="#1b7f5a">o</text>
+      <g font-family="Segoe UI,Arial" font-size="14" font-weight="700" text-anchor="middle">
+        <circle cx="70" cy="55" r="24" fill="#fff7e0" stroke="#b8860b" stroke-width="2"/><text x="70" y="60" fill="#b8860b">x₁=1</text>
+        <circle cx="70" cy="150" r="24" fill="#fff7e0" stroke="#b8860b" stroke-width="2"/><text x="70" y="155" fill="#b8860b">x₂=0</text>
+        <circle cx="70" cy="245" r="24" fill="#fff7e0" stroke="#b8860b" stroke-width="2"/><text x="70" y="250" fill="#b8860b">x₃=1</text>
+        <circle cx="280" cy="95" r="26" fill="#eef2ff" stroke="#27408b" stroke-width="2"/><text x="280" y="100" fill="#27408b">4</text>
+        <circle cx="280" cy="205" r="26" fill="#eef2ff" stroke="#27408b" stroke-width="2"/><text x="280" y="210" fill="#27408b">5</text>
+        <circle cx="480" cy="150" r="26" fill="#e8f7ef" stroke="#1b7f5a" stroke-width="2"/><text x="480" y="155" fill="#1b7f5a">6</text>
       </g>
-      <text x="60" y="225" text-anchor="middle" font-size="13" fill="#5b6478" font-family="Segoe UI,Arial">קלט</text>
-      <text x="260" y="225" text-anchor="middle" font-size="13" fill="#5b6478" font-family="Segoe UI,Arial">שכבה נסתרת</text>
-      <text x="452" y="170" text-anchor="middle" font-size="13" fill="#5b6478" font-family="Segoe UI,Arial">פלט</text>
+      <text x="70" y="290" text-anchor="middle" font-size="12.5" fill="#5b6478" font-family="Segoe UI,Arial">קלט</text>
+      <text x="280" y="290" text-anchor="middle" font-size="12.5" fill="#5b6478" font-family="Segoe UI,Arial">שכבה נסתרת</text>
+      <text x="480" y="195" text-anchor="middle" font-size="12.5" fill="#5b6478" font-family="Segoe UI,Arial">פלט</text>
     </svg>
-    <div class="cap">הרשת: <span class="math">w</span> משקולות קלט→נסתר, <span class="math">v</span> משקולות נסתר→פלט.</div>
+    <div class="cap">הרשת: לכל יחידה נסתרת/פלט יש גם <strong>הטיה</strong> <span class="math">θ</span>. משקל <span class="math">wᵢⱼ</span> = מצומת <span class="math">i</span> לצומת <span class="math">j</span>.</div>
   </div>
 
   <!-- ============ Forward ============ -->
   <h2>3. מעבר קדימה (Forward Pass)</h2>
   <ol class="steps">
-    <li><span class="st">נוירונים נסתרים</span>:<br>
-      <span class="math">net_{h1}=0.5·1+0.1·0=0.5 ⟹ h₁=σ(0.5)=0.6225</span><br>
-      <span class="math">net_{h2}=0.3·1+0.8·0=0.3 ⟹ h₂=σ(0.3)=0.5744</span></li>
-    <li><span class="st">נוירון הפלט</span>:<br>
-      <span class="math">net_o=0.2·0.6225+0.9·0.5744=0.1245+0.5170=0.6415</span><br>
-      <span class="math">o=σ(0.6415)=0.6551</span></li>
+    <li><span class="st">יחידות נסתרות</span> (4, 5):<br>
+      <span class="math">I₄ = 0.2·1 + 0.4·0 + (−0.5)·1 + (−0.4) = −0.7 ⟹ O₄ = σ(−0.7) = 0.332</span><br>
+      <span class="math">I₅ = (−0.3)·1 + 0.1·0 + 0.2·1 + 0.2 = 0.1 ⟹ O₅ = σ(0.1) = 0.525</span></li>
+    <li><span class="st">יחידת הפלט</span> (6):<br>
+      <span class="math">I₆ = (−0.3)·0.332 + (−0.2)·0.525 + 0.1 = −0.105</span><br>
+      <span class="math">O₆ = σ(−0.105) = 0.474</span></li>
   </ol>
-  <p>הפלט של הרשת: <strong><span class="math">o = 0.6551</span></strong> (המטרה היא 1, אז יש שגיאה לתקן).</p>
+  <p>הפלט של הרשת: <strong><span class="math">O₆ = 0.474</span></strong> (המטרה היא 1, אז יש שגיאה לתקן).</p>
 
   <!-- ============ Backprop ============ -->
-  <h2>4. Backpropagation — עדכון משקולות (η=0.3)</h2>
+  <h2>4. Backpropagation — עדכון משקולות (LR=0.9)</h2>
   <div class="box formula"><p class="box-title"><span class="ico">📐</span> הנוסחאות</p>
-    <div class="math-block">δ_o = (t − o)·o·(1−o)<br>δ_h = h·(1−h)·(δ_o·v)<br>משקל ← משקל + η · δ · (קלט לאותו משקל)</div>
+    <div class="math-block">Err (פלט) = O·(1−O)·(T−O)<br>Err (נסתר) = O·(1−O)·Σ(Err<sub>k</sub>·w<sub>jk</sub>)<br>w ← w + LR·Err<sub>j</sub>·O<sub>i</sub> &nbsp;·&nbsp; θ ← θ + LR·Err<sub>j</sub></div>
   </div>
   <ol class="steps">
-    <li><span class="st">דלתא בפלט</span>: <span class="math">δ_o=(1−0.6551)·0.6551·(1−0.6551)=0.3449·0.6551·0.3449=0.0779</span></li>
-    <li><span class="st">עדכון משקולות הפלט</span> (הקלט אליהן הוא <span class="math">h₁,h₂</span>):<br>
-      <span class="math">v₁ ← 0.2+0.3·0.0779·0.6225 = 0.2+0.0146 = 0.2146</span><br>
-      <span class="math">v₂ ← 0.9+0.3·0.0779·0.5744 = 0.9+0.0134 = 0.9134</span></li>
-    <li><span class="st">דלתא בשכבה הנסתרת</span> (משתמשים ב-<span class="math">v</span> הישנים):<br>
-      <span class="math">δ_{h1}=0.6225·0.3775·(0.0779·0.2)=0.2350·0.01558=0.0037</span><br>
-      <span class="math">δ_{h2}=0.5744·0.4256·(0.0779·0.9)=0.2445·0.07011=0.0172</span></li>
-    <li><span class="st">עדכון משקולות הקלט</span> (הקלט אליהן הוא <span class="math">x₁,x₂</span>):<br>
-      <span class="math">w₁₁ ← 0.5+0.3·0.0037·1 = 0.5011</span><br>
-      <span class="math">w₁₂ ← 0.3+0.3·0.0172·1 = 0.3051</span><br>
-      <span class="math">w₂₁ ← 0.1 (ללא שינוי, x₂=0)</span> · <span class="math">w₂₂ ← 0.8 (ללא שינוי)</span></li>
+    <li><span class="st">שגיאה ביחידת הפלט</span>: <span class="math">Err₆ = O₆·(1−O₆)·(T−O₆) = 0.474·0.526·0.526 = 0.1311</span></li>
+    <li><span class="st">שגיאות ביחידות הנסתרות</span> (משתמשים ב-<span class="math">w</span> ה<strong>ישנים</strong>!):<br>
+      <span class="math">Err₄ = O₄·(1−O₄)·Err₆·w₄₆ = 0.332·0.668·0.1311·(−0.3) = −0.0087</span><br>
+      <span class="math">Err₅ = O₅·(1−O₅)·Err₆·w₅₆ = 0.525·0.475·0.1311·(−0.2) = −0.0065</span></li>
+    <li><span class="st">עדכון משקולות הפלט</span> (הקלט אליהן הוא <span class="math">O₄,O₅</span>):<br>
+      <span class="math">w₄₆ ← −0.3 + 0.9·0.1311·0.332 = −0.261</span><br>
+      <span class="math">w₅₆ ← −0.2 + 0.9·0.1311·0.525 = −0.138</span></li>
+    <li><span class="st">עדכון משקולות הקלט</span> (הקלט אליהן הוא <span class="math">x₁,x₂,x₃</span>):<br>
+      <span class="math">w₁₄ ← 0.2 + 0.9·(−0.0087)·1 = 0.192</span> · <span class="math">w₃₄ ← −0.5 + 0.9·(−0.0087)·1 = −0.508</span><br>
+      <span class="math">w₁₅ ← −0.3 + 0.9·(−0.0065)·1 = −0.306</span> · <span class="math">w₃₅ ← 0.2 + 0.9·(−0.0065)·1 = 0.194</span><br>
+      <span class="math">w₂₄ ← 0.4 (ללא שינוי) · w₂₅ ← 0.1 (ללא שינוי)</span> — כי <span class="math">x₂=0</span>.</li>
+    <li><span class="st">עדכון הטיות</span>: <span class="math">θ₆ ← 0.1 + 0.9·0.1311 = 0.218</span> · <span class="math">θ₄ ← −0.408</span> · <span class="math">θ₅ ← 0.194</span></li>
   </ol>
-  <div class="box tip"><p class="box-title"><span class="ico">🎯</span> שימו לב</p><p style="margin:0">משקל שהקלט אליו הוא <strong>0</strong> (כמו <span class="math">w₂₁, w₂₂</span> כש-<span class="math">x₂=0</span>) <strong>לא משתנה</strong>, כי העדכון מוכפל בקלט. זו בדיקת שפיות מצוינת.</p></div>
+  <div class="box tip"><p class="box-title"><span class="ico">🎯</span> שימו לב</p><p style="margin:0">משקל שהקלט אליו הוא <strong>0</strong> (כמו <span class="math">w₂₄, w₂₅</span> כש-<span class="math">x₂=0</span>) <strong>לא משתנה</strong>, כי העדכון מוכפל בקלט. זו בדיקת שפיות מצוינת. (ההטיה, לעומת זאת, תמיד מתעדכנת — כי "הקלט" שלה הוא 1.)</p></div>
 
   <!-- ============ שיטת פתרון ============ -->
   <h2>5. שיטת פתרון — "חשב פלט ועדכן משקולות"</h2>
   <ol class="steps">
-    <li><span class="st">Forward</span> — חשב <span class="math">net</span> ו-<span class="math">o</span> לכל נוירון, שכבה אחר שכבה (מהקלט לפלט).</li>
-    <li><span class="st">δ בפלט</span> — <span class="math">δ_o=(t−o)·o·(1−o)</span>.</li>
-    <li><span class="st">עדכן משקולות הפלט</span> — <span class="math">v ← v+η·δ_o·h</span>.</li>
-    <li><span class="st">δ בנסתר</span> — <span class="math">δ_h=h(1−h)·Σ(δ_o·v)</span> (עם המשקולות הישנים!).</li>
-    <li><span class="st">עדכן משקולות הקלט</span> — <span class="math">w ← w+η·δ_h·x</span>. עגל ל-4 ספרות.</li>
+    <li><span class="st">Forward</span> — חשב <span class="math">I</span> (כולל הטיה) ו-<span class="math">O=σ(I)</span> לכל יחידה, שכבה אחר שכבה (מהקלט לפלט).</li>
+    <li><span class="st">שגיאת הפלט</span> — <span class="math">Err₆ = O₆(1−O₆)(T−O₆)</span>.</li>
+    <li><span class="st">שגיאות נסתרות</span> — <span class="math">Errⱼ = Oⱼ(1−Oⱼ)·Σ(Err<sub>k</sub>·w<sub>jk</sub>)</span> (עם המשקולות ה<strong>ישנים</strong>!).</li>
+    <li><span class="st">עדכן משקולות והטיות</span> — <span class="math">w ← w+LR·Err·O</span>, <span class="math">θ ← θ+LR·Err</span>. עגל ל-3–4 ספרות.</li>
   </ol>
 
   <div class="box mistake">
     <p class="box-title"><span class="ico">⚠️</span> טעויות נפוצות</p>
     <ul class="clean" style="margin:0">
-      <li>להשתמש במשקולות הפלט ה<strong>מעודכנים</strong> בחישוב <span class="math">δ_h</span> — חובה להשתמש בישנים.</li>
-      <li>לשכוח את הגורם <span class="math">o(1−o)</span> (נגזרת הסיגמואיד) ב-δ.</li>
-      <li>להכפיל ב-<span class="math">x</span> הלא נכון — המשקל מתעדכן לפי הקלט ש"נכנס" אליו.</li>
-      <li>לבלבל סימן: כשהמטרה גדולה מהפלט, <span class="math">(t−o)>0</span> והמשקולות גדלים.</li>
-      <li>לא לעגל באופן עקבי (השאלה מבקשת 4 ספרות עשרוניות).</li>
+      <li>לשכוח להוסיף את ה<strong>הטיה</strong> <span class="math">θ</span> בחישוב <span class="math">I</span>.</li>
+      <li>להשתמש במשקולות הפלט ה<strong>מעודכנים</strong> בחישוב <span class="math">Err</span> של השכבה הנסתרת — חובה להשתמש בישנים.</li>
+      <li>לשכוח את הגורם <span class="math">O(1−O)</span> (נגזרת הסיגמואיד) ב-Err.</li>
+      <li>להכפיל ב-<span class="math">O</span>/<span class="math">x</span> הלא נכון — המשקל מתעדכן לפי הקלט ש"נכנס" אליו.</li>
+      <li>לבלבל סימן: כשהמטרה גדולה מהפלט, <span class="math">(T−O)>0</span> והמשקולות גדלים.</li>
     </ul>
   </div>
 
   <div class="box formula">
     <p class="box-title"><span class="ico">📐</span> לסיכום הנושא</p>
     <ul class="clean" style="margin:0">
-      <li>Forward: <span class="math">net=Σwx</span>, <span class="math">o=σ(net)</span>.</li>
-      <li>δ_פלט<span class="math">=(t−o)o(1−o)</span> · δ_נסתר<span class="math">=o(1−o)Σδv</span>.</li>
-      <li>עדכון: <span class="math">Δw=η·δ·input</span>; קלט 0 → אין שינוי.</li>
+      <li>Forward: <span class="math">I=Σwo+θ</span>, <span class="math">O=σ(I)</span>.</li>
+      <li>Err_פלט<span class="math">=O(1−O)(T−O)</span> · Err_נסתר<span class="math">=O(1−O)ΣErr·w</span>.</li>
+      <li>עדכון: <span class="math">Δw=LR·Err·input</span>, <span class="math">Δθ=LR·Err</span>; קלט 0 → אין שינוי במשקל.</li>
     </ul>
   </div>
 
@@ -138,13 +140,12 @@
   <div class="fig diagram">
 <pre class="mermaid">
 flowchart TD
-  Q(["רשת + קלט + מטרה t"]):::start --> F["Forward: net=Σwx, ואז o=σ(net), שכבה אחר שכבה"]:::step
-  F --> DO["דלתא פלט = (t−o)·o·(1−o)"]:::step
-  DO --> UV["עדכן משקולות פלט: v ← v + η·δ·h"]:::step
-  UV --> DH["דלתא נסתר = h·(1−h)·Σ(δ·v ישן)"]:::step
-  DH --> UW["עדכן משקולות קלט: w ← w + η·δ·x"]:::step
-  UW --> A(["משקולות מעודכנות — 4 ספרות"]):::answer
-  DH -.-> W1["טעות: להשתמש ב-v המעודכן במקום הישן"]:::warn
+  Q(["רשת + קלט + מטרה T"]):::start --> F["Forward: I=ΣwO+θ, ואז O=σ(I), שכבה אחר שכבה"]:::step
+  F --> DO["שגיאת פלט = O(1−O)(T−O)"]:::step
+  DO --> DH["שגיאות נסתר = O(1−O)·Σ(Err·w ישן)"]:::step
+  DH --> UW["עדכן משקולות והטיות: w ← w + LR·Err·O ; θ ← θ + LR·Err"]:::step
+  UW --> A(["משקולות מעודכנות — 3–4 ספרות"]):::answer
+  DH -.-> W1["טעות: להשתמש ב-w המעודכן במקום הישן"]:::warn
   UW -.-> W2["בדיקה: קלט 0 → המשקל לא משתנה"]:::warn
   classDef start fill:#27408b,stroke:#1b2a5e,color:#fff;
   classDef step fill:#eef2ff,stroke:#27408b,color:#1f2533;
@@ -153,7 +154,7 @@ flowchart TD
   classDef warn fill:#fdecec,stroke:#b23b3b,color:#b23b3b;
 </pre>
   </div>
-  <div class="box tip"><p class="box-title"><span class="ico">🧭</span> ההיגיון שמאחורי ההסתעפויות</p><p style="margin:0">זו זרימה ליניארית בשני חצאים: קודם <strong>Forward</strong> מלא (מחשבים את כל ה-o), ואז <strong>Backprop</strong> לאחור — דלתא בפלט → עדכון משקולות פלט → דלתא בנסתר (עם המשקולות ה<strong>ישנים!</strong>) → עדכון משקולות קלט. שתי תיבות האזהרה מסמנות את שתי הטעויות הקריטיות ביותר.</p></div>
+  <div class="box tip"><p class="box-title"><span class="ico">🧭</span> ההיגיון שמאחורי ההסתעפויות</p><p style="margin:0">זו זרימה ליניארית בשני חצאים: קודם <strong>Forward</strong> מלא (מחשבים את כל ה-O), ואז <strong>Backprop</strong> לאחור — שגיאה בפלט → שגיאות בנסתר (עם המשקולות ה<strong>ישנים!</strong>) → עדכון כל המשקולות וההטיות. שתי תיבות האזהרה מסמנות את שתי הטעויות הקריטיות ביותר.</p></div>
 
   <div class="card" style="text-align:center;margin-top:26px">
     <a class="home" href="07_עצי_החלטה.html" style="display:inline-block">הנושא הבא ◀ עצי החלטה</a>
