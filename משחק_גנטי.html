@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>סימולטור אבולוציה 🧬 | משחקי למידה</title>
+<title>מהנדס אבולוציה 🧬 | משחקי למידה</title>
 <link rel="stylesheet" href="style.css">
 <link rel="stylesheet" href="games.css">
 </head>
@@ -20,159 +20,195 @@
 <div class="wrap">
   <div class="page-head">
     <p class="eyebrow">משחק · נושא 08</p>
-    <h1>🧬 סימולטור אבולוציה</h1>
-    <span class="ref">צפה באוכלוסייה מתפתחת ל-max f(x)=x² · שחק עם המוטציה וההכלאה</span>
+    <h1>🧬 מהנדס אבולוציה</h1>
+    <span class="ref">3 רמות · ייצוג וכושר ← בחירה והכלאה ← סימולציה</span>
   </div>
 
   <div class="card">
-    <p>כל פרט הוא כרומוזום של 5 ביטים (<code>x∈[0,31]</code>), והכושר הוא <code>f(x)=x²</code>. <b>המטרה:</b> להגיע ל-<code>x=31</code> (<code>11111</code>), כושר <b>961</b>. שנה את הפרמטרים, לחץ "דור הבא" או "הרץ", וצפה בכושר מטפס. 🚀</p>
+    <p>חשב כמה ביטים צריך, הסתברויות רולטה והכלאות — ואז הרץ אוכלוסייה חיה שמתכנסת ל-<code>max f(x)=x²</code>. כל רמה נפתחת אחרי הקודמת. 🚀</p>
   </div>
 
-  <div class="gx-row" style="gap:22px;align-items:flex-end">
-    <div class="gx-ctrl"><label>גודל אוכלוסייה: <b id="lpop">6</b></label><input type="range" id="pop" min="4" max="16" step="2" value="6"></div>
-    <div class="gx-ctrl"><label>שיעור מוטציה: <b id="lmut">5%</b></label><input type="range" id="mut" min="0" max="25" step="1" value="5"></div>
-    <div class="gx-ctrl"><label>שיעור הכלאה: <b id="lcx">80%</b></label><input type="range" id="cx" min="0" max="100" step="10" value="80"></div>
-  </div>
+  <div id="game-root"></div>
 
-  <div class="gx-row" style="margin:14px 0">
-    <button class="gx-btn gx-btn-primary" id="step">▶ דור הבא</button>
-    <button class="gx-btn gx-btn-ok" id="run">⏩ הרץ</button>
-    <button class="gx-btn" id="reset">↻ אתחל</button>
-  </div>
-
-  <div class="gx-prompt" id="status">דור 0 · הכי טוב: —</div>
-
-  <div class="gx-board">
-    <div style="text-align:center;font-weight:700;color:var(--primary);margin-bottom:6px">האוכלוסייה</div>
-    <div id="population"></div>
-  </div>
-
-  <div class="gx-board">
-    <div style="text-align:center;font-weight:700;color:var(--primary);margin-bottom:6px">כושר לאורך הדורות (🟢 הכי טוב · 🔵 ממוצע)</div>
-    <canvas id="chart" class="gx-chart" width="560" height="180"></canvas>
-  </div>
-
-  <div class="gx-row" style="margin-top:6px">
+  <div class="gx-row" style="margin-top:18px">
     <a class="gx-btn gx-btn-ghost" href="08_אלגוריתמים_גנטיים.html">📖 חזרה להסבר</a>
   </div>
 </div>
 
 <script type="module">
-import { GA_CONFIG } from './games-data.js';
-import { toast, confetti, setStars, el } from './games-core.js';
+import { GA_BITS } from './games-data.js';
+import { el, toast, shake, confetti } from './games-core.js';
+import { runLevels } from './games-engine.js';
 
-const BITS = GA_CONFIG.bits, MAXF = GA_CONFIG.optimum * GA_CONFIG.optimum; // 961
-const decode = c => parseInt(c, 2);
-const fitness = c => decode(c) * decode(c);
-const randChrom = () => Array.from({ length: BITS }, () => Math.random() < 0.5 ? '0' : '1').join('');
+const POP = [{ c: '01101', x: 13 }, { c: '11000', x: 24 }, { c: '01000', x: 8 }, { c: '10011', x: 19 }];
+const fit = x => x * x;
 
-let pop = [], gen = 0, history = [], running = null, reached = false;
-let popSize = 6, mutRate = 0.05, cxRate = 0.8;
-
-function init() {
-  popSize = +document.getElementById('pop').value;
-  pop = Array.from({ length: popSize }, randChrom);
-  gen = 0; history = []; reached = false;
-  record(); render();
-}
-function record() {
-  const fits = pop.map(fitness);
-  history.push({ best: Math.max(...fits), avg: fits.reduce((a, b) => a + b, 0) / fits.length });
-}
-function roulette(fits, total) {
-  if (total <= 0) return Math.floor(Math.random() * fits.length);
-  let r = Math.random() * total;
-  for (let i = 0; i < fits.length; i++) { r -= fits[i]; if (r <= 0) return i; }
-  return fits.length - 1;
-}
-function crossover(a, b) {
-  if (Math.random() > cxRate) return [a, b];
-  const p = 1 + Math.floor(Math.random() * (BITS - 1));
-  return [a.slice(0, p) + b.slice(p), b.slice(0, p) + a.slice(p)];
-}
-function mutate(c) {
-  return c.split('').map(bit => Math.random() < mutRate ? (bit === '0' ? '1' : '0') : bit).join('');
-}
-function nextGen() {
-  const fits = pop.map(fitness), total = fits.reduce((a, b) => a + b, 0);
-  const bestIdx = fits.indexOf(Math.max(...fits));
-  const next = [pop[bestIdx]]; // אליטיזם
-  while (next.length < pop.length) {
-    const a = pop[roulette(fits, total)], b = pop[roulette(fits, total)];
-    let [c1, c2] = crossover(a, b);
-    next.push(mutate(c1));
-    if (next.length < pop.length) next.push(mutate(c2));
-  }
-  pop = next; gen++;
-  record(); render();
-  if (!reached && history[history.length - 1].best >= MAXF) {
-    reached = true; confetti(); toast('🏆 הגעת לאופטימום! x=31, כושר 961', 'good'); setStars('genetic', 3);
-  }
-}
-
-function render() {
-  const fits = pop.map(fitness);
-  const best = Math.max(...fits), bestC = pop[fits.indexOf(best)];
-  document.getElementById('status').innerHTML =
-    'דור <b>' + gen + '</b> · הכי טוב: <code>' + bestC + '</code> → x=' + decode(bestC) + ', f=<b>' + best + '</b>';
-  // אוכלוסייה
-  const box = document.getElementById('population'); box.innerHTML = '';
-  pop.map((c, i) => ({ c, f: fits[i] })).sort((a, b) => b.f - a.f).forEach(({ c, f }) => {
-    const pct = Math.round(f / MAXF * 100);
-    const row = el('div', { style: { display: 'flex', alignItems: 'center', gap: '10px', margin: '5px 0' } }, [
-      el('code', { text: c, style: { direction: 'ltr', minWidth: '64px' } }),
-      el('span', { text: 'x=' + decode(c), style: { minWidth: '52px', color: 'var(--muted)', fontSize: '14px' } }),
-      el('div', { style: { flex: '1', background: '#eef2ff', borderRadius: '6px', overflow: 'hidden', height: '18px' } }, [
-        el('div', { style: { width: pct + '%', height: '100%', background: f >= MAXF ? 'var(--ok)' : 'var(--primary-2)', transition: 'width .3s' } })
-      ]),
-      el('b', { text: f, style: { minWidth: '46px', textAlign: 'left', color: 'var(--primary)' } })
-    ]);
-    box.appendChild(row);
-  });
-  drawChart();
-}
-
-function drawChart() {
-  const cv = document.getElementById('chart'), ctx = cv.getContext('2d');
-  const W = cv.width, Hh = cv.height, pad = 26;
-  ctx.clearRect(0, 0, W, Hh);
-  // צירים
-  ctx.strokeStyle = '#dfe3ee'; ctx.lineWidth = 1;
-  ctx.beginPath(); ctx.moveTo(pad, 6); ctx.lineTo(pad, Hh - pad); ctx.lineTo(W - 6, Hh - pad); ctx.stroke();
-  ctx.fillStyle = '#5b6478'; ctx.font = '11px Segoe UI'; ctx.textAlign = 'right';
-  ctx.fillText('961', pad - 4, 12); ctx.fillText('0', pad - 4, Hh - pad);
-  const n = history.length;
-  const xAt = i => pad + (n <= 1 ? 0 : (W - pad - 8) * i / (n - 1));
-  const yAt = v => (Hh - pad) - (Hh - pad - 6) * (v / MAXF);
-  const line = (key, color) => {
-    ctx.strokeStyle = color; ctx.lineWidth = 2.5; ctx.beginPath();
-    history.forEach((h, i) => { const x = xAt(i), y = yAt(h[key]); i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y); });
-    ctx.stroke();
+// ---------- סבב: כמה ביטים ----------
+function roundBits() {
+  return {
+    title: 'כמה ביטים?', data: GA_BITS, play(host, ctx) {
+      let qi = 0;
+      host.append(el('p', { class: 'gx-panel', html: 'נוסחה: <b>n = ⌈log₂((b−a)/דיוק + 1)⌉</b> (מעגלים כלפי מעלה!).' }));
+      const prompt = el('p', { class: 'gx-prompt' }), row = el('div', { class: 'gx-row' });
+      host.append(prompt, row);
+      function go() {
+        if (qi >= GA_BITS.length) return ctx.done();
+        const b = GA_BITS[qi], vals = (b.range[1] - b.range[0]) / b.prec + 1, ans = Math.ceil(Math.log2(vals));
+        prompt.innerHTML = 'תחום <span style="direction:ltr;unicode-bidi:isolate">[' + b.range[0] + ', ' + b.range[1] + ']</span> בדיוק <b>' + b.prec + '</b> — כמה ביטים? (מספר ערכים = ' + Math.round(vals) + ')';
+        row.innerHTML = '';
+        const input = el('input', { class: 'gx-num-in', type: 'text', inputmode: 'numeric', placeholder: 'n=?' });
+        input.addEventListener('keydown', e => { if (e.key === 'Enter') check(); });
+        function check() {
+          const v = parseInt(input.value);
+          if (isNaN(v)) { toast('הקלד מספר', 'info'); return; }
+          if (v === ans) { ctx.score.add(14); toast('✓ ' + ans + ' ביט', 'good'); qi++; setTimeout(go, 600); }
+          else { input.classList.add('bad'); ctx.score.miss(); ctx.addMiss(); shake(row); toast('✗ log₂(' + Math.round(vals) + ')≈' + Math.log2(vals).toFixed(2) + ' → מעגלים מעלה', 'bad'); setTimeout(() => input.classList.remove('bad'), 500); }
+        }
+        row.append(input, el('button', { class: 'gx-btn gx-btn-primary', text: 'בדוק', onclick: check }));
+        input.focus();
+      }
+      go();
+    }
   };
-  line('avg', '#3a5bd9'); line('best', '#1b7f5a');
 }
 
-// בקרות
-const sync = () => {
-  document.getElementById('lpop').textContent = document.getElementById('pop').value;
-  document.getElementById('lmut').textContent = document.getElementById('mut').value + '%';
-  document.getElementById('lcx').textContent = document.getElementById('cx').value + '%';
-  mutRate = +document.getElementById('mut').value / 100;
-  cxRate = +document.getElementById('cx').value / 100;
-};
-document.getElementById('mut').addEventListener('input', sync);
-document.getElementById('cx').addEventListener('input', sync);
-document.getElementById('pop').addEventListener('input', () => { sync(); stop(); init(); });
-document.getElementById('step').addEventListener('click', () => { stop(); nextGen(); });
-document.getElementById('reset').addEventListener('click', () => { stop(); init(); });
-function stop() { if (running) { clearInterval(running); running = null; document.getElementById('run').textContent = '⏩ הרץ'; } }
-document.getElementById('run').addEventListener('click', () => {
-  if (running) { stop(); return; }
-  document.getElementById('run').textContent = '⏸ עצור';
-  running = setInterval(() => { nextGen(); if (gen > 60) stop(); }, 420);
-});
+// ---------- סבב: דירוג כושר ----------
+function roundFitness() {
+  return {
+    title: 'מי הכי כשיר?', data: POP, play(host, ctx) {
+      const best = POP.reduce((b, p) => fit(p.x) > fit(b.x) ? p : b, POP[0]);
+      host.append(el('p', { class: 'gx-prompt', html: 'לחץ על הכרומוזום עם ה<b>כושר הגבוה ביותר</b> (f=x²):' }));
+      const row = el('div', { class: 'gx-row' }); host.append(row);
+      POP.forEach(p => row.appendChild(el('button', { class: 'gx-btn', style: { direction: 'ltr' }, html: p.c + '<br><small>x=' + p.x + '</small>', onclick: () => {
+        if (p === best) { ctx.score.add(15); toast('✓ ' + p.c + ' → f=' + fit(p.x), 'good'); setTimeout(ctx.done, 800); }
+        else { ctx.score.miss(); ctx.addMiss(); shake(row); toast('✗ f(' + p.x + ')=' + fit(p.x) + ' — יש גבוה יותר', 'bad'); }
+      } })));
+    }
+  };
+}
 
-sync(); init();
+// ---------- סבב: רולטה ----------
+function roundRoulette() {
+  return {
+    title: 'הסתברות רולטה', data: POP, play(host, ctx) {
+      const total = POP.reduce((s, p) => s + fit(p.x), 0);
+      const top = POP.reduce((b, p) => fit(p.x) > fit(b.x) ? p : b, POP[0]);
+      const ans = fit(top.x) / total; // 576/1170 = 0.492
+      host.append(el('p', { class: 'gx-panel', html: 'אוכלוסייה: ' + POP.map(p => p.c + '(f=' + fit(p.x) + ')').join(' · ') + ' · <b>Σf=' + total + '</b>' }));
+      host.append(el('p', { class: 'gx-prompt', html: 'מה הסתברות הבחירה (רולטה) של <b style="direction:ltr;unicode-bidi:isolate">' + top.c + '</b>? (אחוז או שבר)' }));
+      const input = el('input', { class: 'gx-num-in', type: 'text', inputmode: 'decimal', placeholder: '% או 0.xx' });
+      input.addEventListener('keydown', e => { if (e.key === 'Enter') check(); });
+      function check() {
+        let v = parseFloat(String(input.value).replace(',', '.'));
+        if (isNaN(v)) { toast('הקלד מספר', 'info'); return; }
+        if (v > 1) v = v / 100;
+        if (Math.abs(v - ans) <= 0.02) { input.classList.add('ok'); input.disabled = true; ctx.score.add(18); toast('✓ ' + (ans * 100).toFixed(1) + '%', 'good'); setTimeout(ctx.done, 900); }
+        else { input.classList.add('bad'); ctx.score.miss(); ctx.addMiss(); shake(input); toast('✗ P = f/Σf = ' + fit(top.x) + '/' + total, 'bad'); setTimeout(() => input.classList.remove('bad'), 500); }
+      }
+      host.append(el('div', { class: 'gx-row' }, [input, el('button', { class: 'gx-btn gx-btn-primary', text: 'בדוק', onclick: check }),
+        el('button', { class: 'gx-btn gx-btn-ghost', text: '💡', onclick: () => toast('P = f(' + top.x + ')/Σf = ' + fit(top.x) + '/' + total + ' = ' + (ans * 100).toFixed(1) + '%', 'info') })]));
+      input.focus();
+    }
+  };
+}
+
+// ---------- סבב: הכלאה ----------
+function roundCrossover() {
+  return {
+    title: 'הכלאה חד-נקודתית', data: null, play(host, ctx) {
+      const p1 = '01101', p2 = '11000', k = 2;
+      const child = p1.slice(0, k) + p2.slice(k); // 01000
+      host.append(el('p', { class: 'gx-panel', html: 'הורים: <b style="direction:ltr;unicode-bidi:isolate">P1=' + p1 + ' · P2=' + p2 + '</b>. נקודת חיתוך אחרי <b>' + k + '</b> ביטים.' }));
+      host.append(el('p', { class: 'gx-prompt', html: 'מהו <b>הצאצא הראשון</b> (תחילת P1 + סוף P2)?' }));
+      const cands = [child, p2.slice(0, k) + p1.slice(k), p1, p2];
+      const uniq = [...new Set(cands)];
+      const row = el('div', { class: 'gx-row' }); host.append(row);
+      shuffle(uniq).forEach(c => row.appendChild(el('button', { class: 'gx-btn', style: { direction: 'ltr' }, html: c + '<br><small>=' + parseInt(c, 2) + '</small>', onclick: () => {
+        if (c === child) { ctx.score.add(16); toast('✓ ' + child + ' = ' + parseInt(child, 2), 'good'); setTimeout(ctx.done, 800); }
+        else { ctx.score.miss(); ctx.addMiss(); shake(row); toast('✗ קח 2 ביטים מ-P1 ואז את השאר מ-P2', 'bad'); }
+      } })));
+    }
+  };
+}
+
+// ---------- סבב: סימולציה ----------
+function roundSim() {
+  return {
+    title: 'סימולציית אבולוציה', data: null, play(host, ctx) {
+      const BITS = 5, MAXF = 961;
+      const dec = c => parseInt(c, 2), fitc = c => dec(c) * dec(c);
+      const rnd = () => Array.from({ length: BITS }, () => Math.random() < 0.5 ? '0' : '1').join('');
+      let pop = [], gen = 0, hist = [], run = null, done = false, mut = 0.05, cx = 0.8, size = 6;
+
+      host.append(el('p', { class: 'gx-panel', html: 'הרץ דורות עד שתגיע ל-<b>x=31 (11111)</b>, כושר <b>961</b>. שחק עם המוטציה/הכלאה. (אפשר לדלג)' }));
+      const ctrls = el('div', { class: 'gx-row', style: { gap: '20px', alignItems: 'flex-end' } });
+      const mkSlider = (lbl, id, min, max, st, val, fn) => {
+        const b = el('b', { text: val + (id === 'pop' ? '' : '%') });
+        const inp = el('input', { type: 'range', min, max, step: st, value: val });
+        inp.addEventListener('input', () => { b.textContent = inp.value + (id === 'pop' ? '' : '%'); fn(+inp.value); });
+        return el('div', { class: 'gx-ctrl' }, [el('label', {}, [document.createTextNode(lbl + ' '), b]), inp]);
+      };
+      ctrls.append(
+        mkSlider('אוכלוסייה:', 'pop', 4, 16, 2, 6, v => { size = v; stop(); init(); }),
+        mkSlider('מוטציה:', 'mut', 0, 25, 1, 5, v => mut = v / 100),
+        mkSlider('הכלאה:', 'cx', 0, 100, 10, 80, v => cx = v / 100)
+      );
+      const status = el('div', { class: 'gx-prompt' });
+      const board = el('div', { class: 'gx-board' }, [el('div', { id: '_pop' })]);
+      const cv = el('canvas', { class: 'gx-chart', width: 560, height: 170 });
+      const btns = el('div', { class: 'gx-row', style: { margin: '12px 0' } });
+      host.append(ctrls, btns, status, board, el('div', { class: 'gx-board' }, [el('div', { style: { textAlign: 'center', fontWeight: 700, color: 'var(--primary)', marginBottom: '6px' }, text: 'כושר לאורך הדורות' }), cv]));
+
+      function init() { pop = Array.from({ length: size }, rnd); gen = 0; hist = []; done = false; rec(); render(); }
+      function rec() { const f = pop.map(fitc); hist.push({ best: Math.max(...f), avg: f.reduce((a, b) => a + b, 0) / f.length }); }
+      function roul(f, t) { if (t <= 0) return 0; let r = Math.random() * t; for (let i = 0; i < f.length; i++) { r -= f[i]; if (r <= 0) return i; } return f.length - 1; }
+      function next() {
+        const f = pop.map(fitc), t = f.reduce((a, b) => a + b, 0), bi = f.indexOf(Math.max(...f));
+        const ng = [pop[bi]];
+        while (ng.length < pop.length) {
+          let a = pop[roul(f, t)], b = pop[roul(f, t)];
+          if (Math.random() < cx) { const p = 1 + Math.floor(Math.random() * (BITS - 1)); [a, b] = [a.slice(0, p) + b.slice(p), b.slice(0, p) + a.slice(p)]; }
+          ng.push(mutateC(a)); if (ng.length < pop.length) ng.push(mutateC(b));
+        }
+        pop = ng; gen++; rec(); render();
+        if (!done && hist[hist.length - 1].best >= MAXF) { done = true; stop(); confetti(); toast('🏆 הגעת ל-961!', 'good'); ctx.score.add(40); btns.innerHTML = ''; setTimeout(ctx.done, 1500); }
+      }
+      function mutateC(c) { return c.split('').map(x => Math.random() < mut ? (x === '0' ? '1' : '0') : x).join(''); }
+      function render() {
+        const f = pop.map(fitc), best = Math.max(...f), bc = pop[f.indexOf(best)];
+        status.innerHTML = 'דור <b>' + gen + '</b> · הכי טוב: <code style="direction:ltr">' + bc + '</code> → x=' + dec(bc) + ', f=<b>' + best + '</b>';
+        const box = document.getElementById('_pop'); box.innerHTML = '';
+        pop.map((c, i) => ({ c, f: f[i] })).sort((a, b) => b.f - a.f).forEach(({ c, f }) => box.appendChild(el('div', { style: { display: 'flex', alignItems: 'center', gap: '10px', margin: '4px 0' } }, [
+          el('code', { text: c, style: { direction: 'ltr', minWidth: '60px' } }),
+          el('span', { text: 'x=' + dec(c), style: { minWidth: '50px', color: 'var(--muted)', fontSize: '14px' } }),
+          el('div', { style: { flex: '1', background: '#eef2ff', borderRadius: '6px', overflow: 'hidden', height: '16px' } }, [el('div', { style: { width: Math.round(f / MAXF * 100) + '%', height: '100%', background: f >= MAXF ? 'var(--ok)' : 'var(--primary-2)' } })]),
+          el('b', { text: f, style: { minWidth: '44px', textAlign: 'left', color: 'var(--primary)' } })
+        ])));
+        const c2 = cv.getContext('2d'), W = cv.width, H = cv.height, pad = 24;
+        c2.clearRect(0, 0, W, H); c2.strokeStyle = '#dfe3ee'; c2.beginPath(); c2.moveTo(pad, 6); c2.lineTo(pad, H - pad); c2.lineTo(W - 6, H - pad); c2.stroke();
+        const nH = hist.length, xA = i => pad + (nH <= 1 ? 0 : (W - pad - 8) * i / (nH - 1)), yA = v => (H - pad) - (H - pad - 6) * (v / MAXF);
+        [['avg', '#3a5bd9'], ['best', '#1b7f5a']].forEach(([k, col]) => { c2.strokeStyle = col; c2.lineWidth = 2.5; c2.beginPath(); hist.forEach((h, i) => { const x = xA(i), y = yA(h[k]); i === 0 ? c2.moveTo(x, y) : c2.lineTo(x, y); }); c2.stroke(); });
+      }
+      function stop() { if (run) { clearInterval(run); run = null; runBtn.textContent = '⏩ הרץ'; } }
+      const stepBtn = el('button', { class: 'gx-btn gx-btn-primary', text: '▶ דור הבא', onclick: () => { stop(); next(); } });
+      const runBtn = el('button', { class: 'gx-btn gx-btn-ok', text: '⏩ הרץ', onclick: () => { if (run) { stop(); return; } runBtn.textContent = '⏸ עצור'; run = setInterval(() => { next(); if (gen > 80) stop(); }, 400); } });
+      const skipBtn = el('button', { class: 'gx-btn gx-btn-ghost', text: 'דלג ⏭', onclick: () => { stop(); ctx.score.add(10); ctx.done(); } });
+      btns.append(stepBtn, runBtn, el('button', { class: 'gx-btn', text: '↻ אתחל', onclick: () => { stop(); init(); } }), skipBtn);
+      init();
+    }
+  };
+}
+
+function shuffle(arr) { const a = arr.slice(); for (let i = a.length - 1; i > 0; i--) { const j = (i * 13 + 7) % (i + 1);[a[i], a[j]] = [a[j], a[i]]; } return a; }
+
+runLevels({
+  gameId: 'genetic',
+  levels: [
+    { key: '1', name: 'ייצוג וכושר', badge: 'יסוד', desc: 'כמה ביטים, ודירוג כושר', rounds: [roundBits(), roundFitness()] },
+    { key: '2', name: 'בחירה והכלאה', badge: 'תרגול', desc: 'רולטה והכלאה חד-נקודתית', rounds: [roundRoulette(), roundCrossover()] },
+    { key: '3', name: 'סימולציה', badge: 'אתגר', desc: 'הרץ אוכלוסייה עד 961', rounds: [roundSim()] }
+  ]
+});
 </script>
 </body>
 </html>

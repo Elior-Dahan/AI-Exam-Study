@@ -44,9 +44,9 @@ const GAMES = [
   { id: 'search',  href: 'משחק_חיפוש.html',   icon: '🔍', t: 'מירוץ חיפוש',         d: 'נחש צומת הבא, חשב g/f, ובדוק קבילוּת — BFS/DFS/UCS/Greedy/A*.',  tag: '3 רמות', topic: 'שיעורים 01–02', levels: ['1', '2', '3'] },
   { id: 'minimax', href: 'משחק_מינימקס.html', icon: '🌳', t: 'אמן המינימקס',         d: 'מלא ערכי MIN/MAX, גזום Alpha-Beta, עד עומק 3.',                tag: '3 רמות', topic: 'שיעור 03',     levels: ['1', '2', '3'] },
   { id: 'dtree',   href: 'משחק_עץ.html',      icon: '🎾', t: 'בונה עצי החלטה',       d: 'אנטרופיה, Information Gain, בניית עץ ID3 וסיווג.',              tag: '3 רמות', topic: 'שיעור 07',     levels: ['1', '2', '3'] },
-  { id: 'genetic', href: 'משחק_גנטי.html',    icon: '🧬', t: 'סימולטור אבולוציה',    d: 'אוכלוסייה מתכנסת ל-max f(x)=x²; שחק עם המוטציה וההכלאה.',       tag: 'ארגז חול', topic: 'שיעור 08' },
-  { id: 'vspace',  href: 'משחק_מושג.html',    icon: '🃏', t: 'גבולות S ו-G',         d: 'עדכן את מרחב הגרסאות עד התכנסות — סולם הכללה ויזואלי.',          tag: 'ויזואלי', topic: 'שיעור 05' },
-  { id: 'neuron',  href: 'משחק_נוירון.html',  icon: '🧠', t: 'אמן את הרשת',          d: 'forward ו-backprop צעד-אחר-צעד על רשת נוירונים ויזואלית.',      tag: 'ויזואלי', topic: 'שיעור 06' }
+  { id: 'neuron',  href: 'משחק_נוירון.html',  icon: '🧠', t: 'אמן את הרשת',          d: 'Forward, שגיאות Backprop, ועדכוני משקל על רשת ויזואלית.',       tag: '3 רמות', topic: 'שיעור 06', levels: ['1', '2', '3'] },
+  { id: 'vspace',  href: 'משחק_מושג.html',    icon: '🃏', t: 'גבולות S ו-G',         d: 'עדכן את S/G עד התכנסות — סולם הכללה, על 3 דאטהסטים שונים.',      tag: '3 רמות', topic: 'שיעור 05', levels: ['1', '2', '3'] },
+  { id: 'genetic', href: 'משחק_גנטי.html',    icon: '🧬', t: 'מהנדס אבולוציה',        d: 'ביטים, רולטה והכלאה — ואז סימולציית אוכלוסייה חיה ל-max x².',    tag: '3 רמות', topic: 'שיעור 08', levels: ['1', '2', '3'] }
 ];
 
 function gStars(g) { return g.levels ? g.levels.reduce((s, k) => s + getStars(g.id + '_L' + k), 0) : getStars(g.id); }

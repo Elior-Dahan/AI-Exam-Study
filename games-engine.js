@@ -194,6 +194,72 @@ export function matrixSolve(m) {
 }
 
 /* ============================================================
+   4b. סולבר רשת נוירונים (forward + backprop, רשת 1 שכבה נסתרת)
+   ============================================================ */
+// cfg: { x:[...], W1:[[w per input]...hidden], b1:[...], W2:[[w per hidden]...out], b2:[...], target:[...], lr }
+export function nnSolve(cfg) {
+  const sig = z => 1 / (1 + Math.exp(-z));
+  const { x, W1, b1, W2, b2, target: t, lr } = cfg;
+  const Ih = b1.map((b, j) => b + W1[j].reduce((s, w, i) => s + w * x[i], 0));
+  const Oh = Ih.map(sig);
+  const Io = b2.map((b, k) => b + W2[k].reduce((s, w, j) => s + w * Oh[j], 0));
+  const Oo = Io.map(sig);
+  const Eo = Oo.map((o, k) => o * (1 - o) * (t[k] - o));
+  const Eh = Oh.map((o, j) => o * (1 - o) * W2.reduce((s, row, k) => s + Eo[k] * row[j], 0));
+  const W2n = W2.map((row, k) => row.map((w, j) => w + lr * Eo[k] * Oh[j]));
+  const b2n = b2.map((b, k) => b + lr * Eo[k]);
+  const W1n = W1.map((row, j) => row.map((w, i) => w + lr * Eh[j] * x[i]));
+  const b1n = b1.map((b, j) => b + lr * Eh[j]);
+  return { Ih, Oh, Io, Oo, Eo, Eh, W1n, b1n, W2n, b2n };
+}
+
+/* ============================================================
+   4c. סולבר Candidate-Elimination (גבולות S ו-G לכל דאטהסט)
+   ============================================================ */
+// ds: { attrs:[...], domains:{attr:[vals]}, examples:[{vals:[...], label:'+'/'-'}] }
+export function candidateElim(ds) {
+  const { examples, domains, attrs } = ds, n = attrs.length;
+  const clone = a => a.map(h => h.slice());
+  const covers = (h, x) => h.every((c, i) => c === '?' || c === x[i]);
+  const geq = (a, b) => a.every((c, i) => c === '?' || c === b[i]); // a כללי-יותר-או-שווה ל-b
+  const eq = (a, b) => a.every((c, i) => c === b[i]);
+  const dedup = arr => { const out = []; for (const h of arr) if (!out.some(o => eq(o, h))) out.push(h); return out; };
+  let S = [Array(n).fill('∅')], G = [Array(n).fill('?')];
+  const evo = [{ S: clone(S), G: clone(G) }];
+  for (const ex of examples) {
+    const x = ex.vals;
+    if (ex.label === '+') {
+      G = G.filter(g => covers(g, x));
+      let newS = [];
+      for (const s of S) {
+        if (s.includes('∅')) { if (G.some(g => geq(g, x))) newS.push(x.slice()); }
+        else if (covers(s, x)) newS.push(s);
+        else { const h = s.map((c, i) => c === x[i] ? c : '?'); if (G.some(g => geq(g, h))) newS.push(h); }
+      }
+      S = dedup(newS.filter((h, i) => !newS.some((h2, j) => i !== j && geq(h, h2) && !eq(h, h2))));
+    } else {
+      S = S.filter(s => !covers(s, x));
+      let newG = [];
+      for (const g of G) {
+        if (!covers(g, x)) { newG.push(g); continue; }
+        for (let i = 0; i < n; i++) {
+          if (g[i] !== '?') continue;
+          for (const v of domains[attrs[i]]) {
+            if (v === x[i]) continue;
+            const h = g.slice(); h[i] = v;
+            if (S.some(s => geq(h, s))) newG.push(h);
+          }
+        }
+      }
+      G = dedup(newG.filter((h, i) => !newG.some((h2, j) => i !== j && geq(h2, h) && !eq(h2, h))));
+    }
+    evo.push({ S: clone(S), G: clone(G) });
+  }
+  const concept = (S.length === 1 && G.length === 1 && eq(S[0], G[0])) ? S[0] : null;
+  return { evolution: evo, concept, attrs };
+}
+
+/* ============================================================
    5. מנוע הרמות
    ============================================================ */
 export function runLevels(cfg) {
@@ -273,6 +339,10 @@ export async function engineSelfTest() {
     iesds_final: 'R=' + ie.iesds.finalRows + ' C=' + ie.iesds.finalCols,                  // expect A / X
     chicken_q: matrixSolve(data.GT_MATRICES.chicken).mixed.q,                              // expect 0.9
     chicken2_q: matrixSolve(data.GT_MATRICES.chicken2).mixed.q,                            // expect 0.6
-    maximin: (() => { const r = matrixSolve(data.GT_MATRICES.maximin1).maximin; return 'p1=' + r.p1 + ' p2=' + r.p2; })()
+    maximin: (() => { const r = matrixSolve(data.GT_MATRICES.maximin1).maximin; return 'p1=' + r.p1 + ' p2=' + r.p2; })(),
+    nn_aima: (() => { const r = nnSolve(data.NN_CONFIGS[0]); return { Oo: +r.Oo[0].toFixed(3), Eo: +r.Eo[0].toFixed(4), w46: +r.W2n[0][0].toFixed(3) }; })(), // O≈0.474, Eo≈0.1311, w46≈-0.261
+    ce_a: (() => { const c = candidateElim(data.VSPACE_SETS[2]).concept; return c ? c.join(',') : 'no'; })(),   // expect Eden,?,?,cheap
+    ce_b: (() => { const c = candidateElim(data.VSPACE_SETS[1]).concept; return c ? c.join(',') : 'no'; })(),   // expect ?,lunch,?,cheap
+    ce_shapes: (() => { const c = candidateElim(data.VSPACE_SETS[0]).concept; return c ? c.join(',') : 'no'; })() // expect circle,?,big
   };
 }

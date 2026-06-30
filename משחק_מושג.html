@@ -21,169 +21,143 @@
   <div class="page-head">
     <p class="eyebrow">משחק · נושא 05</p>
     <h1>🃏 גבולות S ו-G</h1>
-    <span class="ref">צפה במרחב הגרסאות מצטמצם — S עולה, G יורד, עד התכנסות</span>
+    <span class="ref">3 רמות · 3 דאטהסטים שונים · S עולה, G יורד, עד התכנסות</span>
   </div>
 
   <div class="card">
-    <p>דאטה חדש (שונה מהעמוד!): דומיין מסעדות — תכונות <code>[מסעדה, ארוחה, יום, מחיר]</code>. לכל דוגמה לפי הסדר, בחר את העדכון הנכון. <b style="color:#b23b3b">S</b> (אדום) עולה מלמטה על דוגמאות חיוביות, <b style="color:#1b7f5a">G</b> (ירוק) יורד מלמעלה על שליליות, והפס המוצלל = <b>מרחב הגרסאות</b>.</p>
+    <p>לכל דוגמה: <b style="color:#b23b3b">חיובית → הרחב S</b>, <b style="color:#1b7f5a">שלילית → צמצם G</b>. צפה במרחב הגרסאות (הפס המוצלל) מצטמצם עד <b>S=G</b>. כל רמה — דאטהסט אחר.</p>
   </div>
 
-  <div id="score"></div>
+  <div id="game-root"></div>
 
-  <div class="gx-board">
-    <div id="exhost" style="text-align:center;margin-bottom:10px"></div>
-    <div class="gx-ladder-row" style="font-size:12px;color:var(--muted);min-height:auto;margin-bottom:2px">
-      <span>⬆ כללי יותר</span>
-    </div>
-    <div class="gx-ladder" id="ladder"></div>
-    <div class="gx-ladder-row" style="font-size:12px;color:var(--muted);min-height:auto;margin-top:2px">
-      <span>⬇ ספציפי יותר</span>
-    </div>
-  </div>
-
-  <div class="gx-prompt" id="prompt"></div>
-  <div class="gx-row" id="choices"></div>
-
-  <div class="gx-row" style="margin-top:14px">
-    <button class="gx-btn" id="restart">↻ התחל מחדש</button>
+  <div class="gx-row" style="margin-top:18px">
     <a class="gx-btn gx-btn-ghost" href="05_למידת_מושג.html">📖 חזרה להסבר</a>
   </div>
 </div>
 
 <script type="module">
-import { VERSION_SPACE } from './games-data.js';
-import { Scoreboard, toast, winModal, el, shake } from './games-core.js';
+import { VSPACE_SETS } from './games-data.js';
+import { candidateElim, runLevels } from './games-engine.js';
+import { el, toast, shake, winModal } from './games-core.js';
 
-const VS = VERSION_SPACE;
-const ROWH = 54;
-const score = new Scoreboard('vspace');
-document.getElementById('score').appendChild(score.el);
+const D = id => VSPACE_SETS.find(d => d.id === id);
+const ROWH = 48;
+function hypText(h) { return h.every(c => c === '∅') ? '∅' : '[' + h.join(', ') + ']'; }
+function level(h, n) { return h.includes('∅') ? n : h.filter(c => c !== '?').length; }
+function eqH(a, b) { return a.length === b.length && a.every((c, i) => c === b[i]); }
 
-// השאלות לכל דוגמה (האפשרות הנכונה ראשונה, ואז מערבבים)
-const QUESTIONS = [
-  { q: 'דוגמה <b>חיובית +</b>: איך מתעדכן <b>S</b>? (מ-∅ אל הדוגמה)',
-    opts: ['S = { [Dupu, lunch, Mon, cheap] }', 'S = { [?, ?, ?, ?] }', 'S = { ∅ }'], correct: 0 },
-  { q: 'דוגמה <b>שלילית −</b> (Eden,lunch,Fri,expensive): איך מצטמצם <b>G</b>? (לא דרך Meal — גם הדוגמה היא lunch!)',
-    opts: ['G = { [Dupu,?,?,?] , [?,?,Mon,?] , [?,?,?,cheap] }', 'G = { [?, lunch, ?, ?] }', 'G = { [Eden, ?, ?, ?] }'], correct: 0 },
-  { q: 'דוגמה <b>חיובית +</b> (Karnaf,lunch,Sun,cheap): הכלל את S, וזרוק מ-G מי שלא מכסה',
-    opts: ['S=[?,lunch,?,cheap] · G=[?,?,?,cheap]', 'S=[Karnaf,lunch,Sun,cheap] · G ללא שינוי', 'G נשאר עם 3 השערות'], correct: 0 },
-  { q: 'דוגמה <b>שלילית −</b> (Eden,breakfast,Mon,cheap): [?,?,?,cheap] מכסה אותה → צמצם ל-?',
-    opts: ['G = { [?, lunch, ?, cheap] }', 'G = { [?, ?, Mon, cheap] }', 'G = { [Eden, ?, ?, cheap] }'], correct: 0 },
-  { q: 'דוגמה <b>שלילית −</b> אחרונה (Dupu,dinner,Sun,expensive): מה קורה?',
-    opts: ['כלום — S=G כבר לא מכסים אותה ✓ התכנסות', 'G מצטמצם שוב', 'S גדל'], correct: 0 }
-];
-
-let idx = 0, misses = 0; // idx = כמה דוגמאות עובדו
-
-function hypText(h) {
-  if (h.every(a => a === '∅')) return '∅';
-  return '[' + h.join(', ') + ']';
-}
-function level(h) {
-  if (h.every(a => a === '∅')) return 4;
-  return h.filter(a => a !== '?').length;
-}
-function eq(a, b) { return a.length === b.length && a.every((x, i) => x === b[i]); }
-
-function renderLadder() {
-  const st = VS.evolution[idx];
-  const host = document.getElementById('ladder');
-  host.innerHTML = '';
-  host.style.height = (5 * ROWH) + 'px';
-
-  const converged = st.S.length === 1 && st.G.length === 1 && eq(st.S[0], st.G[0]);
-
-  // פס מרחב הגרסאות
-  const gTop = Math.min(...st.G.map(level));
-  const sBottom = Math.max(...st.S.map(level));
+function ladder(host, st, n) {
+  host.innerHTML = ''; host.style.height = ((n + 1) * ROWH) + 'px';
+  const converged = st.S.length === 1 && st.G.length === 1 && eqH(st.S[0], st.G[0]);
+  const gTop = Math.min(...st.G.map(h => level(h, n))), sBot = Math.max(...st.S.map(h => level(h, n)));
   const band = el('div', { class: 'gx-vs-band' });
-  band.style.top = (gTop * ROWH) + 'px';
-  band.style.height = (Math.max(1, sBottom - gTop + 1) * ROWH) + 'px';
+  band.style.top = (gTop * ROWH) + 'px'; band.style.height = (Math.max(1, sBot - gTop + 1) * ROWH) + 'px';
   host.appendChild(band);
-
-  // 5 שורות לפי רמת כלליות (0 כללי ביותר ... 4 ספציפי ביותר)
-  for (let lv = 0; lv <= 4; lv++) {
-    const row = el('div', { class: 'gx-ladder-row' });
-    row.style.height = ROWH + 'px';
-    if (converged && level(st.S[0]) === lv) {
-      row.appendChild(el('span', { class: 'gx-hyp goal', text: hypText(st.S[0]) + '  ✓ S=G' }));
-    } else {
-      st.G.filter(h => level(h) === lv).forEach(h => row.appendChild(el('span', { class: 'gx-hyp g', text: hypText(h) })));
-      st.S.filter(h => level(h) === lv).forEach(h => row.appendChild(el('span', { class: 'gx-hyp s', text: hypText(h) })));
+  for (let lv = 0; lv <= n; lv++) {
+    const row = el('div', { class: 'gx-ladder-row' }); row.style.height = ROWH + 'px';
+    if (converged && level(st.S[0], n) === lv) row.appendChild(el('span', { class: 'gx-hyp goal', text: hypText(st.S[0]) + '  ✓ S=G' }));
+    else {
+      st.G.filter(h => level(h, n) === lv).forEach(h => row.appendChild(el('span', { class: 'gx-hyp g', text: hypText(h) })));
+      st.S.filter(h => level(h, n) === lv).forEach(h => row.appendChild(el('span', { class: 'gx-hyp s', text: hypText(h) })));
     }
     host.appendChild(row);
   }
 }
 
-function renderExample() {
-  const host = document.getElementById('exhost');
-  host.innerHTML = '';
-  if (idx >= VS.examples.length) return;
-  const ex = VS.examples[idx];
-  const pos = ex.label === '+';
-  host.appendChild(el('div', { class: 'gx-ex-card ' + (pos ? 'pos' : 'neg') }, [
-    el('div', { class: 'gx-ex-badge', text: pos ? '＋' : '－' }),
-    el('b', { text: '[' + ex.vals.join(', ') + ']' }),
-    el('span', { style: { fontSize: '12px', color: 'var(--muted)' }, text: 'דוגמה ' + (idx + 1) + '/5 · ' + (pos ? 'חיובית' : 'שלילית') })
-  ]));
+// ---------- סבב: עיבוד הדאטהסט (כלל S/G לכל דוגמה) ----------
+function roundProcess(dsId) {
+  const ds = D(dsId), sol = candidateElim(ds), n = ds.attrs.length;
+  return {
+    title: ds.name, data: ds, play(host, ctx) {
+      let idx = 0;
+      const exHost = el('div', { style: { textAlign: 'center', marginBottom: '8px' } });
+      const lad = el('div', { class: 'gx-ladder' });
+      const prompt = el('p', { class: 'gx-prompt' }), choices = el('div', { class: 'gx-row' });
+      host.append(el('p', { class: 'gx-panel', html: 'תכונות: <span style="direction:ltr;unicode-bidi:isolate;display:inline-block">[' + ds.attrs.join(', ') + ']</span>' }), exHost,
+        el('div', { class: 'gx-ladder-row', style: { fontSize: '12px', color: 'var(--muted)', minHeight: 'auto' } }, [el('span', { text: '⬆ כללי' })]),
+        lad,
+        el('div', { class: 'gx-ladder-row', style: { fontSize: '12px', color: 'var(--muted)', minHeight: 'auto' } }, [el('span', { text: '⬇ ספציפי' })]),
+        prompt, choices);
+      ladder(lad, sol.evolution[0], n);
+      step();
+      function step() {
+        if (idx >= ds.examples.length) return finish();
+        const ex = ds.examples[idx], pos = ex.label === '+';
+        exHost.innerHTML = '';
+        exHost.appendChild(el('div', { class: 'gx-ex-card ' + (pos ? 'pos' : 'neg') }, [
+          el('div', { class: 'gx-ex-badge', text: pos ? '＋' : '－' }),
+          el('b', { text: '[' + ex.vals.join(', ') + ']' }),
+          el('span', { style: { fontSize: '12px', color: 'var(--muted)' }, text: 'דוגמה ' + (idx + 1) + '/' + ds.examples.length })
+        ]));
+        prompt.innerHTML = '🤔 דוגמה <b>' + (pos ? 'חיובית' : 'שלילית') + '</b> — מה הפעולה?';
+        choices.innerHTML = '';
+        const correct = pos ? 'S' : 'G';
+        const opts = [{ k: 'S', t: 'הרחב את S (מכליל)' }, { k: 'G', t: 'צמצם את G (מתמחה)' }];
+        opts.forEach(o => choices.appendChild(el('button', { class: 'gx-btn', text: o.t, onclick: () => pick(o.k === correct) })));
+      }
+      function pick(ok) {
+        if (ok) { ctx.score.add(12); idx++; ladder(lad, sol.evolution[idx], n); toast('✓ נכון!', 'good'); if (idx >= ds.examples.length) setTimeout(finish, 600); else setTimeout(step, 600); }
+        else { ctx.score.miss(); ctx.addMiss(); shake(choices); toast('✗ חיובי→S, שלילי→G', 'bad'); }
+      }
+      function finish() { prompt.innerHTML = '🎉 כל הדוגמאות עובדו!'; choices.innerHTML = ''; setTimeout(ctx.done, 700); }
+    }
+  };
 }
 
-function renderStep() {
-  renderExample();
-  renderLadder();
-  const Q = QUESTIONS[idx];
-  document.getElementById('prompt').innerHTML = '🤔 ' + Q.q;
-  const ch = document.getElementById('choices'); ch.innerHTML = '';
-  // ערבוב אפשרויות עם מעקב אחר הנכונה
-  const order = shuffle([0, 1, 2], idx);
-  order.forEach(oi => {
-    ch.appendChild(el('button', {
-      class: 'gx-btn', html: Q.opts[oi],
-      style: { direction: 'ltr', unicodeBidi: 'isolate' },
-      onclick: () => pick(oi === Q.correct)
-    }));
-  });
+// ---------- סבב: מהו המושג שנלמד? ----------
+function roundConcept(dsId) {
+  const ds = D(dsId), sol = candidateElim(ds);
+  return {
+    title: 'מהו המושג?', data: ds, play(host, ctx) {
+      const concept = sol.concept;
+      const tooGen = concept.map((c, i) => i === concept.findIndex(x => x !== '?') ? '?' : c);
+      const firstQ = concept.indexOf('?'); const tooSpec = concept.map((c, i) => i === firstQ ? ds.domains[ds.attrs[i]][0] : c);
+      const opts = shuffle([{ h: concept, ok: true }, { h: tooGen, ok: false }, { h: tooSpec, ok: false }], ds.attrs.length);
+      host.append(el('p', { class: 'gx-prompt', html: 'מהו <b>המושג שנלמד</b> (S=G)?' }));
+      const row = el('div', { class: 'gx-row' }); host.append(row);
+      opts.forEach(o => row.appendChild(el('button', { class: 'gx-btn', style: { direction: 'ltr', unicodeBidi: 'isolate' }, text: hypText(o.h), onclick: () => {
+        if (o.ok) { ctx.score.add(18); toast('✓ ' + hypText(concept), 'good'); setTimeout(ctx.done, 900); }
+        else { ctx.score.miss(); ctx.addMiss(); shake(row); toast('✗ זה כללי/ספציפי מדי', 'bad'); }
+      } })));
+    }
+  };
 }
 
-// ערבוב דטרמיניסטי לפי אינדקס (בלי Math.random)
-function shuffle(arr, seed) {
-  const a = arr.slice();
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = (seed * 7 + i * 13 + 5) % (i + 1);
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
+// ---------- סבב: סיווג דוגמה חדשה ----------
+function roundClassify(dsId, instances) {
+  const ds = D(dsId), sol = candidateElim(ds), concept = sol.concept;
+  const covers = (h, x) => h.every((c, i) => c === '?' || c === x[i]);
+  return {
+    title: 'סיווג לפי המושג', data: ds, play(host, ctx) {
+      let ti = 0;
+      host.append(el('p', { class: 'gx-panel', html: 'המושג: <span style="direction:ltr;unicode-bidi:isolate;display:inline-block">' + hypText(concept) + '</span>. האם הדוגמה <b>מתאימה</b> למושג (חיובית)?' }));
+      const prompt = el('p', { class: 'gx-prompt' }), ctr = el('div', { class: 'gx-row' }); host.append(prompt, ctr);
+      function next() {
+        if (ti >= instances.length) return ctx.done();
+        prompt.innerHTML = '<span style="direction:ltr;unicode-bidi:isolate;display:inline-block">[' + instances[ti].join(', ') + ']</span> — מתאים למושג?';
+        ctr.innerHTML = '';
+        ctr.append(el('button', { class: 'gx-btn gx-btn-ok', text: '✓ כן (+)', onclick: () => ans(true) }),
+          el('button', { class: 'gx-btn', style: { background: 'var(--warn)', color: '#fff', borderColor: 'var(--warn)' }, text: '✗ לא (−)', onclick: () => ans(false) }));
+      }
+      function ans(a) {
+        if (a === covers(concept, instances[ti])) { ctx.score.add(12); toast('✓', 'good'); ti++; setTimeout(next, 600); }
+        else { ctx.score.miss(); ctx.addMiss(); shake(ctr); toast('✗ בדוק כל תכונה מול המושג', 'bad'); }
+      }
+      next();
+    }
+  };
 }
 
-function pick(correct) {
-  if (correct) {
-    score.add(13);
-    idx++;
-    toast('✓ נכון!', 'good');
-    if (idx >= VS.examples.length) return finish();
-    setTimeout(renderStep, 700);
-  } else {
-    misses++; score.miss(); shake(document.getElementById('choices'));
-    toast('✗ זכור: חיובי→הרחב S, שלילי→צמצם G (מינימלית, בכל תכונה)', 'bad');
-  }
-}
+function shuffle(arr, seed) { const a = arr.slice(); for (let i = a.length - 1; i > 0; i--) { const j = (seed * 7 + i * 13 + 5) % (i + 1);[a[i], a[j]] = [a[j], a[i]]; } return a; }
 
-function finish() {
-  renderExample(); renderLadder();
-  const stars = misses === 0 ? 3 : misses <= 2 ? 2 : 1;
-  document.getElementById('prompt').innerHTML = '🎉 התכנסות! <b>S = G = [?, lunch, ?, cheap]</b>';
-  document.getElementById('choices').innerHTML = '';
-  winModal({
-    title: 'התכנסת למושג! 🃏', stars, gameId: 'vspace',
-    html: '<p>המושג שנלמד: <code>[?, lunch, ?, cheap]</code> — "כל <b>ארוחת צהריים</b> שהיא <b>זולה</b>".</p>' +
-          '<p style="font-size:14px;color:#5b6478">שים לב: התכונות "מסעדה" ו"יום" ירדו ל-<code>?</code> כי הן לא רלוונטיות למושג.</p>' +
-          '<p>ניקוד: <b>' + score.score + '</b></p>'
-  });
-}
-
-function restart() { idx = 0; misses = 0; score.reset(); renderStep(); }
-document.getElementById('restart').addEventListener('click', restart);
-renderStep();
+runLevels({
+  gameId: 'vspace',
+  levels: [
+    { key: '1', name: 'צורות', badge: 'יסוד', desc: '3 תכונות, התכנסות מהירה', rounds: [roundProcess('shapes'), roundConcept('shapes')] },
+    { key: '2', name: 'ארוחת צהריים', badge: 'תרגול', desc: 'דומיין המסעדות (4 תכונות)', rounds: [roundProcess('rest_b'), roundConcept('rest_b')] },
+    { key: '3', name: 'תגובה אלרגית', badge: 'אתגר', desc: 'הדוגמה הקנונית + סיווג', rounds: [roundProcess('rest_a'), roundClassify('rest_a', [['Eden', 'lunch', 'Sun', 'cheap'], ['Dupu', 'lunch', 'Sun', 'cheap'], ['Eden', 'breakfast', 'Fri', 'expensive']])] }
+  ]
+});
 </script>
 </body>
 </html>

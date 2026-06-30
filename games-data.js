@@ -225,3 +225,31 @@ export const DTREE_TOY = {
     { id:'r8', Rested:0, Exam:0, Coffee:0, Study:0 }
   ]
 };
+
+// ---------- רשתות נוירונים: מספר קונפיגים (forward+backprop ע"י nnSolve) ----------
+// W1[j][i]=משקל קלט i→נסתר j ; W2[k][j]=משקל נסתר j→פלט k
+export const NN_CONFIGS = [
+  { id: 'aima', name: 'רשת AIMA · 3→2→1', inLabels: ['x₁=1', 'x₂=0', 'x₃=1'], hidLabels: ['4', '5'], outLabels: ['6'],
+    x: [1, 0, 1], W1: [[0.2, 0.4, -0.5], [-0.3, 0.1, 0.2]], b1: [-0.4, 0.2], W2: [[-0.3, -0.2]], b2: [0.1], target: [1], lr: 0.9 },
+  { id: 'small', name: 'רשת קטנה · 2→2→1', inLabels: ['x₁=1', 'x₂=1'], hidLabels: ['h₁', 'h₂'], outLabels: ['o'],
+    x: [1, 1], W1: [[0.5, -0.2], [0.3, 0.4]], b1: [0.1, -0.1], W2: [[0.6, -0.3]], b2: [0.2], target: [0], lr: 0.5 }
+];
+
+// ---------- מרחב גרסאות: מספר דאטהסטים (S/G ע"י candidateElim) ----------
+const REST_DOM = { Restaurant: ['Eden', 'Dupu', 'Karnaf'], Meal: ['breakfast', 'lunch', 'dinner'], Day: ['Fri', 'Sat', 'Sun', 'Mon'], Cost: ['cheap', 'expensive'] };
+export const VSPACE_SETS = [
+  { id: 'shapes', name: 'צורות', attrs: ['Shape', 'Color', 'Size'],
+    domains: { Shape: ['circle', 'square', 'triangle'], Color: ['red', 'blue', 'green'], Size: ['small', 'big'] },
+    examples: [{ vals: ['circle', 'red', 'big'], label: '+' }, { vals: ['square', 'red', 'big'], label: '-' }, { vals: ['circle', 'blue', 'big'], label: '+' }, { vals: ['circle', 'red', 'small'], label: '-' }] }, // → circle,?,big
+  { id: 'rest_b', name: 'ארוחת צהריים זולה', attrs: ['Restaurant', 'Meal', 'Day', 'Cost'], domains: REST_DOM,
+    examples: [{ vals: ['Dupu', 'lunch', 'Mon', 'cheap'], label: '+' }, { vals: ['Eden', 'lunch', 'Fri', 'expensive'], label: '-' }, { vals: ['Karnaf', 'lunch', 'Sun', 'cheap'], label: '+' }, { vals: ['Eden', 'breakfast', 'Mon', 'cheap'], label: '-' }, { vals: ['Dupu', 'dinner', 'Sun', 'expensive'], label: '-' }] }, // → ?,lunch,?,cheap
+  { id: 'rest_a', name: 'תגובה אלרגית (מסעדות)', attrs: ['Restaurant', 'Meal', 'Day', 'Cost'], domains: REST_DOM,
+    examples: [{ vals: ['Eden', 'breakfast', 'Fri', 'cheap'], label: '+' }, { vals: ['Dupu', 'lunch', 'Fri', 'expensive'], label: '-' }, { vals: ['Eden', 'lunch', 'Sat', 'cheap'], label: '+' }, { vals: ['Karnaf', 'breakfast', 'Sun', 'cheap'], label: '-' }, { vals: ['Eden', 'breakfast', 'Sun', 'expensive'], label: '-' }] } // → Eden,?,?,cheap
+];
+
+// ---------- אלגוריתם גנטי: דוגמאות לחישובי-ביניים ----------
+export const GA_BITS = [
+  { range: [-2, 2], prec: 0.01 },   // → 9 ביט
+  { range: [0, 100], prec: 1 },     // → 7 ביט
+  { range: [0, 1], prec: 0.001 }    // → 10 ביט
+];

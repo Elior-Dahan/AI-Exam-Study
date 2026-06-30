@@ -21,184 +21,178 @@
   <div class="page-head">
     <p class="eyebrow">משחק · נושא 06</p>
     <h1>🧠 אמן את הרשת</h1>
-    <span class="ref">רשת 3→2→1 · עבור צומת-אחר-צומת ב-Forward, ואז אחורה ב-Backprop</span>
+    <span class="ref">3 רמות · Forward ← Backprop (שגיאות) ← עדכון משקולות</span>
   </div>
 
   <div class="card">
-    <p>הרשת הקנונית של AIMA: קלטים <code>x₁=1, x₂=0, x₃=1</code>, מטרה <code>T=1</code>, קצב למידה <code>LR=0.9</code>, סיגמואיד. כל צומת מואר כשתורו מגיע — חשב את הערך, הקלד ובדוק, והצומת נדלק בירוק. תקוע? לחץ "רמז". 💡</p>
-    <p class="cap" style="margin:6px 0 0;color:var(--muted)">σ(−0.7)=0.332 · σ(0.1)=0.525 · σ(−0.105)=0.474 &nbsp;|&nbsp; עגל ל-4 ספרות.</p>
+    <p>חשב צומת-אחר-צומת על רשת ויזואלית — כל צומת נדלק בירוק כשמסיימים. סיגמואיד <code>σ(z)=1/(1+e⁻ᶻ)</code>. עגל ל-3–4 ספרות. תקוע? 💡 רמז.</p>
+    <p class="cap" style="margin:6px 0 0;color:var(--muted)">σ(−0.7)=0.332 · σ(0.1)=0.525 · σ(−0.105)=0.474</p>
   </div>
 
-  <div id="score"></div>
+  <div id="game-root"></div>
 
-  <div class="gx-board">
-    <svg id="net" class="gx-nn" viewBox="0 0 600 330" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="רשת נוירונים אינטראקטיבית"></svg>
-  </div>
-
-  <div class="gx-calc" id="calc"></div>
-
-  <div class="gx-row" style="margin-top:14px">
-    <button class="gx-btn" id="restart">↻ התחל מחדש</button>
+  <div class="gx-row" style="margin-top:18px">
     <a class="gx-btn gx-btn-ghost" href="06_רשתות_נוירונים.html">📖 חזרה להסבר</a>
   </div>
 </div>
 
 <script type="module">
-import { NN_CONFIG } from './games-data.js';
-import { Scoreboard, toast, winModal, el, svg, shake } from './games-core.js';
+import { NN_CONFIGS } from './games-data.js';
+import { nnSolve, runLevels } from './games-engine.js';
+import { el, svg, toast, shake } from './games-core.js';
 
-const sig = x => 1 / (1 + Math.exp(-x));
-const score = new Scoreboard('neuron');
-document.getElementById('score').appendChild(score.el);
+const C = id => NN_CONFIGS.find(c => c.id === id);
+const fmt = n => n < 0 ? '(' + n + ')' : '' + n;
+const ySpread = (count, idx) => count === 1 ? 175 : 60 + (290 - 60) * idx / (count - 1);
 
-// ---------- מיקומי הצמתים ----------
-const POS = {
-  1: { x: 70, y: 60 }, 2: { x: 70, y: 165 }, 3: { x: 70, y: 270 },
-  4: { x: 300, y: 105 }, 5: { x: 300, y: 225 },
-  6: { x: 520, y: 165 }
-};
-const INLABEL = { 1: 'x₁=1', 2: 'x₂=0', 3: 'x₃=1' };
-// קשתות: [from, to, weightLabel]
-const EDGES = [
-  [1, 4, '0.2'], [2, 4, '0.4'], [3, 4, '−0.5'],
-  [1, 5, '−0.3'], [2, 5, '0.1'], [3, 5, '0.2'],
-  [4, 6, '−0.3'], [5, 6, '−0.2']
-];
-const BIAS = { 4: '−0.4', 5: '0.2', 6: '0.1' };
-
-// ---------- רצף הצעדים ----------
-function makeSteps() {
-  return [
-    { kind: 'fwd', node: 4, tmpl: 'I₄ = w₁₄·x₁ + w₂₄·x₂ + w₃₄·x₃ + θ₄', hint: '0.2·1 + 0.4·0 + (−0.5)·1 + (−0.4)', ans: -0.7, tol: 0.02, O: 0.332, edges: ['1-4', '2-4', '3-4'] },
-    { kind: 'fwd', node: 5, tmpl: 'I₅ = w₁₅·x₁ + w₂₅·x₂ + w₃₅·x₃ + θ₅', hint: '(−0.3)·1 + 0.1·0 + 0.2·1 + 0.2', ans: 0.1, tol: 0.02, O: 0.525, edges: ['1-5', '2-5', '3-5'] },
-    { kind: 'fwd', node: 6, tmpl: 'I₆ = w₄₆·O₄ + w₅₆·O₅ + θ₆', hint: '(−0.3)·0.332 + (−0.2)·0.525 + 0.1', ans: -0.105, tol: 0.02, O: 0.474, edges: ['4-6', '5-6'] },
-    { kind: 'delta', node: 6, tmpl: 'Err₆ = O₆·(1−O₆)·(T−O₆)', hint: '0.474·(1−0.474)·(1−0.474)', ans: 0.1311, tol: 0.0020, edges: ['4-6', '5-6'] },
-    { kind: 'delta', node: 4, tmpl: 'Err₄ = O₄·(1−O₄)·Err₆·w₄₆', hint: '0.332·0.668·0.1311·(−0.3)', ans: -0.0087, tol: 0.0012, edges: ['4-6'] },
-    { kind: 'delta', node: 5, tmpl: 'Err₅ = O₅·(1−O₅)·Err₆·w₅₆', hint: '0.525·0.475·0.1311·(−0.2)', ans: -0.0065, tol: 0.0012, edges: ['5-6'] },
-    { kind: 'upd', tmpl: 'w₄₆(חדש) = w₄₆ + LR·Err₆·O₄', hint: '−0.3 + 0.9·0.1311·0.332', ans: -0.261, tol: 0.003, edges: ['4-6'] },
-    { kind: 'upd', tmpl: 'w₁₄(חדש) = w₁₄ + LR·Err₄·x₁', hint: '0.2 + 0.9·(−0.0087)·1', ans: 0.192, tol: 0.003, edges: ['1-4'] },
-    { kind: 'upd', tmpl: 'θ₆(חדש) = θ₆ + LR·Err₆', hint: '0.1 + 0.9·0.1311', ans: 0.218, tol: 0.003, edges: [] }
-  ];
+function positions(cfg) {
+  const pos = {};
+  cfg.x.forEach((_, i) => pos['i' + i] = { x: 70, y: ySpread(cfg.x.length, i), label: cfg.inLabels[i], kind: 'in' });
+  cfg.b1.forEach((_, j) => pos['h' + j] = { x: 300, y: ySpread(cfg.b1.length, j), label: cfg.hidLabels[j], kind: 'hid', bias: cfg.b1[j] });
+  cfg.b2.forEach((_, k) => pos['o' + k] = { x: 510, y: ySpread(cfg.b2.length, k), label: cfg.outLabels[k], kind: 'out', bias: cfg.b2[k] });
+  return pos;
+}
+function edges(cfg) {
+  const e = [];
+  cfg.b1.forEach((_, j) => cfg.x.forEach((_, i) => e.push({ k: 'i' + i + '-h' + j, from: 'i' + i, to: 'h' + j, w: cfg.W1[j][i] })));
+  cfg.b2.forEach((_, k) => cfg.b1.forEach((_, j) => e.push({ k: 'h' + j + '-o' + k, from: 'h' + j, to: 'o' + k, w: cfg.W2[k][j] })));
+  return e;
 }
 
-let STEPS = makeSteps();
-let cur = 0, misses = 0;
-const nodeEls = {}, edgeEls = {}, ovalEls = {};
-
-// ---------- ציור הרשת ----------
-function drawNet() {
-  const root = document.getElementById('net');
-  root.innerHTML = '';
-  // קשתות + תוויות משקל
-  for (const [u, v, wl] of EDGES) {
-    const a = POS[u], b = POS[v];
-    const line = svg('line', { x1: a.x, y1: a.y, x2: b.x, y2: b.y, class: 'nn-edge' });
-    edgeEls[u + '-' + v] = line;
-    root.appendChild(line);
-    const f = 0.34; // קרוב למקור כדי שתוויות הקשתות החוצות לא יתנגשו
-    const mx = a.x + (b.x - a.x) * f, my = a.y + (b.y - a.y) * f - 5;
-    root.appendChild(svg('text', { x: mx, y: my, 'text-anchor': 'middle', class: 'gx-elabel' }, wl));
-  }
-  // צמתים
-  for (const id in POS) {
-    const p = POS[id];
-    const isIn = id <= 3;
-    const c = svg('circle', { cx: p.x, cy: p.y, r: isIn ? 24 : 26, class: 'nn-node ' + (isIn ? 'nn-in' : 'pending') });
-    nodeEls[id] = c;
-    root.appendChild(c);
-    root.appendChild(svg('text', { x: p.x, y: p.y + (isIn ? -1 : -2), 'text-anchor': 'middle', 'font-size': isIn ? 12 : 15, fill: isIn ? '#27408b' : '#5b6478' }, isIn ? INLABEL[id] : id));
+function drawNet(host, cfg, pos, eds, state) {
+  const s = svg('svg', { class: 'gx-nn', viewBox: '0 0 580 340', style: { maxWidth: '580px' } });
+  eds.forEach(e => {
+    const a = pos[e.from], b = pos[e.to];
+    const cls = 'nn-edge' + (state.hot && state.hot.has(e.k) ? (state.back ? ' back' : ' hot') : '');
+    s.appendChild(svg('line', { x1: a.x, y1: a.y, x2: b.x, y2: b.y, class: cls }));
+    const f = 0.32, mx = a.x + (b.x - a.x) * f, my = a.y + (b.y - a.y) * f - 4;
+    const wv = state.newW && state.newW.has(e.k) ? state.newW.get(e.k) : e.w;
+    s.appendChild(svg('text', { x: mx, y: my, 'text-anchor': 'middle', class: 'gx-elabel' + (state.newW && state.newW.has(e.k) ? ' pos' : '') }, wv));
+  });
+  for (const id in pos) {
+    const nd = pos[id], isIn = nd.kind === 'in';
+    let cls = 'nn-node ';
+    if (isIn) cls += 'nn-in';
+    else if (state.done && state.done.has(id)) cls += 'done';
+    else if (state.active === id) cls += 'active';
+    else cls += 'pending';
+    s.appendChild(svg('circle', { cx: nd.x, cy: nd.y, r: isIn ? 23 : 25, class: cls }));
+    s.appendChild(svg('text', { x: nd.x, y: nd.y + (isIn ? 4 : -2), 'text-anchor': 'middle', 'font-size': isIn ? 12 : 14, fill: isIn ? '#27408b' : '#5b6478' }, nd.label));
     if (!isIn) {
-      // הטיה
-      root.appendChild(svg('text', { x: p.x, y: p.y - 34, 'text-anchor': 'middle', class: 'gx-elabel' }, 'θ=' + BIAS[id]));
-      // תווית פלט (תתעדכן)
-      const ov = svg('text', { x: p.x, y: p.y + 14, 'text-anchor': 'middle', 'font-size': 11, fill: '#1b7f5a' }, '');
-      ovalEls[id] = ov;
-      root.appendChild(ov);
+      s.appendChild(svg('text', { x: nd.x, y: nd.y - 34, 'text-anchor': 'middle', class: 'gx-elabel' }, 'θ=' + nd.bias));
+      if (state.oval && state.oval.has(id)) s.appendChild(svg('text', { x: nd.x, y: nd.y + 13, 'text-anchor': 'middle', 'font-size': 11, fill: '#1b7f5a' }, 'O=' + state.oval.get(id)));
     }
   }
-  // כותרות שכבה
-  root.appendChild(svg('text', { x: 70, y: 318, 'text-anchor': 'middle', 'font-size': 12, fill: '#5b6478', 'font-family': 'Segoe UI,Arial' }, 'קלט'));
-  root.appendChild(svg('text', { x: 300, y: 300, 'text-anchor': 'middle', 'font-size': 12, fill: '#5b6478', 'font-family': 'Segoe UI,Arial' }, 'שכבה נסתרת'));
-  root.appendChild(svg('text', { x: 520, y: 215, 'text-anchor': 'middle', 'font-size': 12, fill: '#5b6478', 'font-family': 'Segoe UI,Arial' }, 'פלט'));
+  host.appendChild(s);
 }
 
-function setNodeClass(id, cls) {
-  const isIn = id <= 3;
-  nodeEls[id].setAttribute('class', 'nn-node ' + (isIn ? 'nn-in ' : '') + cls);
-}
-function clearHot() {
-  for (const k in edgeEls) edgeEls[k].setAttribute('class', 'nn-edge');
-}
-function highlight(step) {
-  clearHot();
-  const back = step.kind !== 'fwd';
-  (step.edges || []).forEach(k => edgeEls[k] && edgeEls[k].setAttribute('class', 'nn-edge ' + (back ? 'back' : 'hot')));
-  if (step.node) setNodeClass(step.node, 'active');
-}
-
-// ---------- פאנל החישוב ----------
-function renderStep() {
-  const step = STEPS[cur];
-  highlight(step);
-  const calc = document.getElementById('calc');
-  calc.innerHTML = '';
-  const phase = step.kind === 'fwd' ? 'מעבר קדימה' : step.kind === 'delta' ? 'Backprop — שגיאות' : 'Backprop — עדכון משקל';
-  calc.append(
-    el('div', { class: 'lead', text: '🔹 צעד ' + (cur + 1) + '/' + STEPS.length + ' · ' + phase }),
-    el('div', { class: 'expr', html: step.tmpl })
-  );
-  const input = el('input', { class: 'gx-num-in', type: 'text', inputmode: 'decimal', placeholder: '?' });
-  input.addEventListener('keydown', e => { if (e.key === 'Enter') check(); });
-  const checkBtn = el('button', { class: 'gx-btn gx-btn-primary', text: 'בדוק ✓', onclick: () => check() });
-  const hintBtn = el('button', {
-    class: 'gx-btn gx-btn-ghost', text: '💡 רמז',
-    onclick: () => toast('הצב: <span style="direction:ltr;unicode-bidi:isolate;display:inline-block">' + step.hint + '</span>', 'info')
-  });
-  calc.append(el('div', { class: 'gx-row' }, [input, checkBtn, hintBtn]));
-  input.focus();
-  calc._input = input;
-
-  function check() {
-    const val = parseFloat(String(input.value).replace(',', '.'));
-    if (isNaN(val)) { toast('הקלד מספר', 'info'); return; }
-    if (Math.abs(val - step.ans) <= step.tol) {
-      input.classList.add('ok'); input.disabled = true;
-      score.add(12);
-      if (step.kind === 'fwd') {
-        setNodeClass(step.node, 'done');
-        ovalEls[step.node].textContent = 'O=' + step.O;
-        toast('✓ I' + sub(step.node) + '=' + step.ans + ' → O=σ(' + step.ans + ')=' + step.O, 'good');
-      } else if (step.kind === 'delta') {
-        toast('✓ Err' + sub(step.node) + ' = ' + step.ans, 'good');
-      } else {
-        toast('✓ נכון! ' + step.ans, 'good');
-      }
-      cur++;
-      if (cur >= STEPS.length) return finish();
-      setTimeout(renderStep, 650);
-    } else {
-      misses++; score.miss(); input.classList.add('bad'); shake(calc);
-      toast('✗ לא מדויק — נסה שוב או לחץ 💡', 'bad');
+// מנגנון צעדים משותף: רשימת {tmpl, hint, ans, tol, node, edges, onOK}
+function playSteps(host, ctx, cfg, steps, back) {
+  const pos = positions(cfg), eds = edges(cfg);
+  const done = new Set(), oval = new Map(), newW = new Map();
+  let cur = 0;
+  const netWrap = el('div', {}), calc = el('div', { class: 'gx-calc' });
+  host.append(el('p', { class: 'gx-panel', html: '<b>' + cfg.name + '</b>' }), netWrap, calc);
+  function render() {
+    netWrap.innerHTML = '';
+    const st = steps[cur];
+    drawNet(netWrap, cfg, pos, eds, { done, active: st ? st.node : null, oval, hot: new Set(st ? st.edges : []), back, newW });
+    if (!st) return;
+    calc.innerHTML = '';
+    calc.append(el('div', { class: 'lead', text: '🔹 ' + (cur + 1) + '/' + steps.length }), el('div', { class: 'expr', html: st.tmpl }));
+    const input = el('input', { class: 'gx-num-in', type: 'text', inputmode: 'decimal', placeholder: '?' });
+    input.addEventListener('keydown', e => { if (e.key === 'Enter') check(); });
+    function check() {
+      const v = parseFloat(String(input.value).replace(',', '.'));
+      if (isNaN(v)) { toast('הקלד מספר', 'info'); return; }
+      if (Math.abs(v - st.ans) <= st.tol) {
+        ctx.score.add(12); st.onOK && st.onOK({ done, oval, newW });
+        toast('✓ ' + st.ans, 'good'); cur++;
+        if (cur >= steps.length) { render(); setTimeout(ctx.done, 700); } else render();
+      } else { input.classList.add('bad'); ctx.score.miss(); ctx.addMiss(); shake(calc); toast('✗ נסה שוב או 💡', 'bad'); setTimeout(() => input.classList.remove('bad'), 500); }
     }
+    calc.append(el('div', { class: 'gx-row' }, [input,
+      el('button', { class: 'gx-btn gx-btn-primary', text: 'בדוק ✓', onclick: check }),
+      el('button', { class: 'gx-btn gx-btn-ghost', text: '💡 רמז', onclick: () => toast('הצב: <span style="direction:ltr;unicode-bidi:isolate;display:inline-block">' + st.hint + '</span>', 'info') })]));
+    input.focus();
   }
-}
-function sub(n) { return { 4: '₄', 5: '₅', 6: '₆' }[n] || n; }
-
-function finish() {
-  clearHot();
-  const stars = misses === 0 ? 3 : misses <= 3 ? 2 : 1;
-  document.getElementById('calc').innerHTML = '<div class="lead">🎉 סיימת מחזור אימון מלא!</div>';
-  winModal({
-    title: 'אימנת את הרשת! 🧠', stars, gameId: 'neuron',
-    html: '<p>הפלט היה <code>O₆=0.474</code> (מטרה 1). העדכונים: <code>w₄₆=−0.261</code>, <code>w₁₄=0.192</code>, <code>θ₆=0.218</code>.</p>' +
-          '<p style="font-size:14px;color:#5b6478">שאר המשקולות: w₅₆=−0.138, w₃₄=−0.508, w₃₅=0.194, w₁₅=−0.306 · w₂₄,w₂₅ ללא שינוי (x₂=0).</p>' +
-          '<p>ניקוד: <b>' + score.score + '</b></p>'
-  });
+  render();
 }
 
-function restart() { STEPS = makeSteps(); cur = 0; misses = 0; score.reset(); drawNet(); renderStep(); }
-document.getElementById('restart').addEventListener('click', restart);
-drawNet(); renderStep();
+// ---------- רמה 1: Forward ----------
+function roundForward(cfgId) {
+  const cfg = C(cfgId), sol = nnSolve(cfg);
+  return {
+    title: 'Forward · ' + cfg.name, data: cfg, play(host, ctx) {
+      const steps = [];
+      cfg.b1.forEach((_, j) => steps.push({
+        node: 'h' + j, edges: cfg.x.map((_, i) => 'i' + i + '-h' + j), tol: 0.02, ans: round4(sol.Ih[j]),
+        tmpl: 'I(' + cfg.hidLabels[j] + ') = Σ wᵢ·xᵢ + θ', hint: cfg.W1[j].map((w, i) => fmt(w) + '·' + cfg.x[i]).join(' + ') + ' + ' + fmt(cfg.b1[j]),
+        onOK: s => { s.done.add('h' + j); s.oval.set('h' + j, round4(sol.Oh[j])); }
+      }));
+      cfg.b2.forEach((_, k) => steps.push({
+        node: 'o' + k, edges: cfg.b1.map((_, j) => 'h' + j + '-o' + k), tol: 0.02, ans: round4(sol.Io[k]),
+        tmpl: 'I(' + cfg.outLabels[k] + ') = Σ wⱼ·Oⱼ + θ', hint: cfg.W2[k].map((w, j) => fmt(w) + '·' + round4(sol.Oh[j])).join(' + ') + ' + ' + fmt(cfg.b2[k]),
+        onOK: s => { s.done.add('o' + k); s.oval.set('o' + k, round4(sol.Oo[k])); }
+      }));
+      playSteps(host, ctx, cfg, steps, false);
+    }
+  };
+}
+
+// ---------- רמה 2: שגיאות ----------
+function roundErrors(cfgId) {
+  const cfg = C(cfgId), sol = nnSolve(cfg);
+  return {
+    title: 'Backprop · שגיאות', data: cfg, play(host, ctx) {
+      const steps = [];
+      cfg.b2.forEach((_, k) => steps.push({
+        node: 'o' + k, edges: cfg.b1.map((_, j) => 'h' + j + '-o' + k), tol: 0.0015, ans: round4(sol.Eo[k]),
+        tmpl: 'Err(' + cfg.outLabels[k] + ') = O·(1−O)·(t−O)', hint: round4(sol.Oo[k]) + '·' + round4(1 - sol.Oo[k]) + '·(' + cfg.target[k] + '−' + round4(sol.Oo[k]) + ')',
+        onOK: s => s.done.add('o' + k)
+      }));
+      cfg.b1.forEach((_, j) => steps.push({
+        node: 'h' + j, edges: cfg.b2.map((_, k) => 'h' + j + '-o' + k), tol: 0.0015, ans: round4(sol.Eh[j]),
+        tmpl: 'Err(' + cfg.hidLabels[j] + ') = O·(1−O)·Σ(Errₖ·wⱼₖ)', hint: round4(sol.Oh[j]) + '·' + round4(1 - sol.Oh[j]) + '·(' + cfg.b2.map((_, k) => round4(sol.Eo[k]) + '·' + fmt(cfg.W2[k][j])).join('+') + ')',
+        onOK: s => s.done.add('h' + j)
+      }));
+      playSteps(host, ctx, cfg, steps, true);
+    }
+  };
+}
+
+// ---------- רמה 3: עדכון משקולות ----------
+function roundUpdates(cfgId) {
+  const cfg = C(cfgId), sol = nnSolve(cfg);
+  return {
+    title: 'עדכון משקולות · LR=' + cfg.lr, data: cfg, play(host, ctx) {
+      const steps = [];
+      // עדכן משקל פלט אחד
+      steps.push({ node: 'o0', edges: ['h0-o0'], tol: 0.003, ans: round4(sol.W2n[0][0]),
+        tmpl: 'w(' + cfg.hidLabels[0] + '→' + cfg.outLabels[0] + ')(חדש) = w + LR·Errₒ·O', hint: fmt(cfg.W2[0][0]) + ' + ' + cfg.lr + '·' + round4(sol.Eo[0]) + '·' + round4(sol.Oh[0]),
+        onOK: s => s.newW.set('h0-o0', round4(sol.W2n[0][0])) });
+      // עדכן משקל קלט אחד
+      steps.push({ node: 'h0', edges: ['i0-h0'], tol: 0.003, ans: round4(sol.W1n[0][0]),
+        tmpl: 'w(x₁→' + cfg.hidLabels[0] + ')(חדש) = w + LR·Err_h·x₁', hint: fmt(cfg.W1[0][0]) + ' + ' + cfg.lr + '·' + round4(sol.Eh[0]) + '·' + cfg.x[0],
+        onOK: s => s.newW.set('i0-h0', round4(sol.W1n[0][0])) });
+      // עדכן הטיה
+      steps.push({ node: 'o0', edges: [], tol: 0.003, ans: round4(sol.b2n[0]),
+        tmpl: 'θ(' + cfg.outLabels[0] + ')(חדש) = θ + LR·Errₒ', hint: fmt(cfg.b2[0]) + ' + ' + cfg.lr + '·' + round4(sol.Eo[0]) });
+      playSteps(host, ctx, cfg, steps, true);
+    }
+  };
+}
+
+function round4(n) { return Math.round(n * 10000) / 10000; }
+
+runLevels({
+  gameId: 'neuron',
+  levels: [
+    { key: '1', name: 'Forward', badge: 'יסוד', desc: 'חשב net ו-σ לכל צומת', rounds: [roundForward('aima')] },
+    { key: '2', name: 'Backprop — שגיאות', badge: 'תרגול', desc: 'Err בפלט ובשכבה הנסתרת', rounds: [roundErrors('aima')] },
+    { key: '3', name: 'עדכון + רשת חדשה', badge: 'אתגר', desc: 'עדכוני משקל, ואז רשת שנייה', rounds: [roundUpdates('aima'), roundForward('small')] }
+  ]
+});
 </script>
 </body>
 </html>
