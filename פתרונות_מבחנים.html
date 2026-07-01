@@ -67,7 +67,7 @@ flowchart TD
 
   <h3>שאלה 1 — חיפוש (BFS/IDS/A*, קבילות)</h3>
   <p><span class="badge">חישובי</span> גרף עם 3 יעדים. <strong>שיטה:</strong> לכל אלגוריתם בנה טבלת מעקב תור (FIFO ל-BFS, עומק גדל ל-IDS, <span class="math">f=g+h</span> ל-A*), מבחן יעד בהוצאה, שובר שוויון אלפביתי. דווח את היעד שהושג ואת סדר הפיתוח. לבדיקת קבילות: ודא <span class="math">h(n)≤h*(n)</span> בכל צומת. <strong>דוגמה מלאה זהה:</strong> <a href="01_חיפוש_לא_מיודע.html">חיפוש לא-מיודע</a> + <a href="02_חיפוש_מיודע.html">A* וקבילות</a>.</p>
-  <div class="box tip"><p class="box-title"><span class="ico">▶</span> הרצה אינטראקטיבית — טבלת התור (גרף לדוגמה)</p><p style="margin:0">בחרו אלגוריתם וצעדו כדי לראות איך בונים את <b>טבלת המעקב</b> — בדיוק מה שצריך לעשות בכל שאלת חיפוש במבחן.</p></div>
+  <div class="box tip"><p class="box-title"><span class="ico">▶</span> הרצה אינטראקטיבית — הגרף המדויק של שאלה 1 (3 יעדים)</p><p style="margin:0">הגרף המכוון מהמבחן (S ועד G1/G2/G3, עם ה-<span class="math">h</span> למטרה הקרובה). בחרו אלגוריתם וצעדו כדי לראות את <b>טבלת המעקב</b> ולאיזה יעד כל אלגוריתם מגיע. שימו לב: ה-<span class="math">h</span> <b>לא-קביל</b> — לכן Greedy/A* עלולים להחזיר יעד לא-אופטימלי (בדיוק הלקח של השאלה).</p></div>
   <div class="gx-player" id="m-search"></div>
 
   <h3>שאלה 2 — משחק Nim ופתולוגיה</h3>
@@ -195,12 +195,12 @@ flowchart TD
   mermaid.initialize({ startOnLoad: true, theme: 'neutral', securityLevel: 'loose', flowchart: { htmlLabels: true, curve: 'basis' }, themeVariables: { fontFamily: 'Segoe UI, Arial, sans-serif', fontSize: '15px' } });
 </script>
 <script type="module">
-  import { EX_COMPARE, EX_ID3, EX_MINIMAX, GT_MATRICES } from './games-data.js';
+  import { EX_SEARCH_MULTI, EX_ID3, SAMPLE_MINIMAX, GT_MATRICES } from './games-data.js';
   import { searchTreePlayer, id3Player, minimaxPlayer, nashPlayer } from './games-player.js';
-  searchTreePlayer(document.getElementById('m-search'), EX_COMPARE, ['BFS', 'UCS', 'Greedy', 'A*']);
+  searchTreePlayer(document.getElementById('m-search'), EX_SEARCH_MULTI, ['BFS', 'UCS', 'Greedy', 'A*']);
   id3Player(document.getElementById('m-id3'), EX_ID3);
   nashPlayer(document.getElementById('m-nash'), GT_MATRICES.chicken);
-  minimaxPlayer(document.getElementById('m-minimax'), EX_MINIMAX);
+  minimaxPlayer(document.getElementById('m-minimax'), SAMPLE_MINIMAX);
 </script>
 </body>
 </html>

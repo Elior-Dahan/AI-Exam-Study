@@ -81,7 +81,8 @@ export function idsSteps(graph) {
 // חיפוש מבוסס-מסלולים (tree-search): frontier של מסלולים, goal-test בהוצאה, מניעת מעגלים.
 // משחזר את מוסכמות התרגילים ("תור עדיפויות של מסלולים"). תומך בגרף מכוון.
 export function searchTreeSteps(graph, algo) {
-  const adj = adjacency(graph), start = graph.start, goal = graph.goal, h = graph.h || {};
+  const adj = adjacency(graph), start = graph.start, h = graph.h || {};
+  const goals = graph.goals || [graph.goal], isGoal = n => goals.includes(n);
   const fval = it => algo === 'UCS' ? it.g : algo === 'Greedy' ? h[it.node] : algo === 'A*' ? it.g + h[it.node] : it.g;
   let seq = 0;
   const mk = (path, g, node) => { const it = { path, g, node, seq: seq++ }; it.f = fval(it); return it; };
@@ -102,7 +103,7 @@ export function searchTreeSteps(graph, algo) {
     const idx = pick(), cur = frontier[idx];
     steps.push({ frontier: snap, pick: idx, expand: cur.node, path: cur.path.slice(), g: cur.g, f: cur.f });
     frontier.splice(idx, 1);
-    if (cur.node === goal) { goalPath = cur.path.slice(); cost = cur.g; break; }
+    if (isGoal(cur.node)) { goalPath = cur.path.slice(); cost = cur.g; break; }
     for (const [nb, w] of adj[cur.node]) {
       if (cur.path.includes(nb)) continue;
       frontier.push(mk([...cur.path, nb], cur.g + w, nb));
@@ -135,34 +136,41 @@ export function isAdmissible(graph, hTable) {
    ============================================================ */
 export function minimaxSolve(tree) {
   const rootMax = tree.root !== 'MIN';
+  // ממירים את העץ (מערכים מקוננים בכל עומק) לעץ-אובייקטים עם אינדקס-עלה יציב (שמאל→ימין).
+  let li = 0;
+  function build(node, isMax) {
+    if (!Array.isArray(node)) return { leaf: true, value: node, idx: li++ };
+    return { leaf: false, isMax, children: node.map(ch => build(ch, !isMax)) };
+  }
+  const root = build(tree.t, rootMax);
   const leafValues = [];
-  (function seq(n) { Array.isArray(n) ? n.forEach(seq) : leafValues.push(n); })(tree.t);
-
-  function mm(node, isMax) {
-    if (!Array.isArray(node)) return node;
-    const vals = node.map(ch => mm(ch, !isMax));
-    return isMax ? Math.max(...vals) : Math.min(...vals);
+  (function collect(n) { n.leaf ? leafValues.push(n.value) : n.children.forEach(collect); })(root);
+  const evalNode = n => n.leaf ? n.value : (n.isMax ? Math.max : Math.min)(...n.children.map(evalNode));
+  const rootValue = evalNode(root);
+  const allLeafIdx = (n, acc) => { n.leaf ? acc.push(n.idx) : n.children.forEach(ch => allLeafIdx(ch, acc)); return acc; };
+  // Alpha-Beta בכיוון נתון (reverse=מימין לשמאל). מחזיר את אינדקסי-העלים הנגזמים (במספור שמאל→ימין).
+  function abDir(reverse) {
+    const pruned = [];
+    (function ab(n, alpha, beta) {
+      if (n.leaf) return n.value;
+      let best = n.isMax ? -Infinity : Infinity;
+      const kids = reverse ? [...n.children].reverse() : n.children;
+      for (let k = 0; k < kids.length; k++) {
+        const v = ab(kids[k], alpha, beta);
+        if (n.isMax) { best = Math.max(best, v); alpha = Math.max(alpha, v); }
+        else { best = Math.min(best, v); beta = Math.min(beta, v); }
+        if (alpha >= beta) { for (let j = k + 1; j < kids.length; j++) allLeafIdx(kids[j], pruned); break; }
+      }
+      return best;
+    })(root, -Infinity, Infinity);
+    return pruned.sort((a, b) => a - b);
   }
-  let li = 0; const pruned = [];
-  function markLeaves(node) { if (!Array.isArray(node)) { pruned.push(li); li++; } else node.forEach(markLeaves); }
-  function ab(node, isMax, alpha, beta) {
-    if (!Array.isArray(node)) { li++; return node; }
-    let best = isMax ? -Infinity : Infinity;
-    for (let k = 0; k < node.length; k++) {
-      const v = ab(node[k], !isMax, alpha, beta);
-      if (isMax) { best = Math.max(best, v); alpha = Math.max(alpha, v); }
-      else { best = Math.min(best, v); beta = Math.min(beta, v); }
-      if (alpha >= beta) { for (let j = k + 1; j < node.length; j++) markLeaves(node[j]); break; }
-    }
-    return best;
-  }
-  const rootValue = mm(tree.t, rootMax);
-  li = 0; ab(tree.t, rootMax, -Infinity, Infinity);
-  const childVals = tree.t.map(ch => mm(ch, !rootMax));
+  const prunedLTR = abDir(false), prunedRTL = abDir(true);
+  const childVals = root.children.map(evalNode);
   const bestChild = rootMax
     ? childVals.indexOf(Math.max(...childVals))
     : childVals.indexOf(Math.min(...childVals));
-  return { rootValue, childVals, prunedLeafIndices: pruned, leafValues, bestChild, rootMax };
+  return { rootValue, childVals, prunedLeafIndices: prunedLTR, prunedLeafIndicesLTR: prunedLTR, prunedLeafIndicesRTL: prunedRTL, leafValues, bestChild, rootMax };
 }
 
 /* ============================================================

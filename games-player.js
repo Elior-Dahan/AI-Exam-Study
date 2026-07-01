@@ -9,7 +9,7 @@ import { searchTreeSteps, minimaxSolve, id3Solve, matrixSolve } from './games-en
 function layoutTreeP(tree) {
   let leafCount = 0; (function c(n) { Array.isArray(n) ? n.forEach(c) : leafCount++; })(tree.t);
   let maxDepth = 0; (function d(n, dep) { maxDepth = Math.max(maxDepth, dep); if (Array.isArray(n)) n.forEach(ch => d(ch, dep + 1)); })(tree.t, 0);
-  const W = Math.max(360, leafCount * 66), xStep = leafCount > 1 ? (W - 80) / (leafCount - 1) : 0, yStep = 84;
+  const W = Math.max(360, leafCount * 48), xStep = leafCount > 1 ? (W - 80) / (leafCount - 1) : 0, yStep = 84;
   const nodes = [], edges = []; let leafX = 0, idc = 0;
   const val = (node, isMax) => !Array.isArray(node) ? node : (isMax ? Math.max : Math.min)(...node.map(ch => val(ch, !isMax)));
   function rec(node, depth, isMax) {
@@ -24,7 +24,10 @@ function layoutTreeP(tree) {
 }
 function drawTreeP(host, nodes, edges, W, state) {
   const maxY = Math.max(...nodes.map(n => n.y)) + 44;
-  const s = svg('svg', { class: 'gx-tree', viewBox: '0 0 ' + (W + 20) + ' ' + maxY, style: { maxWidth: (W + 20) + 'px', width: '100%', display: 'block', margin: '0 auto' } });
+  // עצים רחבים (עומק 3, 27 עלים) — רוחב טבעי + גלילה אופקית; עצים צרים — מתאימים לרוחב הזמין.
+  // (svg() לא תומך ב-style כאובייקט — לכן width/height כמאפיינים + מחלקת-CSS.)
+  const wide = W > 680;
+  const s = svg('svg', { class: 'gx-tree gx-tree-p' + (wide ? ' wide' : ''), viewBox: '0 0 ' + (W + 20) + ' ' + maxY, width: W + 20, height: maxY });
   edges.forEach(([p, c]) => s.appendChild(svg('line', { x1: p.x, y1: p.y, x2: c.x, y2: c.y, class: 't-edge' })));
   nodes.forEach(n => {
     if (n.isLeaf) {
@@ -137,7 +140,7 @@ export function searchTreePlayer(host, graph, algos) {
         const showVal = fr => algo === 'A*' ? fr.f : algo === 'Greedy' ? graph.h[fr.node] : fr.g;
         const valName = algo === 'A*' ? 'f' : algo === 'Greedy' ? 'h' : algo === 'UCS' ? 'g' : 'עומק';
         const chosen = step.path.join('→');
-        const isGoal = step.expand === graph.goal;
+        const isGoal = (graph.goals || [graph.goal]).includes(step.expand);
         explain.appendChild(el('p', { class: 'gx-prompt', html: isGoal
           ? '🎯 מוציאים את <b style="direction:ltr;unicode-bidi:isolate;display:inline-block">' + chosen + '</b> — <b>זהו היעד!</b> עלות סופית ' + step.g + '.'
           : 'מוציאים את המסלול ' + (algo === 'BFS' || algo === 'DFS' ? '(' + (algo === 'BFS' ? 'הראשון בתור' : 'האחרון שנכנס') + ')' : 'בעל ' + valName + ' המינימלי') + ': <b style="direction:ltr;unicode-bidi:isolate;display:inline-block">' + chosen + '</b> → מרחיבים את <b>' + step.expand + '</b> ומוסיפים את שכניו.' }));
@@ -158,22 +161,26 @@ export function searchTreePlayer(host, graph, algos) {
 export function minimaxPlayer(host, tree) {
   const { nodes, edges, W } = layoutTreeP(tree), sol = minimaxSolve(tree);
   const leaves = nodes.filter(n => n.isLeaf);
-  const pruned = new Set(sol.prunedLeafIndices.map(i => leaves[i]));
+  const prunedLTR = new Set(sol.prunedLeafIndices.map(i => leaves[i]));
+  const prunedRTL = new Set((sol.prunedLeafIndicesRTL || sol.prunedLeafIndices).map(i => leaves[i]));
   const internal = nodes.filter(n => !n.isLeaf).sort((a, b) => b.depth - a.depth || a.x - b.x);
+  const allFilled = new Map(); internal.forEach(n => allFilled.set(n.id, n.value));
   stepController(host, {
     title: 'עץ מינימקס · שורש ' + (sol.rootMax ? 'MAX' : 'MIN') + ' = ' + sol.rootValue,
-    total: internal.length + 1,
+    total: internal.length + 2,
     renderStep: (i, viz, explain) => {
       viz.innerHTML = ''; explain.innerHTML = '';
-      const filled = new Map();
-      internal.slice(0, Math.min(i, internal.length)).forEach(n => filled.set(n.id, n.value));
-      const showPrune = i >= internal.length;
-      drawTreeP(viz, nodes, edges, W, { filled, highlight: showPrune ? null : internal[i].id, markPruned: showPrune ? pruned : new Set() });
-      if (!showPrune) {
+      const pruneStep = i - internal.length; // <0 = חשיפת ערכים · 0 = גיזום שמאל→ימין · 1 = ימין→שמאל
+      if (pruneStep < 0) {
+        const filled = new Map();
+        internal.slice(0, i).forEach(n => filled.set(n.id, n.value));
+        drawTreeP(viz, nodes, edges, W, { filled, highlight: internal[i].id, markPruned: new Set() });
         const cur = internal[i], cv = cur.children.map(c => c.value);
         explain.appendChild(el('p', { class: 'gx-prompt', html: 'צומת <b style="color:' + (cur.type === 'MAX' ? '#1b7f5a' : '#b23b3b') + '">' + cur.type + '</b>: ' + (cur.type === 'MAX' ? 'max' : 'min') + '(' + cv.join(', ') + ') = <b>' + cur.value + '</b>' }));
       } else {
-        explain.appendChild(el('p', { class: 'gx-prompt', html: '🎯 ערך השורש = <b>' + sol.rootValue + '</b> · המהלך הנבחר: <b>ענף ' + (sol.bestChild + 1) + '</b>. גיזום Alpha-Beta חוסך ' + pruned.size + ' עלים (מסומנים ✂) — הערך <b>לא</b> משתנה.' }));
+        const rtl = pruneStep === 1, pset = rtl ? prunedRTL : prunedLTR;
+        drawTreeP(viz, nodes, edges, W, { filled: allFilled, highlight: null, markPruned: pset });
+        explain.appendChild(el('p', { class: 'gx-prompt', html: '✂ <b>גיזום Alpha-Beta — ' + (rtl ? 'מימין לשמאל (סעיף 2)' : 'משמאל לימין (סעיף 1)') + '</b>: נגזמים <b>' + pset.size + '</b> עלים. ערך השורש = <b>' + sol.rootValue + '</b> · המהלך הנבחר: <b>ענף ' + (sol.bestChild + 1) + '</b> — <b>זהה</b> בשני הכיוונים; רק כמות הגיזום משתנה.' }));
       }
     }
   });

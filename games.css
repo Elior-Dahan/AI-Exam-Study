@@ -172,6 +172,9 @@
 .gx-tree .t-attr{fill:#eef2ff;stroke:#27408b;stroke-width:2.5}
 .gx-tree .t-pending{fill:#f4f6fb;stroke:#c2c9da;stroke-width:2;stroke-dasharray:4 3}
 .gx-tree .t-branch{fill:#5b6478;font-family:Segoe UI,Arial;font-weight:600;font-size:12.5px}
+/* עצי-נגן: צרים מתאימים לרוחב; רחבים (עומק 3, 27 עלים) בגודל טבעי + גלילה אופקית ב-.gx-player-viz */
+.gx-tree-p{max-width:100%;height:auto}
+.gx-tree-p.wide{max-width:none}
 
 /* עמודות Information Gain */
 .gx-ig-bar{display:flex;align-items:center;gap:8px;margin:5px 0;max-width:440px}
@@ -218,7 +221,7 @@
    ============================================================ */
 .gx-player{background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);padding:14px 16px;margin:10px 0}
 .gx-player-head{text-align:center;font-weight:800;color:var(--primary);font-size:16px;margin-bottom:8px}
-.gx-player-viz{min-height:60px}
+.gx-player-viz{min-height:60px;overflow-x:auto}
 .gx-player-explain{background:var(--primary-soft);border:1px solid #d6deff;border-radius:12px;padding:10px 14px;margin:10px 0}
 .gx-player-explain .gx-prompt{margin:0 0 6px;font-size:15.5px}
 .gx-player-ctrls{display:flex;gap:10px;justify-content:center;align-items:center;flex-wrap:wrap;margin-top:6px}
