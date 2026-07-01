@@ -324,6 +324,68 @@ export function candidateElim(ds) {
 }
 
 /* ============================================================
+   4b. Version Space מבוסס-היררכיית-מושגים (רב-ממדי)
+   כל ממד = עץ; מושג = צמת אחד לכל ממד; "מכסה" = הצמת הוא אב-קדמון (או שווה) של עלה-הדוגמה.
+   ============================================================ */
+export function hierarchyVS(problem) {
+  const dims = problem.dims; // [{name, tree}]
+  // מטא לכל ממד: הורה, ילדים, ומסלול-אבות (עלה→שורש)
+  const meta = dims.map(d => {
+    const parent = {}, childrenOf = {}, order = [];
+    (function walk(node, par) { parent[node.name] = par; childrenOf[node.name] = (node.children || []).map(c => c.name); order.push(node.name); (node.children || []).forEach(c => walk(c, node.name)); })(d.tree, null);
+    const ancestors = name => { const a = []; let x = name; while (x != null) { a.push(x); x = parent[x]; } return a; }; // כולל את הצמת עצמו
+    return { root: d.tree.name, parent, childrenOf, ancestors, order };
+  });
+  const ROOT = meta.map(m => m.root);
+  const key = c => c.join('|');
+  const covers = (concept, inst) => concept.every((node, i) => node != null && meta[i].ancestors(inst[i]).includes(node));
+  const geq = (a, b) => a.every((na, i) => meta[i].ancestors(b[i]).includes(na)); // a כללי-או-שווה ל-b (בכל ממד na אב-קדמון-או-שווה של b[i])
+  const lca = (i, node, leaf) => { let x = node; const anc = meta[i].ancestors(leaf); while (x != null && !anc.includes(x)) x = meta[i].parent[x]; return x; };
+  const uniq = arr => { const seen = new Set(), out = []; for (const c of arr) { const k = key(c); if (!seen.has(k)) { seen.add(k); out.push(c); } } return out; };
+
+  let S = [], G = [ROOT.slice()], sInit = false;
+  const steps = [{ idx: -1, inst: null, pos: null, S: [], G: G.map(c => c.slice()), actions: ['התחלה: G = [' + ROOT.join(', ') + '] (הכללי ביותר), S = ∅ (טרם ראינו דוגמה חיובית)'] }];
+  problem.examples.forEach((ex, idx) => {
+    const inst = ex.v, pos = ex.label === 1, actions = [];
+    if (pos) {
+      const gBefore = G.length;
+      G = G.filter(g => covers(g, inst));
+      if (gBefore !== G.length) actions.push('הסרנו מ-G השערות שאינן מכסות את הדוגמה החיובית');
+      if (!sInit) { S = [inst.slice()]; sInit = true; actions.push('אתחול S = [' + inst.join(', ') + '] (הדוגמה החיובית הראשונה)'); }
+      else {
+        const newS = [];
+        for (const s of S) {
+          if (covers(s, inst)) { newS.push(s); continue; }
+          const g2 = s.map((node, i) => lca(i, node, inst[i]));
+          if (G.some(gg => geq(gg, g2))) { newS.push(g2); actions.push('הכללת S: [' + s.join(', ') + '] → [' + g2.join(', ') + ']'); }
+        }
+        S = uniq(newS).filter((s, i, a) => !a.some((s2, j) => j !== i && geq(s, s2) && key(s) !== key(s2)));
+      }
+    } else {
+      const sBefore = S.length;
+      S = S.filter(s => !covers(s, inst));
+      if (sBefore !== S.length) actions.push('הסרנו מ-S השערות שמכסות דוגמה שלילית');
+      const newG = [];
+      for (const g of G) {
+        if (!covers(g, inst)) { newG.push(g); continue; }
+        for (let i = 0; i < g.length; i++) {
+          for (const c of (meta[i].childrenOf[g[i]] || [])) {
+            const excludesNeg = !meta[i].ancestors(inst[i]).includes(c);
+            const spec = g.slice(); spec[i] = c;
+            const coversAllS = S.length ? S.every(s => geq(spec, s)) : true;
+            if (excludesNeg && coversAllS) { newG.push(spec); actions.push('צמצום G: [' + g.join(', ') + '] → [' + spec.join(', ') + ']'); }
+          }
+        }
+      }
+      G = uniq(newG).filter((g, i, a) => !a.some((g2, j) => j !== i && geq(g2, g) && key(g2) !== key(g)));
+    }
+    steps.push({ idx, inst: inst.slice(), pos, S: S.map(c => c.slice()), G: G.map(c => c.slice()), actions });
+  });
+  const converged = S.length === 1 && G.length === 1 && key(S[0]) === key(G[0]);
+  return { steps, S, G, converged, concept: converged ? S[0] : null, dims, ROOT };
+}
+
+/* ============================================================
    5. מנוע הרמות
    ============================================================ */
 export function runLevels(cfg) {

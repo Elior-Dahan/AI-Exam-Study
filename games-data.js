@@ -350,3 +350,59 @@ export const EX_RIVER = {
     { s: ['R', 'R', 'R', 'R'], action: 'האיכר לוקח את האווז ימינה — יעד! ✓' }
   ]
 };
+
+// ============================================================
+// תרגיל למידת מושג (Version Space מבוסס-היררכיה) — מתוך "למידת מושג.pdf"
+// ============================================================
+
+// שאלה 1 — היררכיית צבעים. דוגמאות: red+ , purple− , blue+  →  מתכנס ל-mono
+export const VS_HIER_COLOR = {
+  id: 'vscolor', name: 'שאלה 1 — צבעים',
+  dims: [{
+    name: 'צבע',
+    tree: {
+      name: '?', children: [
+        { name: 'mono', children: [{ name: 'blue' }, { name: 'green' }, { name: 'red' }] },
+        { name: 'poly', children: [{ name: 'orange' }, { name: 'purple' }] }
+      ]
+    }
+  }],
+  examples: [
+    { v: ['red'], label: 1 },
+    { v: ['purple'], label: 0 },
+    { v: ['blue'], label: 1 }
+  ],
+  answer: 'mono'
+};
+
+// שאלה 2 — קלפים (ערך × סוג). דוגמאות: 7♦+ , A♣− , Q♥− , 9♥+ , 8♣−  →  מתכנס ל-[Number, Red]
+export const VS_HIER_CARD = {
+  id: 'vscard', name: 'שאלה 2 — קלפים',
+  dims: [
+    {
+      name: 'ערך', tree: {
+        name: '?', children: [
+          { name: 'Ace' },
+          { name: 'Number', children: [{ name: '7' }, { name: '8' }, { name: '9' }, { name: '10' }] },
+          { name: 'Picture', children: [{ name: 'J' }, { name: 'Q' }, { name: 'K' }] }
+        ]
+      }
+    },
+    {
+      name: 'סוג', tree: {
+        name: '?', children: [
+          { name: 'Black', children: [{ name: 'Clubs' }, { name: 'Spades' }] },
+          { name: 'Red', children: [{ name: 'Diamonds' }, { name: 'Hearts' }] }
+        ]
+      }
+    }
+  ],
+  examples: [
+    { v: ['7', 'Diamonds'], label: 1 },
+    { v: ['Ace', 'Clubs'], label: 0 },
+    { v: ['Q', 'Hearts'], label: 0 },
+    { v: ['9', 'Hearts'], label: 1 },
+    { v: ['8', 'Clubs'], label: 0 }
+  ],
+  answer: 'Number , Red'
+};

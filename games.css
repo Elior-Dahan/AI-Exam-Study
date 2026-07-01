@@ -241,6 +241,32 @@
 .gx-water{width:70px;position:relative;background:repeating-linear-gradient(180deg,#dbeafe,#dbeafe 8px,#bfdbfe 8px,#bfdbfe 16px);border-radius:8px;margin:0 4px}
 .gx-boat{position:absolute;left:50%;transform:translateX(-50%);font-size:30px;transition:top .5s ease}
 
+/* נגן למידת-מושג (Version Space מבוסס-היררכיה) */
+.gx-vs-ex{text-align:center;margin-bottom:8px}
+.gx-vs-chip{display:inline-block;padding:3px 12px;border-radius:999px;font-weight:800;font-size:13px}
+.gx-vs-chip.pos{background:var(--ok-soft);color:#14603f}
+.gx-vs-chip.neg{background:var(--warn-soft);color:#b23b3b}
+.gx-vs-chip.start{background:#eef2ff;color:var(--muted)}
+.gx-vs-inst{margin-right:9px;font-weight:800;font-size:15px;color:#1f2533}
+.gx-hier-panels{display:flex;flex-direction:column;gap:12px}
+.gx-hier-wrap{text-align:center}
+.gx-hier-dim{font-weight:800;color:var(--muted);font-size:12.5px;margin-bottom:2px}
+.gx-hier{max-width:100%;height:auto;display:block;margin:0 auto}
+.gx-vs-act{font-size:14.5px;margin:3px 0;font-family:Consolas,monospace;direction:ltr;text-align:right}
+.gx-vs-bounds{margin-top:8px;font-size:14px;display:flex;flex-direction:column;gap:3px}
+.gx-vs-bounds .sb{color:#14603f}
+.gx-vs-bounds .gb{color:var(--primary)}
+.gx-vs-done{margin-top:8px;background:var(--ok-soft);border:1px solid var(--ok);border-radius:10px;padding:8px 12px;font-weight:700;color:#14603f;text-align:center}
+.gx-vs-hist{margin-top:10px;max-height:180px;overflow-y:auto;border-top:1px dashed var(--line);padding-top:8px}
+.gx-vs-hist-title{font-weight:800;font-size:13px;color:var(--muted);margin-bottom:5px}
+.gx-vs-hrow{font-size:12.5px;padding:4px 7px;border-radius:7px;margin:2px 0;background:#f7f9fc;border:1px solid #eef1f6}
+.gx-vs-hrow.pos{border-right:3px solid var(--ok)}
+.gx-vs-hrow.neg{border-right:3px solid var(--warn)}
+.gx-vs-hrow.cur{background:var(--primary-soft);border-color:#c7d2f5;font-weight:600}
+.gx-vs-hrow .b{font-size:12px}
+.gx-vs-hrow .a{color:#5b6478;margin:0 4px}
+.gx-vs-hrow .sg{display:block;color:#8a93a6;font-size:11.5px;direction:ltr;text-align:right;margin-top:1px}
+
 @media(max-width:560px){
   .gx-num{font-size:20px}
   .gx-matrix td,.gx-matrix th{padding:10px 12px;font-size:15px}

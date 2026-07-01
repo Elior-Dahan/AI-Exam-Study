@@ -14,7 +14,8 @@
   <span class="sep">|</span>
   <a href="#t1">תרגיל 1</a><span class="sep">·</span>
   <a href="#t2">תרגיל 2</a><span class="sep">·</span>
-  <a href="#t3">תרגיל עץ החלטה</a>
+  <a href="#t3">עץ החלטה</a><span class="sep">·</span>
+  <a href="#tvs">למידת מושג</a>
 </div></div>
 
 <div class="wrap">
@@ -157,6 +158,38 @@ flowchart TD
   <div class="box tip"><p class="box-title"><span class="ico">▶</span> הרצה אינטראקטיבית — בניית העץ</p><p style="margin:0">צעדו כדי לראות את ID3 בוחר בכל צומת את התכונה עם ה-IG הגבוה (עמודות), והעץ גדל.</p></div>
   <div class="gx-player" id="player-id3"></div>
 
+  <!-- ============ תרגיל למידת מושג (Version Space) ============ -->
+  <h2 id="tvs">תרגיל למידת מושג — Version Space</h2>
+  <p>אלגוריתם <strong>Candidate-Elimination</strong> על <strong>היררכיית מושגים</strong>: מנהלים שני גבולות — <strong style="color:#14603f">S</strong> (הגבול הספציפי, "עולה" בהכללה בעקבות דוגמאות <span style="color:#14603f">חיוביות</span>) ו-<strong style="color:var(--primary)">G</strong> (הגבול הכללי, "יורד" בצמצום בעקבות דוגמאות <span style="color:#b23b3b">שליליות</span>). מרחב הגרסאות = כל המושגים שבין S ל-G. כשהם מתלכדים — נלמד המושג.</p>
+
+  <h3>שאלה 1 — היררכיית צבעים</h3>
+  <p><strong>ההיררכיה:</strong> <code>? → mono{blue, green, red} · poly{orange, purple}</code>. <strong>דוגמאות:</strong> <span style="color:#14603f">red +</span>, <span style="color:#b23b3b">purple −</span>, <span style="color:#14603f">blue +</span>.</p>
+  <div class="box example"><p class="box-title"><span class="ico">🧩</span> תמצית הפתרון</p>
+    <ul class="clean" style="margin:0">
+      <li><code>red +</code> → S=[red], G=[?].</li>
+      <li><code>purple −</code> → G יורד ל-[<strong>mono</strong>] (poly מכסה את purple ולכן נפסל).</li>
+      <li><code>blue +</code> → S עולה ל-[<strong>mono</strong>] (האב המשותף של red ו-blue).</li>
+      <li><strong>מתכנס: המושג = <span class="good">mono</span></strong> (צבעים חד-גוניים).</li>
+    </ul>
+  </div>
+  <div class="box tip"><p class="box-title"><span class="ico">▶</span> הרצה אינטראקטיבית — S/G על עץ ההיררכיה</p><p style="margin:0">צעדו בדוגמאות ותראו את <b style="color:#14603f">S</b> (ירוק) עולה ואת <b style="color:var(--primary)">G</b> (כחול) יורד — ה"חלון" בין הגבולות מצטמצם עד להתכנסות. למטה: היסטוריית כל צעד.</p></div>
+  <div class="gx-player" id="player-vs-color"></div>
+
+  <h3>שאלה 2 — היררכיית קלפים (ערך × סוג)</h3>
+  <p><strong>שתי היררכיות:</strong> ערך <code>? → Ace · Number{7,8,9,10} · Picture{J,Q,K}</code>, סוג <code>? → Black{Clubs,Spades} · Red{Diamonds,Hearts}</code>. מושג = זוג <code>[ערך, סוג]</code>. <strong>דוגמאות:</strong> <span style="color:#14603f">7♦ +</span>, <span style="color:#b23b3b">A♣ −</span>, <span style="color:#b23b3b">Q♥ −</span>, <span style="color:#14603f">9♥ +</span>, <span style="color:#b23b3b">8♣ −</span>.</p>
+  <div class="box example"><p class="box-title"><span class="ico">🧩</span> תמצית הפתרון</p>
+    <ul class="clean" style="margin:0">
+      <li><code>7♦ +</code> → S=[7, Diamonds].</li>
+      <li><code>A♣ −</code> → G=[Number, ?] · [?, Red] (מוציאים את Ace ואת Black).</li>
+      <li><code>Q♥ −</code> → G=[Number, ?] · [?, Diamonds] (Q הוא Picture, Hearts הוא Red — מצמצמים).</li>
+      <li><code>9♥ +</code> → S עולה ל-[Number, Red]; G=[Number, ?] ([?,Diamonds] נפסל כי אינו מכסה Hearts).</li>
+      <li><code>8♣ −</code> → G יורד ל-[Number, Red] (8♣ הוא Black — מצמצמים את הסוג).</li>
+      <li><strong>מתכנס: המושג = <span class="good">[Number, Red]</span></strong> — קלף מספרי בסדרה אדומה.</li>
+    </ul>
+  </div>
+  <div class="box tip"><p class="box-title"><span class="ico">▶</span> הרצה אינטראקטיבית — S/G על שתי ההיררכיות</p><p style="margin:0">שני העצים (ערך + סוג) מוצגים יחד; בכל צעד רואים היכן נמצאים <b style="color:#14603f">S</b> ו-<b style="color:var(--primary)">G</b> בכל ממד, ואת הדוגמה הנוכחית (<b style="color:#14603f">+</b>/<b style="color:#b23b3b">−</b>) מסומנת על העלה.</p></div>
+  <div class="gx-player" id="player-vs-card"></div>
+
   <div class="card" style="text-align:center;margin-top:26px">
     <a class="home" href="פתרונות_מבחנים.html" style="display:inline-block">להמשך ◀ פתרונות המבחנים</a>
   </div>
@@ -167,13 +200,15 @@ flowchart TD
   mermaid.initialize({ startOnLoad: true, theme: 'neutral', securityLevel: 'loose', flowchart: { htmlLabels: true, curve: 'basis' }, themeVariables: { fontFamily: 'Segoe UI, Arial, sans-serif', fontSize: '15px' } });
 </script>
 <script type="module">
-  import { EX_ASTAR, EX_COMPARE, EX_MINIMAX, EX_ID3, EX_RIVER } from './games-data.js';
-  import { searchTreePlayer, minimaxPlayer, id3Player, riverPlayer } from './games-player.js';
+  import { EX_ASTAR, EX_COMPARE, EX_MINIMAX, EX_ID3, EX_RIVER, VS_HIER_COLOR, VS_HIER_CARD } from './games-data.js';
+  import { searchTreePlayer, minimaxPlayer, id3Player, riverPlayer, vspacePlayer } from './games-player.js';
   riverPlayer(document.getElementById('player-river'), EX_RIVER);
   searchTreePlayer(document.getElementById('player-astar'), EX_ASTAR, ['A*']);
   searchTreePlayer(document.getElementById('player-compare'), EX_COMPARE, ['BFS', 'UCS', 'Greedy', 'A*']);
   minimaxPlayer(document.getElementById('player-minimax'), EX_MINIMAX);
   id3Player(document.getElementById('player-id3'), EX_ID3);
+  vspacePlayer(document.getElementById('player-vs-color'), VS_HIER_COLOR);
+  vspacePlayer(document.getElementById('player-vs-card'), VS_HIER_CARD);
 </script>
 </body>
 </html>

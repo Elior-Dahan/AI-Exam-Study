@@ -3,7 +3,7 @@
 // לשימוש בעמוד "פתרונות תרגילים". ללא ניקוד — צפייה מודרכת.
 // ============================================================
 import { el, svg, segmented } from './games-core.js';
-import { searchTreeSteps, minimaxSolve, id3Solve, matrixSolve } from './games-engine.js';
+import { searchTreeSteps, minimaxSolve, id3Solve, matrixSolve, hierarchyVS } from './games-engine.js';
 
 /* ---------- עוזרי עץ (מינימקס) ---------- */
 function layoutTreeP(tree) {
@@ -276,6 +276,87 @@ export function nashPlayer(host, m) {
           i >= 2 ? el('div', { class: 'expr', html: 'משווים → <b>q = ' + sol.mixed.q + '</b> (כל שחקן משחק ' + c0 + ' בהסתברות ' + sol.mixed.q + ')' }) : el('div', { class: 'expr', style: { color: 'var(--muted)' }, text: 'משווים E[' + r0 + '] = E[' + r1 + '] ופותרים ל-q…' })
         ]));
       }
+    }
+  });
+}
+
+/* ---------- נגן למידת-מושג (Version Space מבוסס-היררכיה) ---------- */
+function hierLayout(tree) {
+  let leafN = 0; (function c(n) { (n.children && n.children.length) ? n.children.forEach(c) : leafN++; })(tree);
+  let maxD = 0; (function d(n, dep) { maxD = Math.max(maxD, dep); (n.children || []).forEach(ch => d(ch, dep + 1)); })(tree, 0);
+  const xGap = 66, yGap = 62, padX = 42, padTop = 20;
+  const nodes = {}, edges = []; let lx = 0;
+  (function rec(n, dep) {
+    let x;
+    if (!(n.children && n.children.length)) { x = padX + lx * xGap; lx++; }
+    else { const cs = n.children.map(ch => rec(ch, dep + 1)); x = cs.reduce((s, c) => s + c.x, 0) / cs.length; n.children.forEach(ch => edges.push([n.name, ch.name])); }
+    nodes[n.name] = { name: n.name, x, y: padTop + dep * yGap, depth: dep, isLeaf: !(n.children && n.children.length) };
+    return nodes[n.name];
+  })(tree, 0);
+  return { nodes, edges, W: padX * 2 + Math.max(0, leafN - 1) * xGap, H: padTop + maxD * yGap + 22 };
+}
+function hierAnc(tree) { const parent = {}; (function w(n, p) { parent[n.name] = p; (n.children || []).forEach(c => w(c, n.name)); })(tree, null); return name => { const a = []; let x = name; while (x != null) { a.push(x); x = parent[x]; } return a; }; }
+function drawHier(dimName, tree, hi) {
+  const L = hierLayout(tree);
+  const s = svg('svg', { class: 'gx-hier', viewBox: '0 0 ' + L.W + ' ' + L.H, width: L.W, height: L.H, preserveAspectRatio: 'xMidYMid meet' });
+  L.edges.forEach(([p, c]) => { const a = L.nodes[p], b = L.nodes[c]; s.appendChild(svg('line', { x1: a.x, y1: a.y + 11, x2: b.x, y2: b.y - 11, stroke: '#c2c9da', 'stroke-width': 1.6 })); });
+  Object.values(L.nodes).forEach(nd => {
+    const isS = hi.sSet.has(nd.name), isG = hi.gSet.has(nd.name), inBand = hi.bandSet.has(nd.name);
+    let fill = '#fff', stroke = '#cfd6e6', sw = 1.5, tcol = '#9aa3b4';
+    if (inBand) { fill = '#eef3ff'; stroke = '#c3d0f0'; tcol = '#3a4a6b'; }
+    if (isG) { stroke = 'var(--primary)'; sw = 2.6; fill = isS ? 'var(--ok-soft)' : '#e9efff'; tcol = '#1f2a44'; }
+    if (isS && !isG) { fill = 'var(--ok-soft)'; stroke = 'var(--ok)'; sw = 2.6; tcol = '#14603f'; }
+    if (isS && isG) { stroke = 'var(--ok)'; sw = 3.2; fill = 'var(--ok-soft)'; tcol = '#14603f'; }
+    const w = Math.max(30, nd.name.length * 7.4 + 14);
+    s.appendChild(svg('rect', { x: nd.x - w / 2, y: nd.y - 12, width: w, height: 24, rx: 7, fill, stroke, 'stroke-width': sw }));
+    s.appendChild(svg('text', { x: nd.x, y: nd.y + 4, 'text-anchor': 'middle', 'font-size': 12, 'font-weight': 700, fill: tcol }, nd.name));
+    if (isS || isG) s.appendChild(svg('text', { x: nd.x - w / 2 - 4, y: nd.y + 4, 'text-anchor': 'end', 'font-size': 10.5, 'font-weight': 800, fill: isS ? 'var(--ok)' : 'var(--primary)' }, isS && isG ? 'S=G' : isS ? 'S' : 'G'));
+    if (hi.instLeaf && hi.instLeaf === nd.name) {
+      const col = hi.pos ? 'var(--ok)' : 'var(--warn)';
+      s.appendChild(svg('circle', { cx: nd.x + w / 2 + 1, cy: nd.y - 12, r: 8, fill: col, stroke: '#fff', 'stroke-width': 1.5 }));
+      s.appendChild(svg('text', { x: nd.x + w / 2 + 1, y: nd.y - 8, 'text-anchor': 'middle', 'font-size': 12, 'font-weight': 900, fill: '#fff' }, hi.pos ? '+' : '−'));
+    }
+  });
+  return el('div', { class: 'gx-hier-wrap' }, [el('div', { class: 'gx-hier-dim', text: dimName }), s]);
+}
+export function vspacePlayer(host, problem) {
+  const sol = hierarchyVS(problem);
+  const ancs = problem.dims.map(d => hierAnc(d.tree));
+  const fmtC = c => '[' + c.join(', ') + ']';
+  const shortAct = a => a.includes('הכללת S') ? a.replace('הכללת S: ', 'S↑ ') : a.includes('צמצום G') ? a.replace('צמצום G: ', 'G↓ ') : a.includes('אתחול S') ? 'אתחול S' : a.includes('הסרנו מ-G') ? 'סינון G' : a.includes('הסרנו מ-S') ? 'סינון S' : a.includes('התחלה') ? 'התחלה' : a;
+  const colorAct = a => a.replace(/הכללת S/g, '<b style="color:var(--ok)">הכללת S</b>').replace(/צמצום G/g, '<b style="color:var(--primary)">צמצום G</b>');
+  stepController(host, {
+    title: problem.name + ' · Version Space (S↑ ירוק / G↓ כחול)',
+    total: sol.steps.length,
+    renderStep: (i, viz, explain) => {
+      viz.innerHTML = ''; explain.innerHTML = '';
+      const step = sol.steps[i];
+      const head = el('div', { class: 'gx-vs-ex' });
+      if (step.inst) { head.append(el('span', { class: 'gx-vs-chip ' + (step.pos ? 'pos' : 'neg'), html: step.pos ? '➕ חיובית' : '➖ שלילית' }), el('span', { class: 'gx-vs-inst', text: step.inst.join(' , ') })); }
+      else head.appendChild(el('span', { class: 'gx-vs-chip start', text: 'מצב התחלה' }));
+      viz.appendChild(head);
+      const panels = el('div', { class: 'gx-hier-panels' });
+      problem.dims.forEach((d, di) => {
+        const sSet = new Set(step.S.map(c => c[di])), gSet = new Set(step.G.map(c => c[di])), anc = ancs[di], bandSet = new Set();
+        (function all(n) { const anN = anc(n.name); if ([...gSet].some(g => anN.includes(g)) && [...sSet].some(sv => anc(sv).includes(n.name))) bandSet.add(n.name); (n.children || []).forEach(all); })(d.tree);
+        panels.appendChild(drawHier(d.name, d.tree, { sSet, gSet, bandSet, instLeaf: step.inst ? step.inst[di] : null, pos: step.pos }));
+      });
+      viz.appendChild(panels);
+      const actWrap = el('div', {});
+      step.actions.forEach(a => actWrap.appendChild(el('div', { class: 'gx-vs-act', html: colorAct(a) })));
+      explain.appendChild(actWrap);
+      explain.appendChild(el('div', { class: 'gx-vs-bounds' }, [
+        el('div', { class: 'sb', html: '<b>S</b> (ספציפי · ירוק): ' + (step.S.length ? step.S.map(fmtC).join('  ·  ') : '∅') }),
+        el('div', { class: 'gb', html: '<b>G</b> (כללי · כחול): ' + (step.G.length ? step.G.map(fmtC).join('  ·  ') : '∅') })
+      ]));
+      if (sol.converged && i === sol.steps.length - 1) explain.appendChild(el('div', { class: 'gx-vs-done', html: '🎯 גבולות S ו-G התלכדו — <b>המושג הנלמד: ' + fmtC(sol.concept) + '</b>' }));
+      const hist = el('div', { class: 'gx-vs-hist' }, [el('div', { class: 'gx-vs-hist-title', text: '🕘 היסטוריית צעדים (הכללה/צמצום)' })]);
+      sol.steps.forEach((st, k) => {
+        if (k > i) return;
+        const badge = st.inst ? (st.pos ? '➕' : '➖') : '•', label = st.inst ? st.inst.join(',') : 'התחלה';
+        hist.appendChild(el('div', { class: 'gx-vs-hrow' + (k === i ? ' cur' : '') + (st.inst ? (st.pos ? ' pos' : ' neg') : ''), html: '<span class="b">' + badge + '</span> <b>' + label + '</b> <span class="a">' + (st.actions.length ? st.actions.map(shortAct).join(' · ') : '—') + '</span><span class="sg">S=' + (st.S.length ? st.S.map(fmtC).join('/') : '∅') + ' · G=' + (st.G.length ? st.G.map(fmtC).join('/') : '∅') + '</span>' }));
+      });
+      explain.appendChild(hist);
     }
   });
 }
