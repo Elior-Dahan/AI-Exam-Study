@@ -37,7 +37,7 @@
 
 <script type="module">
 import { SEARCH_GRAPHS } from './games-data.js';
-import { searchSteps, isAdmissible, shortestToGoal, runLevels } from './games-engine.js';
+import { searchSteps, idsSteps, isAdmissible, shortestToGoal, runLevels } from './games-engine.js';
 import { el, svg, toast, shake } from './games-core.js';
 
 const G = id => SEARCH_GRAPHS.find(g => g.id === id);
@@ -90,6 +90,35 @@ function roundPredict(graphId, algo) {
             if (n === graph.goal) { render(); prompt.innerHTML = '🎉 הגענו ליעד! מסלול: ' + sol.path.join('→') + ' (עלות ' + sol.cost + ')'; setTimeout(ctx.done, 1200); }
             else { si++; render(); }
           } else { ctx.score.miss(); ctx.addMiss(); shake(gWrap); toast('✗ ' + algo + ' פותח קודם את ' + step.expand, 'bad'); }
+        });
+      }
+      render();
+    }
+  };
+}
+
+// ---------- סבב: IDS (העמקה איטרטיבית) ----------
+function roundIDS(graphId) {
+  const graph = G(graphId);
+  return {
+    title: 'IDS · העמקה איטרטיבית', data: { graph }, play(host, ctx) {
+      const sol = idsSteps(graph); let si = 0, expanded = new Set();
+      host.append(el('p', { class: 'gx-panel', html: '<b>IDS</b> · ' + graph.name + ' — DFS עם גבול-עומק גדל. בכל איטרציה מתחילים <b>מחדש מ-S</b> ומעמיקים ברמה. לחץ על הצומת הבא במחסנית.' }));
+      const prompt = el('p', { class: 'gx-prompt' }), gWrap = el('div', {});
+      host.append(prompt, gWrap);
+      function render() {
+        const step = sol.steps[si];
+        if (step.newIter) expanded = new Set();
+        const frontier = new Set(step.frontier);
+        prompt.innerHTML = '🔽 <b>גבול-עומק = ' + step.limit + '</b> · מחסנית: <span style="direction:ltr;unicode-bidi:isolate;display:inline-block">' + step.frontier.join(' · ') + '</span>';
+        gWrap.innerHTML = '';
+        drawGraph(gWrap, graph, { expanded, frontier }, n => {
+          if (!frontier.has(n)) return;
+          if (n === step.expand) {
+            expanded.add(n); ctx.score.add(10); toast('✓ ' + n, 'good');
+            if (n === graph.goal) { render(); prompt.innerHTML = '🎉 היעד נמצא בגבול-עומק ' + step.limit + '!'; setTimeout(ctx.done, 1300); }
+            else { si++; render(); }
+          } else { ctx.score.miss(); ctx.addMiss(); shake(gWrap); toast('✗ IDS פותח קודם את ' + step.expand + ' (מחסנית, אלפביתי)', 'bad'); }
         });
       }
       render();
@@ -159,9 +188,9 @@ function roundAdmissible(graphId) {
 runLevels({
   gameId: 'search',
   levels: [
-    { key: '1', name: 'BFS / DFS', badge: 'יסוד', desc: 'חיפוש לא-מיודע — תור מול מחסנית', rounds: [roundPredict('g1', 'BFS'), roundPredict('g0', 'BFS'), roundPredict('g1', 'DFS')] },
-    { key: '2', name: 'UCS / Greedy', badge: 'תרגול', desc: 'לפי עלות g מול יוריסטיקה h', rounds: [roundPredict('g0', 'UCS'), roundCompute('g0', 'A*', 'D'), roundPredict('g1', 'Greedy')] },
-    { key: '3', name: 'A* וקבילוּת', badge: 'אתגר', desc: 'f=g+h ובדיקת קבילות', rounds: [roundPredict('g2', 'A*'), roundCompute('g2', 'A*', 'D'), roundAdmissible('g2')] }
+    { key: '1', name: 'לא-מיודע: BFS/DFS/IDS', badge: 'יסוד', desc: 'תור, מחסנית, והעמקה איטרטיבית', rounds: [roundPredict('g0', 'BFS'), roundPredict('g0', 'DFS'), roundIDS('g1')] },
+    { key: '2', name: 'עלות ויוריסטיקה', badge: 'תרגול', desc: 'UCS ו-Greedy על גרף עמוק', rounds: [roundPredict('g3', 'UCS'), roundCompute('g3', 'A*', 'D'), roundPredict('g3', 'Greedy')] },
+    { key: '3', name: 'A* וקבילוּת', badge: 'אתגר', desc: 'f=g+h, גרף עמוק, ובדיקת קבילות', rounds: [roundPredict('g3', 'A*'), roundCompute('g3', 'A*', 'E'), roundAdmissible('g3')] }
   ]
 });
 </script>

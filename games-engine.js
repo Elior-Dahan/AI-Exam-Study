@@ -37,7 +37,9 @@ export function searchSteps(graph, algo) {
     frontier.splice(idx, 1); inFrontier.delete(cur.node);
     expanded.push(cur.node); expandedSet.add(cur.node);
     if (cur.node === goal) { goalNode = cur; break; }
-    for (const [nb, w] of adj[cur.node]) {
+    // DFS: מחסנית (LIFO) — דוחפים בסדר הפוך כדי שהאלפביתי-ראשון ייפתח ראשון
+    const nbrs = algo === 'DFS' ? [...adj[cur.node]].reverse() : adj[cur.node];
+    for (const [nb, w] of nbrs) {
       if (expandedSet.has(nb)) continue;
       const ng = cur.g + w;
       if (algo === 'UCS' || algo === 'A*') {
@@ -53,6 +55,27 @@ export function searchSteps(graph, algo) {
   let path = [], cost = 0;
   if (goalNode) { let n = goalNode; while (n) { path.unshift(n.node); n = n.parent; } cost = goalNode.g; }
   return { order: expanded, steps, path, cost, found: !!goalNode };
+}
+
+// IDS: DFS מוגבל-עומק עם עומק גדל. tree-search (מניעת מעגלים לפי המסלול הנוכחי).
+export function idsSteps(graph) {
+  const adj = adjacency(graph), start = graph.start, goal = graph.goal;
+  const steps = []; let found = false, foundLimit = null;
+  for (let limit = 0; limit < 40 && !found; limit++) {
+    const stack = [{ node: start, depth: 0, path: [start] }];
+    while (stack.length) {
+      const snap = stack.map(s => s.node);
+      const cur = stack.pop();
+      steps.push({ expand: cur.node, limit, depth: cur.depth, frontier: snap, newIter: steps.length === 0 || steps[steps.length - 1].limit !== limit });
+      if (cur.node === goal) { found = true; foundLimit = limit; break; }
+      if (cur.depth < limit) {
+        const nbrs = [...adj[cur.node]].reverse(); // אלפביתי-ראשון בראש המחסנית
+        for (const [nb] of nbrs) if (!cur.path.includes(nb)) stack.push({ node: nb, depth: cur.depth + 1, path: [...cur.path, nb] });
+      }
+    }
+    if (found) break;
+  }
+  return { steps, found, foundLimit };
 }
 
 export function shortestToGoal(graph) {
@@ -330,6 +353,10 @@ export async function engineSelfTest() {
   const ie = matrixSolve(data.GT_MATRICES.iesds3);
   return {
     search_Astar: { path: sa.path.join(','), cost: sa.cost, steps: sa.steps.length },     // expect cost 6
+    search_DFS_g0: searchSteps(data.SEARCH_GRAPHS[0], 'DFS').order.join(','),              // expect S,A,C,G (alphabetical-first)
+    ids_g1: idsSteps(data.SEARCH_GRAPHS[1]).steps.map(s => s.expand).join(','),
+    ids_found_limit: idsSteps(data.SEARCH_GRAPHS[1]).foundLimit,
+    g3_admissible: isAdmissible(data.SEARCH_GRAPHS[3], data.SEARCH_GRAPHS[3].h).admissible, // expect true
     minimax_t0: { root: mm.rootValue, prunedValues: mm.prunedLeafIndices.map(i => mm.leafValues[i]), best: mm.bestChild }, // expect root 4, pruned [7,5]
     minimax_t1: { root: minimaxSolve(data.MINIMAX_TREES[1]).rootValue },
     minimax_t2: { root: minimaxSolve(data.MINIMAX_TREES[2]).rootValue },
