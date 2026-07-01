@@ -51,6 +51,8 @@
   <div class="box tip"><p class="box-title"><span class="ico">🎯</span> איך לבנות את עץ החיפוש והתור</p>
     <p style="margin:0">מ-<code>(L,L,L,L)</code> הפעולה החוקית היחידה שלא יוצרת מצב אסור היא "קח אווז" (אם ניקח שועל/חיטה — האווז יישאר עם השני). לכן השורש מסתעף בעיקר ל-<code>(R,L,R,L)</code>. <strong>DFS</strong> צולל לאורך ענף יחיד עד הסוף (תוך backtrack ממצבים אסורים/חזרות), ו-<strong>BFS</strong> מפתח שכבה-שכבה. בתור רושמים את המצבים הממתינים לפיתוח; ב-BFS (FIFO) נקבל את המסלול הקצר ביותר (7 צעדים), שזהה כאן ל-DFS כי הפתרון יחיד כמעט.</p>
   </div>
+  <div class="box tip"><p class="box-title"><span class="ico">▶</span> הרצה אינטראקטיבית — החצייה צעד-אחר-צעד</p><p style="margin:0">לחצו <b>הבא ▶</b> לראות את הפריטים 🧑‍🌾🦊🦆🌾 חוצים את הנהר בין הגדות.</p></div>
+  <div class="gx-player" id="player-river"></div>
 
   <h3>שאלה 2 — מבוך על רשת (DFS / BFS / Greedy)</h3>
   <div class="box tip"><p class="box-title"><span class="ico">🎯</span> שיטת הפתרון (סדר עדיפות התנועה: מעלה ← שמאלה ← ימינה ← למטה)</p>
@@ -137,6 +139,9 @@ flowchart TD
   </div>
   <div class="box mistake"><p class="box-title"><span class="ico">⚠️</span> הערה</p><p style="margin:0">השוו את כמות הגיזום בין שני הכיוונים — לרוב כיוון אחד גוזם יותר. ערך ה-MAX וצעד ה-MAX <strong>זהים</strong> בשני הכיוונים (הגיזום לא משנה את התוצאה). הציבו את ערכי העלים מהעותק שלכם לפי השיטה — התבנית המלאה עם α/β בכל צומת מודגמת בעמוד חיפוש יריבי.</p></div>
 
+  <div class="box tip"><p class="box-title"><span class="ico">▶</span> הרצה אינטראקטיבית — עץ לדוגמה</p><p style="margin:0">צעדו כדי לחשב <b>מלמטה למעלה</b> כל צומת MIN/MAX, ובסוף לראות אילו עלים נגזמים ב-Alpha-Beta.</p></div>
+  <div class="gx-player" id="player-minimax"></div>
+
   <!-- ============ תרגיל עץ החלטה ============ -->
   <h2 id="t3">תרגיל עץ החלטה (ID3)</h2>
   <p>פתרון מלא ומפורט (חישוב אנטרופיה, IG לכל תכונה, בניית העץ וחיזוי U/V/W) נמצא ב<a href="07_עצי_החלטה.html">עמוד עצי החלטה</a> — זוהי בדיוק דוגמת הפטריות.</p>
@@ -149,6 +154,9 @@ flowchart TD
     </ul>
   </div>
 
+  <div class="box tip"><p class="box-title"><span class="ico">▶</span> הרצה אינטראקטיבית — בניית העץ</p><p style="margin:0">צעדו כדי לראות את ID3 בוחר בכל צומת את התכונה עם ה-IG הגבוה (עמודות), והעץ גדל.</p></div>
+  <div class="gx-player" id="player-id3"></div>
+
   <div class="card" style="text-align:center;margin-top:26px">
     <a class="home" href="פתרונות_מבחנים.html" style="display:inline-block">להמשך ◀ פתרונות המבחנים</a>
   </div>
@@ -159,10 +167,13 @@ flowchart TD
   mermaid.initialize({ startOnLoad: true, theme: 'neutral', securityLevel: 'loose', flowchart: { htmlLabels: true, curve: 'basis' }, themeVariables: { fontFamily: 'Segoe UI, Arial, sans-serif', fontSize: '15px' } });
 </script>
 <script type="module">
-  import { EX_ASTAR, EX_COMPARE } from './games-data.js';
-  import { searchTreePlayer } from './games-player.js';
+  import { EX_ASTAR, EX_COMPARE, EX_MINIMAX, EX_ID3, EX_RIVER } from './games-data.js';
+  import { searchTreePlayer, minimaxPlayer, id3Player, riverPlayer } from './games-player.js';
+  riverPlayer(document.getElementById('player-river'), EX_RIVER);
   searchTreePlayer(document.getElementById('player-astar'), EX_ASTAR, ['A*']);
   searchTreePlayer(document.getElementById('player-compare'), EX_COMPARE, ['BFS', 'UCS', 'Greedy', 'A*']);
+  minimaxPlayer(document.getElementById('player-minimax'), EX_MINIMAX);
+  id3Player(document.getElementById('player-id3'), EX_ID3);
 </script>
 </body>
 </html>

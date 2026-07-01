@@ -5,6 +5,51 @@
 import { el, svg, segmented } from './games-core.js';
 import { searchTreeSteps, minimaxSolve, id3Solve } from './games-engine.js';
 
+/* ---------- עוזרי עץ (מינימקס) ---------- */
+function layoutTreeP(tree) {
+  let leafCount = 0; (function c(n) { Array.isArray(n) ? n.forEach(c) : leafCount++; })(tree.t);
+  let maxDepth = 0; (function d(n, dep) { maxDepth = Math.max(maxDepth, dep); if (Array.isArray(n)) n.forEach(ch => d(ch, dep + 1)); })(tree.t, 0);
+  const W = Math.max(360, leafCount * 66), xStep = leafCount > 1 ? (W - 80) / (leafCount - 1) : 0, yStep = 84;
+  const nodes = [], edges = []; let leafX = 0, idc = 0;
+  const val = (node, isMax) => !Array.isArray(node) ? node : (isMax ? Math.max : Math.min)(...node.map(ch => val(ch, !isMax)));
+  function rec(node, depth, isMax) {
+    const id = idc++;
+    if (!Array.isArray(node)) { const nd = { id, x: 40 + leafX * xStep, y: 40 + maxDepth * yStep, isLeaf: true, value: node, depth }; leafX++; nodes.push(nd); return nd; }
+    const children = node.map(ch => rec(ch, depth + 1, !isMax));
+    const nd = { id, x: children.reduce((s, c) => s + c.x, 0) / children.length, y: 40 + depth * yStep, isLeaf: false, type: isMax ? 'MAX' : 'MIN', depth, children, value: val(node, isMax) };
+    nodes.push(nd); children.forEach(c => edges.push([nd, c])); return nd;
+  }
+  rec(tree.t, 0, tree.root !== 'MIN');
+  return { nodes, edges, W };
+}
+function drawTreeP(host, nodes, edges, W, state) {
+  const maxY = Math.max(...nodes.map(n => n.y)) + 44;
+  const s = svg('svg', { class: 'gx-tree', viewBox: '0 0 ' + (W + 20) + ' ' + maxY, style: { maxWidth: (W + 20) + 'px', width: '100%', display: 'block', margin: '0 auto' } });
+  edges.forEach(([p, c]) => s.appendChild(svg('line', { x1: p.x, y1: p.y, x2: c.x, y2: c.y, class: 't-edge' })));
+  nodes.forEach(n => {
+    if (n.isLeaf) {
+      const pr = state.markPruned && state.markPruned.has(n);
+      s.appendChild(svg('rect', { x: n.x - 18, y: n.y - 16, width: 36, height: 32, rx: 6, fill: pr ? 'var(--warn-soft)' : '#eef2ff', stroke: pr ? 'var(--warn)' : '#27408b', 'stroke-width': 2 }));
+      s.appendChild(svg('text', { x: n.x, y: n.y + 5, 'text-anchor': 'middle', 'font-size': 14, 'font-weight': 700, fill: pr ? '#b23b3b' : '#27408b' }, pr ? '✂' : n.value));
+    } else {
+      const isMax = n.type === 'MAX', hl = state.highlight === n.id;
+      s.appendChild(svg('circle', { cx: n.x, cy: n.y, r: 21, fill: hl ? 'var(--accent-soft)' : (isMax ? '#e8f7ef' : '#fdecec'), stroke: hl ? 'var(--accent)' : (isMax ? '#1b7f5a' : '#b23b3b'), 'stroke-width': hl ? 4 : 2 }));
+      s.appendChild(svg('text', { x: n.x, y: n.y - 3, 'text-anchor': 'middle', 'font-size': 10.5, 'font-weight': 700, fill: isMax ? '#1b7f5a' : '#b23b3b' }, n.type));
+      s.appendChild(svg('text', { x: n.x, y: n.y + 12, 'text-anchor': 'middle', 'font-size': 14, 'font-weight': 800, fill: '#1f2533' }, state.filled && state.filled.has(n.id) ? state.filled.get(n.id) : '?'));
+    }
+  });
+  host.appendChild(s);
+}
+function igBars(gains, winner) {
+  const wrap = el('div', { style: { maxWidth: '430px', margin: '6px auto 0' } });
+  const mx = Math.max(...Object.values(gains));
+  Object.keys(gains).forEach(a => wrap.appendChild(el('div', { class: 'gx-ig-bar' + (a === winner ? ' win' : '') }, [
+    el('span', { class: 'name', text: a }),
+    el('div', { class: 'track' }, [el('div', { class: 'fill', style: { width: (mx ? Math.round(gains[a] / mx * 100) : 0) + '%' } })]),
+    el('span', { class: 'val', text: 'IG=' + gains[a].toFixed(3) })])));
+  return wrap;
+}
+
 /* ---------- בקר-צעדים גנרי ---------- */
 export function stepController(host, { title, total, renderStep }) {
   host.innerHTML = '';
@@ -107,4 +152,89 @@ export function searchTreePlayer(host, graph, algos) {
       }
     });
   }
+}
+
+/* ---------- נגן מינימקס (מלמטה-למעלה + Alpha-Beta) ---------- */
+export function minimaxPlayer(host, tree) {
+  const { nodes, edges, W } = layoutTreeP(tree), sol = minimaxSolve(tree);
+  const leaves = nodes.filter(n => n.isLeaf);
+  const pruned = new Set(sol.prunedLeafIndices.map(i => leaves[i]));
+  const internal = nodes.filter(n => !n.isLeaf).sort((a, b) => b.depth - a.depth || a.x - b.x);
+  stepController(host, {
+    title: 'עץ מינימקס · שורש ' + (sol.rootMax ? 'MAX' : 'MIN') + ' = ' + sol.rootValue,
+    total: internal.length + 1,
+    renderStep: (i, viz, explain) => {
+      viz.innerHTML = ''; explain.innerHTML = '';
+      const filled = new Map();
+      internal.slice(0, Math.min(i, internal.length)).forEach(n => filled.set(n.id, n.value));
+      const showPrune = i >= internal.length;
+      drawTreeP(viz, nodes, edges, W, { filled, highlight: showPrune ? null : internal[i].id, markPruned: showPrune ? pruned : new Set() });
+      if (!showPrune) {
+        const cur = internal[i], cv = cur.children.map(c => c.value);
+        explain.appendChild(el('p', { class: 'gx-prompt', html: 'צומת <b style="color:' + (cur.type === 'MAX' ? '#1b7f5a' : '#b23b3b') + '">' + cur.type + '</b>: ' + (cur.type === 'MAX' ? 'max' : 'min') + '(' + cv.join(', ') + ') = <b>' + cur.value + '</b>' }));
+      } else {
+        explain.appendChild(el('p', { class: 'gx-prompt', html: '🎯 ערך השורש = <b>' + sol.rootValue + '</b> · המהלך הנבחר: <b>ענף ' + (sol.bestChild + 1) + '</b>. גיזום Alpha-Beta חוסך ' + pruned.size + ' עלים (מסומנים ✂) — הערך <b>לא</b> משתנה.' }));
+      }
+    }
+  });
+}
+
+/* ---------- נגן ID3 (אנטרופיה → IG → פיצול) ---------- */
+function id3Reveal(id3, ds) {
+  const steps = [];
+  (function walk(node, rows, path) {
+    if (node.attr !== undefined) {
+      const gains = {}; ds.attrs.forEach(a => gains[a] = id3.gain(rows, a));
+      steps.push({ kind: 'attr', attr: node.attr, path, gains, rows: rows.length });
+      Object.keys(node.children).forEach(v => walk(node.children[v], rows.filter(r => r[node.attr] == v), [...path, { attr: node.attr, val: v }]));
+    } else steps.push({ kind: 'leaf', value: node.leaf, path, rows: rows.length });
+  })(id3.tree, ds.rows, []);
+  return steps;
+}
+export function id3Player(host, ds) {
+  const id3 = id3Solve(ds), steps = id3Reveal(id3, ds);
+  const H0 = id3.entropy(ds.rows);
+  stepController(host, {
+    title: 'ID3 · ' + ds.name + ' · H(S)=' + H0.toFixed(2),
+    total: steps.length,
+    renderStep: (i, viz, explain) => {
+      viz.innerHTML = ''; explain.innerHTML = '';
+      // מתאר-עץ שגדל
+      const outline = el('div', {});
+      steps.slice(0, i + 1).forEach(s => {
+        const ind = s.path.length;
+        const br = s.path.length ? '<span style="color:var(--muted);font-size:13px">' + s.path[s.path.length - 1].attr + '=' + s.path[s.path.length - 1].val + ' → </span>' : 'שורש: ';
+        const body = s.kind === 'attr' ? '<b style="color:var(--primary)">' + s.attr + '?</b>' : (s.value ? '<b style="color:var(--ok)">אכיל ✓</b>' : '<b style="color:var(--warn)">רעיל ✗</b>');
+        outline.appendChild(el('div', { style: { paddingRight: (ind * 22 + 4) + 'px', margin: '3px 0', borderRight: ind ? '2px solid var(--line)' : 'none' }, html: br + body }));
+      });
+      viz.appendChild(el('div', { class: 'gx-board', style: { textAlign: 'right' } }, [outline]));
+      const st = steps[i];
+      if (st.kind === 'attr') {
+        explain.appendChild(el('p', { class: 'gx-prompt', html: (st.path.length ? 'בענף [' + st.path.map(p => p.attr + '=' + p.val).join(', ') + '] — ' : 'בשורש — ') + 'בוחרים <b>' + st.attr + '</b> (IG הגבוה ביותר, ' + st.rows + ' דוגמאות):' }));
+        explain.appendChild(igBars(st.gains, st.attr));
+      } else explain.appendChild(el('p', { class: 'gx-prompt', html: '🍄 עלה: <b>' + (st.value ? 'אכיל ✓' : 'רעיל ✗') + '</b> (' + st.rows + ' דוגמאות, קבוצה טהורה)' }));
+    }
+  });
+}
+
+/* ---------- נגן חצייה (רצף מצבים + גדות) ---------- */
+function drawBanks(host, data, state) {
+  const bank = (title, cls) => { const b = el('div', { class: 'gx-bank' + cls }); b.appendChild(el('div', { class: 'gx-bank-title', text: title })); const it = el('div', { class: 'gx-bank-items' }); b.appendChild(it); return { b, it }; };
+  const L = bank('גדה שמאלית', ''), R = bank('גדה ימנית', ' right');
+  state.forEach((side, k) => (side === 'L' ? L.it : R.it).appendChild(el('span', { title: data.labels[k], text: data.icons[k] })));
+  const water = el('div', { class: 'gx-water' });
+  const boat = el('span', { class: 'gx-boat', text: '⛵' }); boat.style.top = state[0] === 'L' ? '62%' : '18%';
+  water.appendChild(boat);
+  host.appendChild(el('div', { class: 'gx-river' }, [R.b, water, L.b]));
+}
+export function riverPlayer(host, data) {
+  stepController(host, {
+    title: data.name,
+    total: data.states.length,
+    renderStep: (i, viz, explain) => {
+      viz.innerHTML = ''; explain.innerHTML = '';
+      drawBanks(viz, data, data.states[i].s);
+      explain.appendChild(el('p', { class: 'gx-prompt', html: (i === 0 ? '' : 'חצייה ' + i + ': ') + data.states[i].action }));
+    }
+  });
 }
