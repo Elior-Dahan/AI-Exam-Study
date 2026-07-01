@@ -3,7 +3,7 @@
 // לשימוש בעמוד "פתרונות תרגילים". ללא ניקוד — צפייה מודרכת.
 // ============================================================
 import { el, svg, segmented } from './games-core.js';
-import { searchTreeSteps, minimaxSolve, id3Solve } from './games-engine.js';
+import { searchTreeSteps, minimaxSolve, id3Solve, matrixSolve } from './games-engine.js';
 
 /* ---------- עוזרי עץ (מינימקס) ---------- */
 function layoutTreeP(tree) {
@@ -235,6 +235,40 @@ export function riverPlayer(host, data) {
       viz.innerHTML = ''; explain.innerHTML = '';
       drawBanks(viz, data, data.states[i].s);
       explain.appendChild(el('p', { class: 'gx-prompt', html: (i === 0 ? '' : 'חצייה ' + i + ': ') + data.states[i].action }));
+    }
+  });
+}
+
+/* ---------- נגן נאש (טהור + מעורב) ---------- */
+function matrixTableP(m, nashSet, paretoSet) {
+  const cell = u => '<span style="color:#b23b3b">' + u[0] + '</span>, <span style="color:#1b7f5a">' + u[1] + '</span>';
+  const t = el('table', { class: 'gx-matrix' });
+  t.appendChild(el('tr', {}, [el('th', { text: '' }), ...m.cols.map(c => el('th', { html: (m.colName ? m.colName[c] + '<br>' : '') + '(' + c + ')' }))]));
+  m.rows.forEach(r => t.appendChild(el('tr', {}, [el('th', { html: (m.rowName ? m.rowName[r] + '<br>' : '') + '(' + r + ')' }),
+    ...m.cols.map(c => el('td', { class: (nashSet && nashSet.has(r + c) ? 'nash' : '') + (paretoSet && paretoSet.has(r + c) ? ' pareto' : ''), html: cell(m.pay[r][c]) }))])));
+  return t;
+}
+export function nashPlayer(host, m) {
+  const sol = matrixSolve(m), is2x2 = m.rows.length === 2 && m.cols.length === 2;
+  const total = is2x2 && sol.mixed && sol.mixed.q != null ? 3 : 1;
+  stepController(host, {
+    title: m.title + ' · נאש',
+    total,
+    renderStep: (i, viz, explain) => {
+      viz.innerHTML = ''; explain.innerHTML = '';
+      viz.appendChild(matrixTableP(m, new Set(sol.pureNash.map(([r, c]) => r + c))));
+      if (i === 0) {
+        explain.appendChild(el('p', { class: 'gx-prompt', html: '<b>נאש טהורים</b> (מסומנים ירוק — best-response לשני השחקנים): ' + (sol.pureNash.length ? sol.pureNash.map(([r, c]) => '(' + r + ',' + c + ')').join(' · ') : 'אין') }));
+      } else {
+        const r0 = m.rows[0], r1 = m.rows[1], c0 = m.cols[0], c1 = m.cols[1];
+        const a = m.pay[r0][c0][0], b = m.pay[r0][c1][0], c = m.pay[r1][c0][0], d = m.pay[r1][c1][0];
+        explain.appendChild(el('div', { class: 'gx-calc' }, [
+          el('div', { class: 'lead', text: 'שיווי משקל מעורב — שיטת האדישות (q = הסתברות שהיריב משחק ' + c0 + '):' }),
+          el('div', { class: 'expr', html: 'E[' + r0 + '] = q·(' + a + ') + (1−q)·(' + b + ')' }),
+          el('div', { class: 'expr', html: 'E[' + r1 + '] = q·(' + c + ') + (1−q)·(' + d + ')' }),
+          i >= 2 ? el('div', { class: 'expr', html: 'משווים → <b>q = ' + sol.mixed.q + '</b> (כל שחקן משחק ' + c0 + ' בהסתברות ' + sol.mixed.q + ')' }) : el('div', { class: 'expr', style: { color: 'var(--muted)' }, text: 'משווים E[' + r0 + '] = E[' + r1 + '] ופותרים ל-q…' })
+        ]));
+      }
     }
   });
 }
