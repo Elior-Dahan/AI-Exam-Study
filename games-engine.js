@@ -78,6 +78,39 @@ export function idsSteps(graph) {
   return { steps, found, foundLimit };
 }
 
+// חיפוש מבוסס-מסלולים (tree-search): frontier של מסלולים, goal-test בהוצאה, מניעת מעגלים.
+// משחזר את מוסכמות התרגילים ("תור עדיפויות של מסלולים"). תומך בגרף מכוון.
+export function searchTreeSteps(graph, algo) {
+  const adj = adjacency(graph), start = graph.start, goal = graph.goal, h = graph.h || {};
+  const fval = it => algo === 'UCS' ? it.g : algo === 'Greedy' ? h[it.node] : algo === 'A*' ? it.g + h[it.node] : it.g;
+  let seq = 0;
+  const mk = (path, g, node) => { const it = { path, g, node, seq: seq++ }; it.f = fval(it); return it; };
+  let frontier = [mk([start], 0, start)];
+  const steps = []; let goalPath = null, cost = 0, guard = 0;
+  const pick = () => {
+    if (algo === 'BFS') { let bi = 0; for (let i = 1; i < frontier.length; i++) if (frontier[i].seq < frontier[bi].seq) bi = i; return bi; }
+    if (algo === 'DFS') { let bi = 0; for (let i = 1; i < frontier.length; i++) if (frontier[i].seq > frontier[bi].seq) bi = i; return bi; }
+    let bi = 0;
+    for (let i = 1; i < frontier.length; i++) {
+      const a = frontier[i], b = frontier[bi];
+      if (a.f < b.f || (a.f === b.f && (a.node < b.node || (a.node === b.node && a.path.join() < b.path.join())))) bi = i;
+    }
+    return bi;
+  };
+  while (frontier.length && guard++ < 3000) {
+    const snap = frontier.map(it => ({ path: it.path.slice(), g: it.g, f: it.f, node: it.node }));
+    const idx = pick(), cur = frontier[idx];
+    steps.push({ frontier: snap, pick: idx, expand: cur.node, path: cur.path.slice(), g: cur.g, f: cur.f });
+    frontier.splice(idx, 1);
+    if (cur.node === goal) { goalPath = cur.path.slice(); cost = cur.g; break; }
+    for (const [nb, w] of adj[cur.node]) {
+      if (cur.path.includes(nb)) continue;
+      frontier.push(mk([...cur.path, nb], cur.g + w, nb));
+    }
+  }
+  return { steps, path: goalPath || [], cost, found: !!goalPath, algo };
+}
+
 export function shortestToGoal(graph) {
   const adj = adjacency(graph), goal = graph.goal, dist = {};
   for (const n in graph.nodes) dist[n] = Infinity;
@@ -357,6 +390,10 @@ export async function engineSelfTest() {
     ids_g1: idsSteps(data.SEARCH_GRAPHS[1]).steps.map(s => s.expand).join(','),
     ids_found_limit: idsSteps(data.SEARCH_GRAPHS[1]).foundLimit,
     g3_admissible: isAdmissible(data.SEARCH_GRAPHS[3], data.SEARCH_GRAPHS[3].h).admissible, // expect true
+    ex_astar: (() => { const r = searchTreeSteps(data.EX_ASTAR, 'A*'); return r.path.join(',') + '=' + r.cost; })(),        // expect S,B,E,F,G=18
+    ex_compare_astar: (() => { const r = searchTreeSteps(data.EX_COMPARE, 'A*'); return r.path.join(',') + '=' + r.cost; })(), // expect S,B,D,G=7
+    ex_compare_bfs: (() => { const r = searchTreeSteps(data.EX_COMPARE, 'BFS'); return r.path.join(',') + '=' + r.cost; })(),   // expect S,G=9
+    ex_id3_root: id3Solve(data.EX_ID3).best,                                                                                  // expect Smooth
     minimax_t0: { root: mm.rootValue, prunedValues: mm.prunedLeafIndices.map(i => mm.leafValues[i]), best: mm.bestChild }, // expect root 4, pruned [7,5]
     minimax_t1: { root: minimaxSolve(data.MINIMAX_TREES[1]).rootValue },
     minimax_t2: { root: minimaxSolve(data.MINIMAX_TREES[2]).rootValue },

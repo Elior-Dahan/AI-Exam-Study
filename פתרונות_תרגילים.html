@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>פתרונות תרגילים | חבילת למידה</title>
 <link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="games.css">
 </head>
 <body>
 
@@ -83,6 +84,9 @@
   <p><strong>התשובה:</strong> A* מחזיר את המסלול <code>S→B→E→F→G</code> בעלות <strong>18</strong> (האופטימלי).</p>
   <div class="box mistake"><p class="box-title"><span class="ico">⚠️</span> דקות חשובה</p><p style="margin:0">היוריסטיקה כאן <strong>אינה עקבית</strong> (למשל <span class="math">h(S)=17 &gt; c(S,A)+h(A)=16</span>). לכן <strong>חובה</strong> לנהל תור של <em>מסלולים</em> ולא "לסגור" צמתים מוקדם — אחרת היינו מחזירים בטעות את S-A-E-F-G בעלות 19. ניהול מסלולים (tree-search) עם יוריסטיקה קבילה מבטיח אופטימליות.</p></div>
 
+  <div class="box tip"><p class="box-title"><span class="ico">▶</span> הרצה אינטראקטיבית</p><p style="margin:0 0 8px">לחצו <b>הבא ▶</b> כדי לפתוח צומת-אחר-צומת ולראות את תור המסלולים (f) מתעדכן — בדיוק כמו הטבלה למעלה, חי על הגרף.</p></div>
+  <div class="gx-player" id="player-astar"></div>
+
   <h2>🗺️ תרשים זרימה — פתרון ה-A* (שאלה 3)</h2>
   <div class="fig diagram">
 <pre class="mermaid">
@@ -118,6 +122,9 @@ flowchart TD
   </table>
   <p style="font-size:14px;color:var(--muted)">מסלולים אפשריים ל-G: S→G=9 · S→A→C→G=8 · S→A→D→G=9 · <strong>S→B→D→G=7 (אופטימלי)</strong>.</p>
 
+  <div class="box tip"><p class="box-title"><span class="ico">▶</span> הרצה אינטראקטיבית — בחרו אלגוריתם</p><p style="margin:0 0 8px">בחרו <b>BFS / UCS / Greedy / A*</b> וצעדו כדי לראות כיצד <b>כל אלגוריתם</b> מוציא מסלולים בסדר אחר ומגיע ליעד אחר (גרף מכוון).</p></div>
+  <div class="gx-player" id="player-compare"></div>
+
   <h3>שאלה 2 — Minimax עם גיזום Alpha-Beta</h3>
   <p>העץ: שורש <strong>MAX</strong>, שלושה צמתי <strong>MIN</strong>, ותחתיהם צמתי <strong>MAX</strong> עם עלים (3 בכל קבוצה).</p>
   <div class="box tip"><p class="box-title"><span class="ico">🎯</span> שיטת הפתרון (זהה לדוגמה המלאה ב<a href="03_חיפוש_יריבי.html">עמוד חיפוש יריבי</a>)</p>
@@ -150,6 +157,12 @@ flowchart TD
 <script type="module">
   import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
   mermaid.initialize({ startOnLoad: true, theme: 'neutral', securityLevel: 'loose', flowchart: { htmlLabels: true, curve: 'basis' }, themeVariables: { fontFamily: 'Segoe UI, Arial, sans-serif', fontSize: '15px' } });
+</script>
+<script type="module">
+  import { EX_ASTAR, EX_COMPARE } from './games-data.js';
+  import { searchTreePlayer } from './games-player.js';
+  searchTreePlayer(document.getElementById('player-astar'), EX_ASTAR, ['A*']);
+  searchTreePlayer(document.getElementById('player-compare'), EX_COMPARE, ['BFS', 'UCS', 'Greedy', 'A*']);
 </script>
 </body>
 </html>

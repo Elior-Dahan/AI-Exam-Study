@@ -213,6 +213,31 @@
 .gx-bot{display:flex;align-items:center;gap:10px;justify-content:center;margin:6px 0;font-size:15px}
 .gx-bot .guess{font-family:Consolas,monospace;font-weight:800;color:var(--primary);min-width:46px;direction:ltr}
 
+/* ============================================================
+   נגני-פתרון אינטראקטיביים (עמוד פתרונות תרגילים)
+   ============================================================ */
+.gx-player{background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);padding:14px 16px;margin:10px 0}
+.gx-player-head{text-align:center;font-weight:800;color:var(--primary);font-size:16px;margin-bottom:8px}
+.gx-player-viz{min-height:60px}
+.gx-player-explain{background:var(--primary-soft);border:1px solid #d6deff;border-radius:12px;padding:10px 14px;margin:10px 0}
+.gx-player-explain .gx-prompt{margin:0 0 6px;font-size:15.5px}
+.gx-player-ctrls{display:flex;gap:10px;justify-content:center;align-items:center;flex-wrap:wrap;margin-top:6px}
+.gx-player-count{font-weight:800;color:var(--muted);min-width:96px;text-align:center}
+.gx-btn.on{background:var(--warn);color:#fff;border-color:var(--warn)}
+.gx-path-list{display:flex;flex-wrap:wrap;gap:7px;justify-content:center}
+.gx-path-chip{font-family:Consolas,monospace;font-size:13.5px;background:#eef2ff;border:1px solid #c7d2f5;color:var(--primary);
+  border-radius:9px;padding:4px 10px;direction:ltr}
+.gx-path-chip.chosen{background:var(--accent-soft);border-color:var(--accent);color:var(--accent);font-weight:800;outline:2px solid var(--accent);outline-offset:-2px}
+
+/* גדות הנהר (חידת החצייה) */
+.gx-river{display:flex;align-items:stretch;gap:0;max-width:560px;margin:0 auto;min-height:150px}
+.gx-bank{flex:1;background:#eef7ef;border:2px solid #bfe0c4;border-radius:14px;padding:10px;text-align:center}
+.gx-bank.right{background:#eef2ff;border-color:#c7d2f5}
+.gx-bank-title{font-weight:800;color:var(--muted);font-size:13px;margin-bottom:6px}
+.gx-bank-items{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;font-size:30px;min-height:44px}
+.gx-water{width:70px;position:relative;background:repeating-linear-gradient(180deg,#dbeafe,#dbeafe 8px,#bfdbfe 8px,#bfdbfe 16px);border-radius:8px;margin:0 4px}
+.gx-boat{position:absolute;left:50%;transform:translateX(-50%);font-size:30px;transition:top .5s ease}
+
 @media(max-width:560px){
   .gx-num{font-size:20px}
   .gx-matrix td,.gx-matrix th{padding:10px 12px;font-size:15px}

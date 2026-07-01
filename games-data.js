@@ -30,7 +30,7 @@ export function adjacency(graph) {
   for (const n in graph.nodes) adj[n] = [];
   for (const [u, v, w] of graph.edges) {
     adj[u].push([v, w]);
-    adj[v].push([u, w]);
+    if (!graph.directed) adj[v].push([u, w]); // גרף מכוון → רק u→v
   }
   for (const n in adj) adj[n].sort((a, b) => a[0].localeCompare(b[0]));
   return adj;
@@ -260,3 +260,62 @@ export const GA_BITS = [
   { range: [0, 100], prec: 1 },     // → 7 ביט
   { range: [0, 1], prec: 0.001 }    // → 10 ביט
 ];
+
+// ============================================================
+// דאטה לנגני-הפתרון האינטראקטיביים (עמוד פתרונות תרגילים)
+// ============================================================
+
+// תרגיל 1, שאלה 3 — A* על הגרף (לא-מכוון) → S,B,E,F,G עלות 18
+export const EX_ASTAR = {
+  id: 'exastar', name: 'תרגיל 1 ש3 — A*',
+  nodes: {
+    S: { x: 265, y: 32, start: true }, A: { x: 110, y: 108 }, B: { x: 265, y: 108 }, C: { x: 420, y: 108 },
+    D: { x: 180, y: 195 }, E: { x: 360, y: 195 }, F: { x: 275, y: 272 }, G: { x: 275, y: 338, goal: true }
+  },
+  edges: [['S', 'A', 6], ['S', 'B', 5], ['S', 'C', 10], ['A', 'E', 6], ['B', 'E', 6], ['B', 'D', 7], ['C', 'D', 6], ['E', 'F', 4], ['D', 'F', 6], ['F', 'G', 3]],
+  h: { S: 17, A: 10, B: 13, C: 4, D: 2, E: 4, F: 1, G: 0 }, start: 'S', goal: 'G'
+};
+
+// תרגיל 2, שאלה 1 — השוואת אלגוריתמים (מכוון). A*→S,B,D,G(7) · BFS→S,G(9)
+export const EX_COMPARE = {
+  id: 'excompare', name: 'תרגיל 2 ש1 — השוואת אלגוריתמים', directed: true,
+  nodes: {
+    S: { x: 265, y: 32, start: true }, A: { x: 140, y: 120 }, B: { x: 390, y: 120 },
+    C: { x: 90, y: 215 }, D: { x: 265, y: 210 }, E: { x: 440, y: 215 }, G: { x: 265, y: 338, goal: true }
+  },
+  edges: [['S', 'A', 2], ['S', 'B', 1], ['S', 'G', 9], ['A', 'C', 2], ['A', 'D', 3], ['B', 'D', 2], ['B', 'E', 4], ['C', 'G', 4], ['D', 'G', 4]],
+  h: { S: 6, A: 0, B: 6, C: 4, D: 1, E: 10, G: 0 }, start: 'S', goal: 'G'
+};
+
+// תרגיל 2, שאלה 2 — עץ מינימקס (root MAX) → שורש 4, נגזמים 7,5
+export const EX_MINIMAX = { id: 'exmm', name: 'תרגיל 2 ש2 — מינימקס', root: 'MAX', t: [[3, 7, 8], [10, 8, 4], [2, 7, 5]] };
+
+// תרגיל עץ החלטה — פטריות (Smooth שורש IG≈0.049, ואז Smelly בכל ענף — הפוך)
+export const EX_ID3 = {
+  id: 'mush', name: 'פטריות (אכיל/רעיל)', target: 'Edible', attrs: ['NotHeavy', 'Smelly', 'Spotted', 'Smooth'],
+  rows: [
+    { id: 'A', NotHeavy: 1, Smelly: 0, Spotted: 0, Smooth: 0, Edible: 1 },
+    { id: 'B', NotHeavy: 1, Smelly: 0, Spotted: 1, Smooth: 0, Edible: 1 },
+    { id: 'C', NotHeavy: 0, Smelly: 1, Spotted: 0, Smooth: 1, Edible: 1 },
+    { id: 'D', NotHeavy: 0, Smelly: 0, Spotted: 0, Smooth: 1, Edible: 0 },
+    { id: 'E', NotHeavy: 1, Smelly: 1, Spotted: 1, Smooth: 0, Edible: 0 },
+    { id: 'F', NotHeavy: 1, Smelly: 0, Spotted: 1, Smooth: 1, Edible: 0 },
+    { id: 'G', NotHeavy: 1, Smelly: 0, Spotted: 0, Smooth: 1, Edible: 0 },
+    { id: 'H', NotHeavy: 0, Smelly: 1, Spotted: 0, Smooth: 0, Edible: 0 }
+  ]
+};
+
+// תרגיל 1, שאלה 1 — האיכר, שועל, אווז, חיטה. מצב=[Farmer,Fox,Goose,Wheat] (L/R)
+export const EX_RIVER = {
+  name: 'האיכר, שועל, אווז וחיטה', labels: ['איכר', 'שועל', 'אווז', 'חיטה'], icons: ['🧑‍🌾', '🦊', '🦆', '🌾'],
+  states: [
+    { s: ['L', 'L', 'L', 'L'], action: 'מצב התחלה — כולם בגדה השמאלית' },
+    { s: ['R', 'L', 'R', 'L'], action: 'האיכר לוקח את האווז ימינה' },
+    { s: ['L', 'L', 'R', 'L'], action: 'האיכר חוזר לבד שמאלה' },
+    { s: ['R', 'R', 'R', 'L'], action: 'האיכר לוקח את השועל ימינה' },
+    { s: ['L', 'R', 'L', 'L'], action: 'האיכר מחזיר את האווז שמאלה' },
+    { s: ['R', 'R', 'L', 'R'], action: 'האיכר לוקח את החיטה ימינה' },
+    { s: ['L', 'R', 'L', 'R'], action: 'האיכר חוזר לבד שמאלה' },
+    { s: ['R', 'R', 'R', 'R'], action: 'האיכר לוקח את האווז ימינה — יעד! ✓' }
+  ]
+};
